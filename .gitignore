@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env*
+!.env.example
+__pycache__/
+dist-artifact/
+tools/calco/models/*.onnx
+dist-estudio/
+tools/tripo/out/
+tools/trellis/out/

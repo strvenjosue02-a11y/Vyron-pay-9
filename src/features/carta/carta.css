@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+/* Archivo variable (ancho 62–125) — solo latín, autoalojada. Una familia para display y texto. */
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  src: url("../../../node_modules/@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+ * Vyron · carta. Escenario negro de vitrina (referencias: Jacob & Co, AP, Cartier):
+ * la comida real es la única fuente de color; la interfaz es tinta cálida sobre carbón,
+ * con un acento naranja de seguridad para las acciones.
+ */
+:root {
+  color-scheme: dark;
+  --bg: #0b0a09;
+  --panel: #141110;
+  --ink: #f4efe7;
+  --muted: #a1978c;
+  --accent: #ff5b1f;
+  --danger: #ff7a6b;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+@theme inline {
+  --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior-y: none;
+    scroll-behavior: auto;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-stretch: 100%;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  input, textarea, select { font-size: 16px; }
+  button, a, [role="button"], [role="radio"], [role="checkbox"] {
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    cursor: pointer;
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  img { -webkit-user-drag: none; }
+}
+
+@layer components {
+  /* Titulares: condensados, pesados, tracking negativo según tamaño (Apple §15). */
+  .display {
+    font-stretch: 62%;
+    font-weight: 820;
+    text-transform: uppercase;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+  }
+  .label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .spec { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0.02em; }
+  .spec div { display: flex; gap: 0.4rem; }
+  .spec dt { color: color-mix(in oklab, var(--muted) 70%, transparent); }
+
+  .spot {
+    background:
+      radial-gradient(60% 42% at 50% 46%, rgb(255 140 70 / 0.16), transparent 70%),
+      radial-gradient(90% 60% at 50% 110%, rgb(255 91 31 / 0.08), transparent 70%);
+  }
+  .word {
+    font-size: clamp(9rem, 44vw, 24rem);
+    color: transparent;
+    -webkit-text-stroke: 1px rgb(255 255 255 / 0.09);
+  }
+  /* Vitrina de producto: piso cálido + luz cenital, igual en todas las fotos. */
+  .stage {
+    background:
+      radial-gradient(70% 55% at 50% 38%, rgb(255 255 255 / 0.07), transparent 70%),
+      radial-gradient(60% 25% at 50% 92%, rgb(0 0 0 / 0.55), transparent 70%),
+      linear-gradient(180deg, #1b1715, #100e0c);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  }
+  .food { filter: drop-shadow(0 22px 22px rgb(0 0 0 / 0.55)); }
+  .glass {
+    background: rgb(14 12 11 / 0.72);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.06);
+  }
+  .cta { background: var(--accent); color: #140802; }
+  .chip { transition: background-color 180ms var(--ease-out), color 180ms var(--ease-out); }
+  .choice { transition: border-color 150ms var(--ease-out), background-color 150ms var(--ease-out); }
+
+  /* Respuesta al presionar (100–160 ms, ease-out): en pointer-down, nunca en click. */
+  .tap { transition: transform 120ms var(--ease-out); }
+  .tap:active { transform: scale(0.96); }
+  .card:has(> div button:active, h3 button:active) .stage { transform: scale(0.985); }
+  .card .stage { transition: transform 160ms var(--ease-out); }
+
+  .depth-photo:has(canvas[data-ready="1"]) img { opacity: 0; }
+
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+}
+
+/* Entrada del hero (una vez, primera carga → presupuesto de deleite). CSS = fuera del hilo principal. */
+@keyframes hero-in { from { opacity: 0; transform: translateY(28px) scale(0.96); filter: blur(6px); } }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+.hero-in > * { animation: hero-in 900ms var(--ease-out) both; }
+.rise { animation: rise 600ms var(--ease-out) both; }
+
+/* Reveal ligado al scroll en el compositor; sin soporte, el contenido está visible en reposo. */
+@supports (animation-timeline: view()) {
+  @keyframes reveal { from { opacity: 0; transform: translateY(24px); } }
+  .reveal { animation: reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 45%; }
+}
+
+.draw-circle { stroke-dasharray: 151; stroke-dashoffset: 151; animation: draw 600ms var(--ease-out) forwards; }
+.draw-check { stroke-dasharray: 36; stroke-dashoffset: 36; animation: draw 360ms 420ms var(--ease-out) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-in > *, .rise, .reveal { animation: none !important; }
+  .draw-circle, .draw-check { animation: none; stroke-dashoffset: 0; }
+  .tap:active { transform: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass { background: var(--panel); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}

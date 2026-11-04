@@ -1,0 +1,34 @@
+{
+ "batido-chocolate": {
+  "w": 323,
+  "h": 841
+ },
+ "batido-fresa": {
+  "w": 415,
+  "h": 851
+ },
+ "batido-oreo": {
+  "w": 546,
+  "h": 1198
+ },
+ "burger-bacon": {
+  "w": 734,
+  "h": 818
+ },
+ "burger-papas": {
+  "w": 625,
+  "h": 777
+ },
+ "nachos": {
+  "w": 718,
+  "h": 871
+ },
+ "papas": {
+  "w": 734,
+  "h": 845
+ },
+ "pollo-papas": {
+  "w": 709,
+  "h": 700
+ }
+}
