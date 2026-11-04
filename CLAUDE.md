@@ -14,8 +14,8 @@ este stack. El objetivo es calibre de estudio (Awwwards / Linear / Vercel), nunc
 ### 2. Componentes (antes de escribirlos desde cero)
 Busca primero en los registros configurados en `components.json` (MCP `shadcn` en `.mcp.json`):
 `@magicui`, `@react-bits`, `@animate-ui`, `@aceternity`, `@motion-primitives`, `@cult-ui`,
-además del registro base de shadcn/ui y el MCP `21st` (21st.dev). Adapta el componente al design
-system; no lo pegues tal cual.
+además del registro base de shadcn/ui. Adapta el componente al design system; no lo pegues tal cual.
+No se usan servicios que pidan API key salvo que sea imprescindible (21st.dev fue retirado).
 
 ### 3. Animación — qué herramienta para qué
 | Necesidad | Herramienta | Skills de referencia |
@@ -29,7 +29,21 @@ system; no lo pegues tal cual.
 - Tokens de curvas y duraciones: `src/lib/motion.ts` y `@theme` en `src/index.css`. No inventes curvas nuevas.
 - Utilidades listas: `Reveal`, `SplitHeading`, `SmoothScroll` en `src/components/motion/`.
 
-### 4. Revisión obligatoria antes de entregar
+### 4. 3D realista (modelos, comida, muebles, edificios, humanos, animales)
+- Lee primero `.claude/memory/KNOWLEDGE.md`, `LESSONS.md` y `.claude/memory/research/` y la skill `realistic-3d-web`.
+- Sin descargas posibles → modelado procedural (ver `src/features/burger/` como referencia: Lathe,
+  ruido fbm, texturas canvas, PBR con MeshPhysicalMaterial, iluminación RoomEnvironment local).
+- Con modelos glTF → optimizar (gltf-transform: meshopt/draco + texturas KTX2/webp) y cargar diferido.
+- Encaja la cámara al aspecto del dispositivo; nunca dejes el modelo cortado en móvil.
+
+### 5. Equipo de agentes y memoria colectiva
+- `3d-researcher` (`.claude/agents/`) aprende y escribe hallazgos verificados en `.claude/memory/`.
+- `web-builder` traduce la memoria en skills, componentes y webs, y confirma o corrige lo aprendido.
+- Todo agente (y tú) lee la memoria al empezar y la actualiza al terminar: errores → `LESSONS.md`,
+  hechos probados → `KNOWLEDGE.md`, pedidos entre agentes → `HANDOFF.md`. Mejora lo existente en
+  vez de duplicarlo.
+
+### 6. Revisión obligatoria antes de entregar
 - `review-animations` sobre todo lo animado y `animation-performance` si hay algo pesado.
 - `mobile-native` para el acabado en móvil; `break-ui` con datos extremos.
 - `npm run build` sin errores y captura en escritorio (1280px) y móvil (390px).

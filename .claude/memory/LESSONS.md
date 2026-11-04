@@ -1,0 +1,12 @@
+# Lecciones (errores que no se repiten)
+
+- `manualChunks` que agrupa three/@react-three hace que Vite lo precargue en el index → rompe la carga diferida. No usarlo; basta con `React.lazy`. (2026-11-04, web-builder)
+- TypeScript 7 eliminó `baseUrl`; usar solo `paths`. (2026-11-04, web-builder)
+- Un objeto 3D grande detrás del titular destruye la legibilidad: cámara más lejos, opacidad ≤50 %, máscara radial. (2026-11-04, web-builder)
+- `scrollIntoView({ inline: "center" })` en una tira de pestañas también desplaza la PÁGINA en vertical (saltaba al final del hero al cargar). Usar `strip.scrollTo({ left })`. (2026-11-04, web-builder, src/features/burger/menu.tsx)
+- Un icono decorativo `absolute` encima de una tarjeta intercepta los toques del botón: siempre `pointer-events-none` en decoración. Detectado con Playwright `click`. (2026-11-04, web-builder)
+- CanvasTexture con `flipY` (por defecto): la fila 0 del canvas es v=1. En un Lathe, v=1 es el ÚLTIMO punto del perfil (la corona) → el degradado del pan estaba invertido. (2026-11-04, web-builder, src/features/burger/textures.ts)
+- Ruido radial solo por ángulo en un cilindro = "monedas apiladas". El ruido debe depender también de la altura y redondear hombros (`1 - k·|t|^4`). (2026-11-04, web-builder, src/features/burger/geometry.ts)
+- Colocar instancias (ajonjolí) sobre un elipsoide aproximado las entierra dentro de la malla. Muestrear el MISMO perfil con `SplineCurve.getPointAt/getTangentAt` y desplazar un poco por la normal. (2026-11-04, web-builder)
+- Con reduced-motion, mostrar el modelo en su estado compacto: el estado "despiezado" es más alto y tapa el titular. (2026-11-04, web-builder)
+- Tailwind `animate-bounce` usa curvas ease-in → no pasa la regla de animación; usar keyframe propia con ease-in-out. (2026-11-04, web-builder)

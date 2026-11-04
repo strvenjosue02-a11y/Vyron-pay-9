@@ -12,35 +12,26 @@
 }
 
 :root {
-  --radius: 0.75rem;
-  --background: oklch(0.985 0 0);
-  --foreground: oklch(0.16 0.01 270);
-  --card: oklch(1 0 0);
+  /* Vyron Burger — warm charcoal stage, appetizing red, toasted gold (ui-ux-pro-max: restaurant) */
+  color-scheme: dark;
+  --radius: 0.875rem;
+  --background: oklch(0.15 0.008 50);
+  --foreground: oklch(0.97 0.01 80);
+  --card: oklch(0.2 0.01 50);
   --card-foreground: var(--foreground);
-  --muted: oklch(0.96 0.005 270);
-  --muted-foreground: oklch(0.5 0.015 270);
-  --primary: oklch(0.58 0.2 275);
+  --muted: oklch(0.24 0.01 50);
+  --muted-foreground: oklch(0.72 0.02 70);
+  --primary: oklch(0.6 0.22 27);
   --primary-foreground: oklch(0.99 0 0);
-  --accent: oklch(0.8 0.15 190);
-  --accent-foreground: oklch(0.16 0.01 270);
-  --border: oklch(0.16 0.01 270 / 0.1);
-  --ring: oklch(0.58 0.2 275 / 0.5);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: oklch(0.13 0.008 270);
-    --foreground: oklch(0.97 0.003 270);
-    --card: oklch(0.17 0.01 270);
-    --muted: oklch(0.2 0.01 270);
-    --muted-foreground: oklch(0.68 0.015 270);
-    --primary: oklch(0.68 0.19 275);
-    --accent: oklch(0.82 0.14 190);
-    --border: oklch(1 0 0 / 0.08);
-  }
+  --accent: oklch(0.8 0.14 80);
+  --accent-foreground: oklch(0.18 0.01 50);
+  --border: oklch(1 0 0 / 0.08);
+  --ring: oklch(0.6 0.22 27 / 0.6);
 }
 
 @theme inline {
+  --font-sans: "Karla Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Playfair Display SC", ui-serif, Georgia, serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -61,12 +52,44 @@
 
 @layer base {
   * { @apply border-border outline-ring/50; }
-  html { -webkit-text-size-adjust: 100%; }
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+  input, textarea, select { font-size: 16px; }
   body {
     @apply bg-background text-foreground antialiased;
     -webkit-tap-highlight-color: transparent;
   }
-  button { touch-action: manipulation; }
+  button, a, [role="button"], [role="tab"] {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: pointer;
+  }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+}
+
+@layer utilities {
+  /* Press feedback on pointer-down for every tappable control. */
+  .tap { transition: transform 120ms var(--ease-out-quint), background-color 150ms ease; }
+  .tap:active { transform: scale(0.96); }
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .drag-handle { touch-action: none; }
+  /* Scroll hint: gentle on-screen movement → ease-in-out, never ease-in. */
+  .nudge { animation: nudge 1.6s var(--ease-in-out-quint) infinite; }
+  /* Film grain so flat gradients read as material, not as CSS. */
+  .grain::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.18; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+@keyframes nudge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
 }
 
 /* Lenis */
