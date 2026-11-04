@@ -63,3 +63,17 @@
 - Cadena: SSAO (solo nivel alto) → Bloom (umbral 1, 0.15) → ToneMapping NEUTRAL → HueSaturation +0.16 → BrightnessContrast +0.1 → Vignette → SMAA. `flat` en el Canvas para que el ToneMapping del composer mande. (2026-11-04, web-builder)
 - PerformanceMonitor baja dpr y desactiva SSAO en dispositivos lentos; un capítulo 3D solo se monta a ±1 viewport (≤2 contextos WebGL vivos). (2026-11-04, web-builder)
 - Build de un solo archivo (`npm run build:artifact`, vite-plugin-singlefile) ≈2.3 MB; probado bajo CSP estricta sin errores. (2026-11-04, web-builder)
+
+## Skills instaladas (vendorizadas en .claude/skills/, 2026-11-04)
+Copias de solo lectura; licencia upstream en `.claude/skills/LICENSE-<nombre>`. Revisadas: sin prompt-injection ni exfiltración.
+- `impeccable` → pbakaus/impeccable@695cea5 (Apache-2.0, + NOTICE.md). Solo SKILL.md + reference/; **sin scripts/** (el lanzador descarga un binario de GitHub Releases). Usar siempre la ruta "Launcher unavailable"; `live/generate/hooks/pin/doctor` no disponibles.
+- `taste-skill` (name: design-taste-frontend) → Leonxlnx/taste-skill@12af471 (MIT). Incluye scripts Node locales (draw/lint/inspect/scenes necesitan Chrome headless; assets.mjs consulta Openverse/Wikimedia/Met/AIC/NASA/archive.org sin API key — pueden no ser alcanzables aquí). Guarda historial en `~/.taste-skill/`.
+- `threejs-{fundamentals,geometry,materials,lighting,textures,loaders,animation,interaction,shaders,postprocessing,performance,asset-pipeline,react-three-fiber}` → CloudAI-X/threejs-skills@0e18186 (MIT). Apuntan a three r186 / R3F 9.8.
+- `web-quality-audit`, `performance`, `core-web-vitals`, `accessibility`, `seo`, `best-practices` → addyosmani/web-quality-skills@afa8da9 (MIT). `analyze.sh` es de solo lectura (requiere jq).
+- `atdd`, `atdd-team`, `atdd-mutate` → swingerman/engineer@f5216e2 (MIT). Parcial: citan agentes/scripts del plugin (`pipeline-builder`, `spec-guardian`, `dae_gherkin.py`, `${CLAUDE_PLUGIN_ROOT}`) que no se vendorizaron.
+- `sharp-edges`, `differential-review`, `fp-check` → trailofbits/skills@711af09 (CC-BY-SA-4.0). Los agentes del plugin (`differential-review:adversarial-modeler`, agentes de deep-verification de fp-check) no están; usar los .md de metodología.
+- No instaladas: Motion ai-kit (motiondivision/ai-kit, sin LICENSE), Shadcnblocks-Skill (API key de pago + script que lee secretos de 1Password), Trail of Bits semgrep/codeql/semgrep-rule-*/supply-chain (herramientas o APIs no alcanzables), insecure-defaults y audit-context-building (dependen del tool Workflow/comandos del plugin). No existen repos canónicos para Web Performance Kit, dotLottie, Paper Shaders ni Spline skills.
+
+## Herramientas locales (probado 2026-11-04, web-builder)
+- `tools/calco/calco.py`: IS-Net (rembg, GitHub release) + Depth Anything V2 Small ONNX (fabio-sim, GitHub release) en onnxruntime CPU; recorte+profundidad+GLB relieve en ~5 s para 410×200. Probado con captura del usuario.
+- `tools/blender/`: bpy 5.2.3 (PyPI, rueda cp313) funciona headless; Cycles CPU + OIDN, 540² a 24 muestras ≈17 s con la hamburguesa clásica completa (incluye construcción de escena).

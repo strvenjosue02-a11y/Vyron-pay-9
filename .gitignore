@@ -4,3 +4,4 @@ dist/
 !.env.example
 __pycache__/
 dist-artifact/
+tools/calco/models/*.onnx

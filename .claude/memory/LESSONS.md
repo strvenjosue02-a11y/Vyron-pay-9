@@ -29,3 +29,8 @@
 - Papas: proporción real ≈1:8 (ancho 0.12–0.15, largo 0.95–1.35). Más largas parecen palitos; además deben quedarse dentro de la huella del cartucho (que se estrecha abajo) o atraviesan la pared. (2026-11-04, web-builder)
 - Encuadre de escenas con texto abajo: bajar el `lookAt` para subir el objeto y que el titular no tape la base. Probar siempre en 390×844 y 1280×800: el ajuste por altura en escritorio acerca demasiado la cámara. (2026-11-04, web-builder)
 - Muslos de pollo: colocarlos en paralelo con los huesos hacia fuera; enfrentados forman una "pesa". Costra con clearcoat alto + normalMap fuerte se ve vidriosa: coat ≤0.12, normalScale ~0.45, roughness ~0.62. (2026-11-04, web-builder)
+- bpy (Blender como módulo): importar `bpy` ANTES que `bmesh`/`mathutils` o falla `No module named 'bmesh'`. (2026-11-04, web-builder, tools/blender)
+- `bmesh.ops.subdivide_edges(..., use_grid_fill=True)` sobre un círculo de 180 lados se cuelga (CPU al 100 % >10 min). Construir discos como malla polar (anillos × segmentos). (2026-11-04, web-builder)
+- En shaders de Blender, `Geometry > Position` es espacio mundo: un ColorRamp por altura se rompe al mover la capa. Usar `Texture Coordinate > Generated` (caja del objeto normalizada). (2026-11-04, web-builder)
+- Al instanciar copias de un proto escalado, `inst.scale = (s,s,s)` borra la escala del proto (ajonjolí → esferas). Multiplicar por `proto.scale`. (2026-11-04, web-builder)
+- Desde este entorno NO hay fotos reales: bloqueados Wikimedia, Unsplash, Pexels, Pixabay y Hugging Face. Fuentes reales posibles: fotos subidas por el usuario o dominios permitidos en la configuración del entorno. (2026-11-04, web-builder)
