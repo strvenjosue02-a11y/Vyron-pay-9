@@ -7,7 +7,8 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 export default defineConfig(({ mode }) => {
   // `vite build --mode artifact` → one self-contained HTML (scripts, CSS,
   // fonts, HDRI inlined) for hosts that block external files and fetch().
-  const single = mode === "artifact";
+  // `--mode estudio` → visor de modelos 3D en un solo archivo (los GLB van al lado, en models/).
+  const single = mode === "artifact" || mode === "estudio";
   return {
     plugins: [react(), tailwindcss(), ...(single ? [viteSingleFile()] : [])],
     resolve: {
@@ -22,7 +23,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      outDir: single ? "dist-artifact" : "dist",
+      outDir: mode === "estudio" ? "dist-estudio" : single ? "dist-artifact" : "dist",
+      ...(mode === "estudio" ? { rollupOptions: { input: "estudio.html" } } : {}),
       // The Three.js chunk is large by nature; it is lazy-loaded, never on first paint.
       chunkSizeWarningLimit: single ? 5000 : 2000,
       assetsInlineLimit: single ? 100_000_000 : 0,

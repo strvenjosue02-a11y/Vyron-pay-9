@@ -34,3 +34,6 @@
 - En shaders de Blender, `Geometry > Position` es espacio mundo: un ColorRamp por altura se rompe al mover la capa. Usar `Texture Coordinate > Generated` (caja del objeto normalizada). (2026-11-04, web-builder)
 - Al instanciar copias de un proto escalado, `inst.scale = (s,s,s)` borra la escala del proto (ajonjolí → esferas). Multiplicar por `proto.scale`. (2026-11-04, web-builder)
 - Desde este entorno NO hay fotos reales: bloqueados Wikimedia, Unsplash, Pexels, Pixabay y Hugging Face. Fuentes reales posibles: fotos subidas por el usuario o dominios permitidos en la configuración del entorno. (2026-11-04, web-builder)
+- Reglas CSS `display: grid/flex` anulan el atributo `hidden`: añadir siempre `[hidden]{display:none!important}` (overlay "pendiente" quedaba encima del modelo). (2026-11-04, web-builder, src/estudio)
+- Tripo: la API v2 (`api.tripo3d.ai/v2/openapi`) se apagó el 2026-10-31; usar v3 (`openapi.tripo3d.ai/v3/...`). Las guías de terceros siguen citando v2. (2026-11-04, web-builder, tripo-python-sdk README)
+- Recortes para imagen→3D: quitar platos (blanco poco saturado en la mitad inferior) y apéndices finos (apertura morfológica 15–31 px + componente mayor); el generador copia todo lo que ve. (2026-11-04, web-builder, tools/tripo/prepare.py)
