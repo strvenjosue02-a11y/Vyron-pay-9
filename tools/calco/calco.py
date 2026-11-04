@@ -54,6 +54,14 @@ def cutout(rgb: np.ndarray) -> np.ndarray:
     return np.clip(alpha, 0, 1)
 
 
+def feather_frame(alpha: np.ndarray, px: int = 22) -> np.ndarray:
+    """Si el objeto toca el borde de la foto, el recorte queda con un corte recto: lo difumina."""
+    h, w = alpha.shape
+    yy, xx = np.mgrid[0:h, 0:w]
+    d = np.minimum.reduce([xx, yy, w - 1 - xx, h - 1 - yy]).astype(np.float32)
+    return alpha * np.clip(d / px, 0, 1) ** 0.8
+
+
 def refine_alpha(alpha: np.ndarray) -> np.ndarray:
     """Limpia ruido y deja un borde suave de ~1 px (sin halo)."""
     m = (alpha > 0.5).astype(np.uint8)
@@ -62,7 +70,7 @@ def refine_alpha(alpha: np.ndarray) -> np.ndarray:
         keep = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
         m = (labels == keep).astype(np.uint8)
     soft = cv2.GaussianBlur(alpha * m, (3, 3), 0)
-    return np.clip(soft, 0, 1)
+    return feather_frame(np.clip(soft, 0, 1))
 
 
 # ---------------------------------------------------------------- profundidad

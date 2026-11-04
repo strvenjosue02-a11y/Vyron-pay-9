@@ -11,13 +11,21 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss(), ...(single ? [viteSingleFile()] : [])],
     resolve: {
-      alias: { "@": path.resolve(import.meta.dirname, "./src") },
+      alias: {
+        "@": path.resolve(import.meta.dirname, "./src"),
+        // Preact con la API de React: ~10 KB en vez de ~60 KB de react-dom (Android de gama media).
+        react: "preact/compat",
+        "react-dom/client": "preact/compat/client",
+        "react-dom": "preact/compat",
+        "react/jsx-runtime": "preact/jsx-runtime",
+        "react/jsx-dev-runtime": "preact/jsx-dev-runtime",
+      },
     },
     build: {
       outDir: single ? "dist-artifact" : "dist",
       // The Three.js chunk is large by nature; it is lazy-loaded, never on first paint.
       chunkSizeWarningLimit: single ? 5000 : 2000,
-      ...(single ? { assetsInlineLimit: 100_000_000 } : {}),
+      assetsInlineLimit: single ? 100_000_000 : 0,
     },
   };
 });
