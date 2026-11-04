@@ -1,4 +1,4 @@
-import * as THREE from "three/webgpu";
+import * as THREE from "three";
 
 /** Small deterministic value noise — no deps, used for geometry and textures. */
 function hash(x: number, y: number, z: number) {
@@ -143,5 +143,28 @@ export function shadowTexture() {
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, s, s);
+  });
+}
+
+/** Pickle cross-section: dark skin ring, translucent pale flesh, ring of seeds. */
+export function pickleSliceTexture() {
+  return canvasTexture(256, (ctx, s) => {
+    const c = s / 2;
+    ctx.fillStyle = "#3f5a12";
+    ctx.fillRect(0, 0, s, s);
+    ctx.fillStyle = "#9fae4a";
+    ctx.beginPath(); ctx.arc(c, c, c * 0.88, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#c4c878";
+    ctx.beginPath(); ctx.arc(c, c, c * 0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#e6e2b0";
+    for (let k = 0; k < 9; k++) {
+      const a = (k / 9) * Math.PI * 2;
+      ctx.save();
+      ctx.translate(c + Math.cos(a) * c * 0.34, c + Math.sin(a) * c * 0.34);
+      ctx.rotate(a);
+      ctx.beginPath(); ctx.ellipse(0, 0, c * 0.08, c * 0.04, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    speckle(ctx, s, 0.2, 10, false);
   });
 }

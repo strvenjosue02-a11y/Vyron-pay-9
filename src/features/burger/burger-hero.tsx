@@ -48,11 +48,11 @@ export function BurgerHero() {
       <div className="sticky top-0 h-svh overflow-hidden">
         {/* Warm stage light behind the burger */}
         <div className="absolute inset-0 bg-[radial-gradient(70%_45%_at_50%_48%,oklch(0.45_0.12_45/0.55),transparent_70%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent" />
 
         <Suspense fallback={<div className="absolute inset-0 grid place-items-center"><div className="size-40 animate-pulse rounded-full bg-amber-900/30 blur-2xl" /></div>}>
           <BurgerScene state={state} still={reduce} />
         </Suspense>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent" />
 
         <header className="relative z-10 flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
           <span className="font-display text-xl tracking-wide">Vyron<span className="text-primary">.</span></span>

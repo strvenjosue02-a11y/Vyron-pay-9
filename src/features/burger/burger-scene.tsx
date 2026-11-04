@@ -1,36 +1,17 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import * as THREE from "three/webgpu";
-import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import SceneCanvas from "@/components/three/scene-canvas";
+import { ContactShadows } from "@react-three/drei";
+import * as THREE from "three";
+import GLCanvas from "@/components/three/gl-canvas";
 import { layers } from "./data";
 import {
   bottomBunGeometry, cheeseGeometry, lettuceGeometry, pattyGeometry, sesameMatrices, topBunGeometry,
 } from "./geometry";
-import { bunTexture, pattyBump, pattyTexture, shadowTexture, tomatoSliceTexture } from "./textures";
+import { bunTexture, pattyBump, pattyTexture, pickleSliceTexture, tomatoSliceTexture } from "./textures";
 
 export type ScrollState = { progress: number; active: number };
 
 const GAP = 0.62; // extra space between layers when fully exploded
-
-/** Studio-style image based lighting generated locally — no HDRI download. */
-function StudioEnvironment() {
-  const { gl, scene } = useThree();
-  useEffect(() => {
-    const pmrem = new THREE.PMREMGenerator(gl as unknown as THREE.WebGPURenderer);
-    const room = new RoomEnvironment();
-    const rt = pmrem.fromScene(room as unknown as THREE.Scene, 0.04);
-    scene.environment = rt.texture;
-    scene.environmentIntensity = 0.45;
-    return () => {
-      scene.environment = null;
-      rt.dispose();
-      pmrem.dispose();
-      room.traverse((o) => (o as THREE.Mesh).geometry?.dispose());
-    };
-  }, [gl, scene]);
-  return null;
-}
 
 function useBurgerAssets() {
   const assets = useMemo(() => {
@@ -44,7 +25,6 @@ function useBurgerAssets() {
       pickle: new THREE.CylinderGeometry(0.27, 0.27, 0.045, 32),
       onion: new THREE.TorusGeometry(0.42, 0.035, 12, 64),
       seed: new THREE.SphereGeometry(0.036, 8, 6).scale(1, 0.42, 2.1),
-      shadow: new THREE.PlaneGeometry(3.4, 3.4).rotateX(-Math.PI / 2),
     };
     const tex = {
       topBun: bunTexture(0, 0.14, true),
@@ -52,20 +32,20 @@ function useBurgerAssets() {
       patty: pattyTexture(),
       pattyBump: pattyBump(),
       tomato: tomatoSliceTexture(),
-      shadow: shadowTexture(),
+      pickle: pickleSliceTexture(),
     };
     const mat = {
       topBun: new THREE.MeshPhysicalMaterial({ map: tex.topBun, roughness: 0.4, clearcoat: 0.55, clearcoatRoughness: 0.35, sheen: 0.25, sheenColor: new THREE.Color("#ffcf8a"), sheenRoughness: 0.6 }),
-      bottomBun: new THREE.MeshPhysicalMaterial({ map: tex.bottomBun, roughness: 0.6, sheen: 0.3, sheenColor: new THREE.Color("#ffd9a0") }),
-      patty: new THREE.MeshPhysicalMaterial({ map: tex.patty, bumpMap: tex.pattyBump, bumpScale: 2.5, roughness: 0.62, clearcoat: 0.45, clearcoatRoughness: 0.35 }),
-      cheese: new THREE.MeshPhysicalMaterial({ color: "#e88a12", roughness: 0.38, clearcoat: 0.35, clearcoatRoughness: 0.25, side: THREE.DoubleSide }),
-      lettuce: new THREE.MeshPhysicalMaterial({ color: "#3f8f22", roughness: 0.5, clearcoat: 0.6, clearcoatRoughness: 0.3, sheen: 0.35, sheenColor: new THREE.Color("#a8e070"), side: THREE.DoubleSide }),
-      tomatoSide: new THREE.MeshPhysicalMaterial({ color: "#c41f12", roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.1 }),
-      tomatoCap: new THREE.MeshPhysicalMaterial({ map: tex.tomato, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08 }),
-      pickle: new THREE.MeshPhysicalMaterial({ color: "#7d8f2c", roughness: 0.4, clearcoat: 0.8, clearcoatRoughness: 0.2 }),
+      bottomBun: new THREE.MeshPhysicalMaterial({ map: tex.bottomBun, roughness: 0.66, sheen: 0.15, sheenColor: new THREE.Color("#ffd9a0"), specularIntensity: 0.6 }),
+      patty: new THREE.MeshPhysicalMaterial({ map: tex.patty, bumpMap: tex.pattyBump, bumpScale: 3, roughness: 0.78, clearcoat: 0.12, clearcoatRoughness: 0.5, specularIntensity: 0.5 }),
+      cheese: new THREE.MeshPhysicalMaterial({ color: "#e98a0e", roughness: 0.5, clearcoat: 0.1, clearcoatRoughness: 0.3, specularIntensity: 0.6, side: THREE.DoubleSide }),
+      lettuce: new THREE.MeshPhysicalMaterial({ color: "#3d8a1f", roughness: 0.58, clearcoat: 0.18, clearcoatRoughness: 0.35, sheen: 0.2, sheenColor: new THREE.Color("#a8e070"), side: THREE.DoubleSide }),
+      tomatoSide: new THREE.MeshPhysicalMaterial({ color: "#b3170c", roughness: 0.25, clearcoat: 0.8, clearcoatRoughness: 0.1 }),
+      tomatoCap: new THREE.MeshPhysicalMaterial({ map: tex.tomato, color: "#e8d0cc", roughness: 0.3, clearcoat: 0.7, clearcoatRoughness: 0.08 }),
+      pickle: new THREE.MeshPhysicalMaterial({ color: "#5f7a1e", roughness: 0.4, clearcoat: 0.5, clearcoatRoughness: 0.2 }),
       onion: new THREE.MeshPhysicalMaterial({ color: "#efd9ec", roughness: 0.3, clearcoat: 0.6, transmission: 0.25, thickness: 0.05 }),
       seed: new THREE.MeshStandardMaterial({ color: "#efdcae", roughness: 0.5 }),
-      shadow: new THREE.MeshBasicMaterial({ map: tex.shadow, transparent: true, depthWrite: false }),
+      pickleCap: new THREE.MeshPhysicalMaterial({ map: tex.pickle, roughness: 0.35, clearcoat: 0.6, clearcoatRoughness: 0.15 }),
     };
     return { geo, tex, mat };
   }, []);
@@ -84,7 +64,7 @@ function useBurgerAssets() {
 function Burger({ state, still }: { state: ScrollState; still: boolean }) {
   const { geo, mat } = useBurgerAssets();
   const root = useRef<THREE.Group>(null);
-  const shadow = useRef<THREE.Mesh>(null);
+  const shadow = useRef<THREE.Group>(null);
   const layerRefs = useRef<(THREE.Group | null)[]>([]);
   const seeds = useRef<THREE.InstancedMesh>(null);
   const eased = useRef(0);
@@ -158,7 +138,7 @@ function Burger({ state, still }: { state: ScrollState; still: boolean }) {
     </group>,
     <group key="pi">
       {[[0.55, -0.2], [-0.5, -0.35], [-0.1, 0.55]].map(([x, z], i) => (
-        <mesh key={i} geometry={geo.pickle} material={mat.pickle} position={[x, 0.025, z]} rotation-z={0.06 * (i - 1)} />
+        <mesh key={i} geometry={geo.pickle} material={[mat.pickle, mat.pickleCap, mat.pickleCap]} position={[x, 0.025, z]} rotation-z={0.06 * (i - 1)} />
       ))}
     </group>,
     <group key="to">
@@ -175,7 +155,9 @@ function Burger({ state, still }: { state: ScrollState; still: boolean }) {
 
   return (
     <>
-      <mesh ref={shadow} geometry={geo.shadow} material={mat.shadow} />
+      <group ref={shadow}>
+        <ContactShadows opacity={0.75} scale={5} blur={2.4} far={2.5} resolution={512} color="#1a0c04" />
+      </group>
       <group ref={root} userData={{ assembledHeight }}>
         {parts.map((part, i) => (
           <group key={layers[i].id} ref={(el) => void (layerRefs.current[i] = el)}>
@@ -189,13 +171,10 @@ function Burger({ state, still }: { state: ScrollState; still: boolean }) {
 
 export default function BurgerScene({ state, still = false }: { state: ScrollState; still?: boolean }) {
   return (
-    <SceneCanvas camera={{ position: [0, 1.4, 6], fov: 32 }}>
-      <StudioEnvironment />
-      <hemisphereLight args={["#fff3e0", "#2a1408", 0.5]} />
-      <directionalLight position={[3, 5, 4]} intensity={2.4} color="#fff0dc" />
-      <directionalLight position={[-4, 2, -3]} intensity={2.2} color="#ff9b54" />
-      <directionalLight position={[-3, -1, 4]} intensity={0.5} color="#ffd9b0" />
+    <GLCanvas camera={{ position: [0, 1.4, 6], fov: 32 }}>
+      <directionalLight position={[3, 5, 4]} intensity={1.05} color="#fff0dc" />
+      <directionalLight position={[-4, 2, -3]} intensity={1.8} color="#ff9b54" />
       <Burger state={state} still={still} />
-    </SceneCanvas>
+    </GLCanvas>
   );
 }

@@ -1,4 +1,4 @@
-import * as THREE from "three/webgpu";
+import * as THREE from "three";
 import { fbm, noise3 } from "./textures";
 
 const V = (x: number, y: number) => new THREE.Vector2(x, y);

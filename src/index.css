@@ -15,7 +15,7 @@
   /* Vyron Burger — warm charcoal stage, appetizing red, toasted gold (ui-ux-pro-max: restaurant) */
   color-scheme: dark;
   --radius: 0.875rem;
-  --background: oklch(0.15 0.008 50);
+  --background: #15110e; /* matches the 3D canvas clear colour */
   --foreground: oklch(0.97 0.01 80);
   --card: oklch(0.2 0.01 50);
   --card-foreground: var(--foreground);
