@@ -21,3 +21,27 @@ Fuentes: SDK oficial `VAST-AI-Research/tripo-python-sdk` (MIT, leído en GitHub:
 ## Pendiente para el usuario
 - Permitir en la red del entorno: `openapi.tripo3d.ai`, `*.tripo3d.ai`, `*.tripo3d.com` (CDN de descarga de `model_url`).
 - Guardar la clave como secreto `TRIPO_API_KEY` (no en el chat ni en el repo).
+
+## Ampliación (2026-11-04, web-builder)
+
+### Cómo usar TRELLIS.2 sin GPU propia (todas requieren abrir su dominio + clave en secreto del entorno)
+- fal.ai `fal-ai/trellis-2` (docs oficiales; precio: ver fal.ai/pricing; un tercero cita $0.25–0.35 por modelo, sin verificar).
+- Replicate `fishwowater/trellis2` (comunidad; créditos de prueba).
+- Runware (≈$0.02/modelo según su página), PiAPI ($0.10), 3D AI Studio (10 créditos), Empirio Labs ($0.499 a 1536). Precios de terceros sin verificar.
+- Space oficial de Hugging Face `microsoft/TRELLIS.2` con `gradio_client` + `HF_TOKEN` (cola gratuita, lenta).
+- GPU propia: Linux + NVIDIA ≥24 GB + CUDA 12.4 (README de TRELLIS.2).
+
+### Otros modelos abiertos (según comparativas de vendedores; probar con fotos propias)
+- Hunyuan3D 2.1 (Tencent, licencia comunitaria con límites): mejor fidelidad de textura.
+- Hi3DGen: mejor geometría según testers. Stable Fast 3D: <1 s, calidad media.
+
+### Captura real: Gaussian Splatting (la vía más fiel a "igual que lo real")
+- three.js ≥ r186 trae `GaussianSplat` + loaders PLY/SPZ/SPLAT/KSPLAT — **verificado en node_modules/three 0.187** (`examples/jsm/objects/GaussianSplat.js`).
+- Spark (`@sparkjsdev/spark` 2.4.0, MIT, World Labs): renderer de splats para three.js con LOD en streaming.
+- Captura con teléfono: Scaniverse (gratis, procesa en el teléfono), Polycam, KIRI Engine; o fotos + Postshot. La demo de comida de Spark se hizo con fotos de un Pixel + Postshot.
+- Límite: un splat no se puede despiezar en capas como una malla; para despiece hace falta malla (TRELLIS.2/Tripo) o una captura por capa.
+
+### Referencias de webs/tutoriales
+- NOIRGRID BURGERS (foro three.js): hamburguesa por capas con scroll.
+- Tubik Studio: animación de armado de hamburguesa reescrita en three.js.
+- Fireship `threejs-scroll-animation-demo` (repo + vídeo) y freeCodeCamp "React 3D Animation Website (Three.js + WebGi + GSAP)", 1 h 46 min.
