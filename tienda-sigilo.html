@@ -1,0 +1,416 @@
+<title>Tienda Sigilo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: monitor de seguridad — plano a la izquierda, consola de plan y riesgo a la derecha */
+:root{
+  --bg:#0e1311; --panel:#161d1a; --line:#2a3631; --fg:#dfe7e2; --mute:#8a9a92;
+  --floor:#efe6d4; --grid:#ddd1ba; --shelf:#fbf7ee; --edge:#3a3226;
+  --ok:#5fd18b; --warn:#f2b84b; --bad:#ef5b5b; --cam:#7fb7ff;
+  --mono:"IBM Plex Mono",ui-monospace,monospace; --sans:"IBM Plex Sans",system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--fg);font-family:var(--sans)}
+.wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;padding-block:16px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1200px;margin:0 auto}
+@media (max-width:820px){.wrap{grid-template-columns:minmax(0,1fr)}}
+h1{font-family:var(--mono);font-size:15px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 8px;color:var(--mute)}
+h1 b{color:var(--fg)}
+canvas{width:100%;max-width:100%;display:block;border:1px solid var(--line);border-radius:4px;background:#000}
+.hud{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;font-family:var(--mono);font-size:12px;color:var(--mute)}
+.hud span b{color:var(--fg)}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px}
+.box h2{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:0 0 8px}
+.items{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.items label{display:flex;gap:6px;align-items:flex-start;font-size:13px;padding:4px;border-radius:3px;cursor:pointer}
+.items label:hover{background:#1e2723}
+.items label.no{opacity:.4;cursor:not-allowed}
+.tag{font-family:var(--mono);font-size:10px;color:var(--mute);display:block}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.row>span{font-size:12px;color:var(--mute);min-width:72px}
+select,button{font:inherit;font-size:13px;background:#0f1513;color:var(--fg);border:1px solid var(--line);border-radius:3px;padding:6px 8px}
+button{cursor:pointer}
+button.pri{background:#21402f;border-color:#2f6a49}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--cam);outline-offset:1px}
+.cap{height:6px;background:#0f1513;border-radius:3px;overflow:hidden;margin-top:6px}
+.cap i{display:block;height:100%;background:var(--warn);width:0}
+.meter{display:grid;grid-template-columns:96px 1fr 44px;gap:8px;align-items:center;font-size:12px;margin:4px 0}
+.meter .bar{height:8px;background:#0f1513;border-radius:4px;overflow:hidden}
+.meter .bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .2s}
+.meter em{font-family:var(--mono);font-style:normal;text-align:right;font-variant-numeric:tabular-nums}
+.big{font-family:var(--mono);font-size:26px;font-variant-numeric:tabular-nums}
+.log{font-family:var(--mono);font-size:11.5px;line-height:1.5;max-height:190px;overflow:auto;color:var(--mute)}
+.log div b{color:var(--fg)} .log .r{color:var(--bad)} .log .g{color:var(--ok)} .log .y{color:var(--warn)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.stats div{font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums}
+.stats small{display:block;font-size:10px;color:var(--mute);letter-spacing:.1em;text-transform:uppercase}
+.note{font-size:12px;color:var(--mute);line-height:1.5}
+</style>
+
+<div class="wrap">
+  <div>
+    <h1><b>Tienda Sigilo</b> · CAM-SIM</h1>
+    <canvas id="cv" width="700" height="714"></canvas>
+    <div class="hud">
+      <span>Estado: <b id="hState">listo</b></span>
+      <span>Tiempo: <b id="hTime">0s</b></span>
+      <span>Clientes: <b id="hNpc">0</b></span>
+      <span>Clima: <b id="hWx">—</b></span>
+      <span>Velocidad: <select id="speed"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select></span>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="box">
+      <h2>1 · Qué intenta llevarse (máx. 2)</h2>
+      <div class="items" id="items"></div>
+      <div class="cap"><i id="capBar"></i></div>
+      <div class="note" id="capTxt">Bolsillo del abrigo: 0 / 1.2</div>
+    </div>
+    <div class="box">
+      <h2>2 · Plan</h2>
+      <div class="row"><span>Hora</span><select id="hora"><option value="manana">Mañana tranquila</option><option value="mediodia" selected>Mediodía</option><option value="pico">Hora pico</option></select></div>
+      <div class="row"><span>Al salir</span><select id="cover"><option value="buy">Compra algo barato</option><option value="none">Sale sin comprar</option></select></div>
+      <div class="row"><span>Actitud</span><select id="style"><option value="calm">Paciente</option><option value="fast">Apurado</option></select></div>
+      <div class="row">
+        <button class="pri" id="go">Calcular y simular</button>
+        <button id="auto">Modo automático</button>
+        <button id="stop">Parar</button>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Probabilidad (150 simulaciones del plan)</h2>
+      <div class="big" id="pEst">—</div>
+      <div class="note" id="pWhy">Elige objetos y pulsa «Calcular y simular».</div>
+    </div>
+    <div class="box">
+      <h2>Sospecha en vivo</h2>
+      <div class="meter"><span>Cajero</span><div class="bar"><i id="mCash"></i></div><em id="vCash">0%</em></div>
+      <div class="meter"><span>Reponedor</span><div class="bar"><i id="mClerk"></i></div><em id="vClerk">—</em></div>
+      <div class="meter"><span>Clientes</span><div class="bar"><i id="mNpc"></i></div><em id="vNpc">0%</em></div>
+      <div class="meter"><span>Riesgo acum.</span><div class="bar"><i id="mRisk"></i></div><em id="vRisk">0%</em></div>
+      <div class="meter"><span>Grabación</span><div class="bar"><i id="mRec"></i></div><em id="vRec">0%</em></div>
+    </div>
+    <div class="box">
+      <h2>Registro</h2>
+      <div class="log" id="log"></div>
+    </div>
+    <div class="box">
+      <h2>Estadísticas</h2>
+      <div class="stats">
+        <div id="sN">0<small>Intentos</small></div>
+        <div id="sOk">0<small>Escapó</small></div>
+        <div id="sBad">0<small>Atrapado</small></div>
+        <div id="sPct">—<small>Éxito</small></div>
+      </div>
+    </div>
+    <div class="note">Simulación de juego. Los NPC usan señales reales de prevención de pérdidas: saludo al entrar, abrigo en día caluroso, merodeo, miradas nerviosas, cliente que desaparece mucho rato, salir sin comprar, efecto espectador. Las cámaras tienen campo de visión real (se tapan con estanterías) y solo detectan en vivo si el cajero mira el monitor; si no, queda grabado para revisión posterior.</div>
+  </div>
+</div>
+
+<script>
+// ---------- MUNDO ----------
+const OB=[ // tall: bloquea visión
+ {x:3,y:4,w:94,h:9,t:1,k:'shelf'},
+ ...[5,21,38,55,71,88].map(x=>({x,y:24,w:7,h:40,t:1,k:'shelf'})),
+ {x:3,y:68,w:7,h:14,t:0,k:'L'},{x:3,y:76,w:25,h:6,t:0,k:'L'},
+ {x:36,y:74,w:30,h:5,t:0,k:'pos'},
+ {x:73,y:72,w:8,h:9,t:1,k:'fr'},{x:89,y:69,w:8,h:15,t:1,k:'fr'},
+ {x:0,y:88,w:30,h:3,t:1,k:'wall'},{x:68,y:88,w:32,h:3,t:1,k:'wall'}
+];
+const TALL=OB.filter(o=>o.t);
+const ITEMS=[
+ {id:'chicle',n:'Chicle',size:.3,noise:0,val:1,spot:[40,71],face:90},
+ {id:'sd',n:'Tarjeta microSD',size:.2,noise:.05,val:15,spot:[62,71],face:90},
+ {id:'labial',n:'Pintalabios',size:.3,noise:0,val:8,spot:[33,48],face:0},
+ {id:'pilas',n:'Pilas AA (blíster)',size:.5,noise:.35,val:5,spot:[50,30],face:180},
+ {id:'choco',n:'Chocolatina',size:.4,noise:.15,val:1.5,spot:[66.5,42],face:0},
+ {id:'galletas',n:'Galletas pequeñas',size:.8,noise:.3,val:2,spot:[16.5,45],face:180},
+ {id:'papas',n:'Bolsa de papas',size:1.0,noise:.95,val:2,spot:[83,35],face:0},
+ {id:'refresco',n:'Refresco 2 L',size:3,noise:.2,val:2,spot:[77,69.5],face:90},
+ {id:'vino',n:'Botella de vino',size:2.6,noise:.3,val:9,spot:[60,18.5],face:-90},
+];
+const CAP=1.2;
+const CAMS=[
+ {x:1.5,y:15,a:35,fov:80,r:75},{x:98.5,y:15,a:145,fov:80,r:75},
+ {x:51,y:73,a:90,fov:100,r:22},{x:98.5,y:86,a:-125,fov:80,r:60},{x:1.5,y:66,a:-35,fov:80,r:60}
+];
+const LX=[16.5,33,50,66.5,83];
+const PAY=[51,71], DOOR=[50,87], OUT=[50,99], FR2=[86,76], WAITQ=[50,67];
+const CASH={x:51,y:83}, MON={x:58,y:85};
+const NODES=[...LX.map(x=>[x,18.5]),...LX.map(x=>[x,67]),[32,70],[32,85],[69.5,70],[69.5,85],[84,85],PAY,DOOR,OUT,FR2,[77,69.5]];
+const HORA={manana:{npc:[1,2],clerk:.4},mediodia:{npc:[2,4],clerk:.6},pico:{npc:[4,6],clerk:.7}};
+const R=Math.random, rr=(a,b)=>a+R()*(b-a), ri=(a,b)=>Math.floor(rr(a,b+1)), cl=v=>v<0?0:v>1?1:v;
+const D2R=Math.PI/180;
+
+function segT(ax,ay,bx,by,o,pad){ // devuelve t de entrada o -1
+  const x0=o.x-pad,x1=o.x+o.w+pad,y0=o.y-pad,y1=o.y+o.h+pad;let tmin=0,tmax=1;
+  const dx=bx-ax,dy=by-ay;
+  if(Math.abs(dx)<1e-9){if(ax<x0||ax>x1)return -1}else{let t1=(x0-ax)/dx,t2=(x1-ax)/dx;if(t1>t2)[t1,t2]=[t2,t1];tmin=Math.max(tmin,t1);tmax=Math.min(tmax,t2);if(tmin>tmax)return -1}
+  if(Math.abs(dy)<1e-9){if(ay<y0||ay>y1)return -1}else{let t1=(y0-ay)/dy,t2=(y1-ay)/dy;if(t1>t2)[t1,t2]=[t2,t1];tmin=Math.max(tmin,t1);tmax=Math.min(tmax,t2);if(tmin>tmax)return -1}
+  return tmin;
+}
+const losBlocked=(ax,ay,bx,by)=>TALL.some(o=>segT(ax,ay,bx,by,o,-.3)>=0);
+const moveBlocked=(a,b)=>OB.some(o=>segT(a[0],a[1],b[0],b[1],o,1.1)>=0);
+const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+// grafo
+const EDGES=NODES.map((n,i)=>NODES.map((m,j)=>j!==i&&dist(n,m)<40&&!moveBlocked(n,m)?j:-1).filter(j=>j>=0));
+function path(from,to){
+  if(!moveBlocked(from,to)&&dist(from,to)<40)return [to];
+  const N=NODES.length, S=N, T=N+1, P=[...NODES,from,to];
+  const adj=EDGES.map(e=>e.slice()); adj[S]=[];adj[T]=[];
+  for(let i=0;i<N;i++){if(!moveBlocked(from,NODES[i]))adj[S].push(i);if(!moveBlocked(NODES[i],to))adj[i].push(T)}
+  const d=Array(N+2).fill(1e9),pr=Array(N+2).fill(-1),u=Array(N+2).fill(0);d[S]=0;
+  for(;;){let b=-1;for(let i=0;i<N+2;i++)if(!u[i]&&d[i]<1e9&&(b<0||d[i]<d[b]))b=i;if(b<0||b===T)break;u[b]=1;
+    for(const j of adj[b]){const nd=d[b]+dist(P[b],P[j]);if(nd<d[j]){d[j]=nd;pr[j]=b}}}
+  if(pr[T]<0)return [to];const out=[];for(let c=T;c!==S;c=pr[c])out.unshift(P[c]);return out;
+}
+function sees(o,x,y){ // visibilidad 0..1
+  const dx=x-o.x,dy=y-o.y,d=Math.hypot(dx,dy);if(d>o.r||d<.01)return d<.01?1:0;
+  let da=Math.atan2(dy,dx)/D2R-o.a;da=((da+540)%360)-180;if(Math.abs(da)>o.fov/2)return 0;
+  if(losBlocked(o.x,o.y,x,y))return 0;return 1-d/o.r;
+}
+
+// ---------- SIMULACIÓN ----------
+function newSim(plan,live){
+  const H=HORA[plan.hora];
+  const S={t:0,plan,live,done:false,result:null,risk:0,recVis:0,log:[],bubbles:[],
+    hot:R()<.4, npcs:[], npcTarget:ri(H.npc[0],H.npc[1]), payLock:null, alert:null, detected:null, reasons:[]};
+  const L=(m,c)=>{if(live)S.log.push({t:S.t,m,c})};S.L=L;
+  S.say=(a,txt)=>{if(live)S.bubbles.push({a,txt,until:S.t+2.2})};
+  S.cash={kind:'cash',x:CASH.x,y:CASH.y,a:-90,fov:120,r:55,sus:0,state:'idle',stT:0,att:.6,lastSaw:0,trained:1.3,name:'el cajero'};
+  S.clerk=R()<H.clerk?{kind:'clerk',x:16.5,y:30,a:0,fov:120,r:45,sus:0,att:.35,trained:1.6,tasks:[],path:[],sp:7,name:'el reponedor'}:null;
+  const th=S.th={x:OUT[0],y:OUT[1],a:-90,path:[],sp:8,items:[],nerv:plan.style==='fast'?.35:.1,tasks:[],stay:0,lx:0,ly:0,bought:false,inside:false,hidden:0};
+  // tareas del ladrón
+  const decoy=ITEMS[ri(2,6)].spot; const tk=th.tasks;
+  tk.push({k:'go',to:DOOR},{k:'enter'},{k:'go',to:[LX[ri(0,4)],rr(30,58)]},{k:'browse',t:rr(4,9)});
+  for(const it of plan.items){tk.push({k:'go',to:it.spot,face:it.face},{k:'wait',it},{k:'conceal',it},{k:'browse',t:rr(1.5,3.5)})}
+  if(plan.cover==='buy')tk.push({k:'go',to:FR2,face:0},{k:'browse',t:2},{k:'grab'},{k:'pay'});
+  tk.push({k:'exit'});
+  // cámaras que el ladrón notó al entrar
+  th.knownCams=CAMS.map(()=>R()<(plan.style==='calm'?.8:.5));
+  for(let i=0;i<S.npcTarget;i++)spawnNpc(S,rr(0,25)*i);
+  if(S.hot)L('Día caluroso: un abrigo llama la atención.','y');
+  return S;
+}
+function spawnNpc(S,delay){
+  const n={kind:'npc',x:OUT[0]+rr(-3,3),y:OUT[1],a:-90,fov:110,r:40,sus:0,att:.25,trained:.5,path:[],sp:rr(6,8),tasks:[],wait:delay,noticed:false,name:'un cliente'};
+  n.tasks.push({k:'go',to:DOOR});const k=ri(1,3);
+  for(let i=0;i<k;i++){const it=ITEMS[ri(0,ITEMS.length-1)];n.tasks.push({k:'go',to:it.spot,face:it.face},{k:'browse',t:rr(4,12)})}
+  n.tasks.push({k:'pay'},{k:'exit'});S.npcs.push(n);
+}
+function walk(a,dt){
+  if(!a.path.length)return true;const p=a.path[0],dx=p[0]-a.x,dy=p[1]-a.y,d=Math.hypot(dx,dy),st=a.sp*dt;
+  a.a=Math.atan2(dy,dx)/D2R;if(d<=st){a.x=p[0];a.y=p[1];a.path.shift();return !a.path.length}
+  a.x+=dx/d*st;a.y+=dy/d*st;return false;
+}
+function runTask(S,a,dt){ // genérico para NPC / ladrón
+  const t=a.tasks[0];if(!t)return;
+  if(t.k==='go'){if(!t.s){t.s=1;a.path=path([a.x,a.y],t.to)}if(walk(a,dt)){if(t.face!=null)a.a=t.face;a.tasks.shift()}return}
+  if(t.k==='browse'){t.e=(t.e||0)+dt;if(t.e>=t.t)a.tasks.shift();return}
+  if(t.k==='pay'){
+    if(!t.s){if(S.payLock&&S.payLock!==a){if(!t.q){t.q=1;a.path=path([a.x,a.y],WAITQ)}walk(a,dt);return}S.payLock=a;t.s=1;a.path=path([a.x,a.y],PAY)}
+    if(walk(a,dt)){a.a=90;t.e=(t.e||0)+dt;if(t.e>4){S.payLock=null;a.tasks.shift();if(a===S.th){a.bought=true;S.L('Paga una botella de agua (tapadera).')}}}
+    return}
+}
+function step(S,dt){
+  if(S.done)return;S.t+=dt;const th=S.th,c=S.cash,P=S.plan;
+  // NPCs
+  for(const n of S.npcs){if(n.wait>0){n.wait-=dt;continue}
+    const t=n.tasks[0];if(!t){n.gone=true;continue}
+    if(t.k==='exit'){if(!t.s){t.s=1;n.path=path([n.x,n.y],DOOR).concat([OUT])}if(walk(n,dt))n.tasks.shift();continue}
+    if(t.k==='browse'&&n.lookT>0){n.lookT-=dt}
+    runTask(S,n,dt)}
+  const before=S.npcs.length;S.npcs=S.npcs.filter(n=>!n.gone);
+  for(let i=S.npcs.length;i<S.npcTarget;i++)if(before>S.npcs.length)spawnNpc(S,rr(5,20));
+  // reponedor
+  const k=S.clerk;
+  if(k){
+    if(k.sus>.55&&!k.helped&&th.inside&&!losBlocked(k.x,k.y,th.x,th.y)===false){}
+    if(k.sus>.55&&!k.helped&&th.inside){k.helped=1;k.tasks=[{k:'go',to:[th.x+(th.x>50?-4:4),th.y]},{k:'help'}];S.L('El reponedor se acerca: «¿Le ayudo a buscar algo?»','y');}
+    if(!k.tasks.length)k.tasks.push({k:'go',to:[LX[ri(0,4)],rr(28,60)],face:R()<.5?0:180},{k:'browse',t:rr(8,18)});
+    const kt=k.tasks[0];
+    if(kt.k==='help'){k.a=Math.atan2(th.y-k.y,th.x-k.x)/D2R;S.say(k,'¿Le ayudo?');th.nerv=Math.min(1,th.nerv+.3);k.att=1;kt.e=(kt.e||0)+dt;if(kt.e>3)k.tasks.shift()}
+    else{runTask(S,k,dt);k.att=kt.k==='browse'?.35:.6;if(k.sus>.5)k.att=.9}
+  }
+  // cajero
+  const serving=S.payLock&&S.payLock.tasks[0]&&S.payLock.tasks[0].e>0;
+  c.stT+=dt;
+  if(serving){c.state='serving';c.a=-90;c.att=.15}
+  else if(c.state==='monitor'){c.a=Math.atan2(MON.y-c.y,MON.x-c.x)/D2R;c.att=0;if(c.stT>3.5){c.state='idle';c.stT=0}}
+  else{c.state='idle';c.att=.6;c.a=-90+Math.sin(S.t*.5)*55;if(c.sus>.45&&th.inside){c.a=Math.atan2(th.y-c.y,th.x-c.x)/D2R;c.att=.9}
+    if(R()<dt*(c.sus>.45?.18:.07)){c.state='monitor';c.stT=0}}
+  // ladrón
+  const tt=th.tasks[0];let concealing=false,glance=false;
+  if(tt){
+    if(tt.k==='enter'){th.inside=true;S.L('Entra un hombre con abrigo.');
+      if(c.state!=='serving'&&R()<.75){S.say(c,'¡Buenas!');th.nerv=Math.min(1,th.nerv+.25);S.L('El cajero lo saluda y le hace contacto visual (disuasión).','y')}
+      th.tasks.shift()}
+    else if(tt.k==='wait'){
+      tt.e=(tt.e||0)+dt;th.a=tt.it.face;
+      tt.g=(tt.g||0)+dt;const gi=2.6-1.6*th.nerv;
+      if(tt.g>gi){tt.g=0;glance=true;th.a=tt.it.face+rr(-150,150)}
+      // ¿hay ventana? el ladrón estima quién lo ve (con error de percepción)
+      let watchers=0;for(const o of observers(S))if(sees(o,th.x,th.y)>0&&R()>.1)watchers++;
+      CAMS.forEach((cm,i)=>{if(th.knownCams[i]&&sees(cm,th.x,th.y)>0)watchers++});
+      const pat=P.style==='calm'?32:8;
+      if(watchers===0&&tt.e>1.5){th.tasks.shift();S.L(`Busca un momento sin miradas… lo encuentra (${tt.e.toFixed(0)}s).`)}
+      else if(tt.e>pat){th.tasks.shift();th.nerv=Math.min(1,th.nerv+.15);S.L(`Se le acaba la paciencia: actúa con ${watchers} posible(s) testigo(s).`,'y')}
+    }
+    else if(tt.k==='conceal'){
+      concealing=true;const dur=1.2+tt.it.size*1.5+th.nerv*.8;
+      if(!tt.s){tt.s=1;if(tt.it.noise>0&&R()<tt.it.noise+.1){S.say(th,'*crujido*');S.L(`El envoltorio de ${tt.it.n.toLowerCase()} hace ruido.`,'y');
+        for(const o of observers(S)){const d=Math.hypot(o.x-th.x,o.y-th.y);if(d<22*tt.it.noise+4&&R()<.85){o.a=Math.atan2(th.y-o.y,th.x-o.x)/D2R;o.lookT=3;if(o.kind==='npc')o.att=1}}}}
+      tt.e=(tt.e||0)+dt;if(tt.e>=dur){th.items.push(tt.it);th.tasks.shift();S.L(`Esconde: ${tt.it.n} en el abrigo.`)}
+    }
+    else if(tt.k==='grab'){th.tasks.shift()}
+    else if(tt.k==='exit'){
+      if(!tt.s){tt.s=1;th.path=path([th.x,th.y],DOOR)}
+      if(walk(th,dt)&&!tt.d){tt.d=1;exitCheck(S)}
+    }
+    else runTask(S,th,dt);
+  }
+  // estancia en el mismo sitio
+  if(Math.hypot(th.x-th.lx,th.y-th.ly)<2)th.stay+=dt;else{th.stay=0;th.lx=th.x;th.ly=th.y}
+  if(!th.inside)return;
+  // percepción y sospecha
+  let anySeen=false;
+  for(const o of observers(S)){
+    let att=o.att;if(o.lookT>0){att=1;o.lookT-=dt}
+    const v=sees(o,th.x,th.y);
+    if(o===c){if(v>0)c.lastSaw=S.t;else if(c.state==='idle'&&S.t-c.lastSaw>25&&S.t>30){c.sus+=.006*dt;}}
+    if(v>0&&att>0){anySeen=true;
+      let s=.003;if(S.hot)s+=.006;if(th.stay>10)s+=.02;
+      s*=o.trained*att*dt*(.5+v);if(glance)s+=.07*o.trained*att;o.sus=cl(o.sus+s);
+      if(concealing){const kk=o.kind==='npc'?1.1:o.kind==='clerk'?2.0:1.6;const p=1-Math.exp(-kk*v*att*dt);S.risk=1-(1-S.risk)*(1-p);
+        if(R()<p){
+          if(o.kind==='npc'){if(!o.noticed){o.noticed=true;const others=S.npcs.length;const pr=.35/(1+.25*(others-1));
+            S.say(o,'¿Eh…?');if(R()<pr){S.alert={t:S.t+5,who:o};S.L('Un cliente lo vio y decide avisar al cajero.','r')}
+            else S.L(`Un cliente lo vio pero no dice nada (efecto espectador, ${others} clientes).`,'y')}}
+          else if(!S.detected){S.detected=o.name;S.say(o,'…lo vi.');S.L(`<b>${o.name[0].toUpperCase()+o.name.slice(1)}</b> lo vio esconder algo.`,'r')}
+        }}
+    }else o.sus=Math.max(0,o.sus-.002*dt);
+  }
+  if(concealing){let mv=0;for(const cm of CAMS){const v=sees(cm,th.x,th.y);if(v>mv)mv=v}
+    if(mv>0){S.recVis=Math.max(S.recVis,mv);
+      if(c.state==='monitor'){const p=1-Math.exp(-1.6*mv*dt);S.risk=1-(1-S.risk)*(1-p);if(R()<p&&!S.detected){S.detected='la cámara (el cajero miraba el monitor)';S.L('<b>Cámara</b>: el cajero lo ve en el monitor en ese instante.','r')}}}}
+  if(S.alert&&S.t>S.alert.t){c.sus=1;S.alert=null;S.say(c,'Gracias, lo vigilo.');if(!S.detected)S.detected='un cliente que avisó al cajero'}
+  if(S.t>260&&!S.done){S.done=true;S.result={ok:false,why:['Se quedó demasiado tiempo y abandonó.']}}
+}
+function observers(S){const a=[S.cash];if(S.clerk)a.push(S.clerk);for(const n of S.npcs)if(n.wait<=0&&n.y<88)a.push(n);return a}
+function exitCheck(S){
+  const th=S.th,c=S.cash,why=[];let stop=0;
+  if(!th.bought&&sees({...c,fov:200},th.x,th.y)>0){c.sus=cl(c.sus+.12);why.push('salió sin comprar delante del cajero')}
+  const s=Math.max(c.sus,S.clerk?S.clerk.sus*.9:0);
+  stop=th.bought?cl((s-.45)*1.4):cl((s-.25)*1.6);
+  let ok=true,reason='';
+  if(S.detected){ok=false;reason='Detenido en la puerta: lo delató '+S.detected+'.'}
+  else if(R()<stop){ok=false;reason=`El cajero sospechaba (${Math.round(s*100)}%) y le pide revisar el abrigo.`}
+  else if(S.recVis>.25){const val=th.items.reduce((a,b)=>a+b.val,0);const p=cl((.08+.025*val)*(.5+S.recVis));
+    if(R()<p){ok=false;reason=`Salió, pero el inventario no cuadró y lo identificaron en la grabación (cámara ${Math.round(S.recVis*100)}% nítida).`}}
+  if(ok&&th.items.length===0){ok=false;reason='Salió sin llevarse nada.'}
+  if(!ok)S.say(c,'Disculpe, un momento…');
+  S.done=true;S.result={ok,reason,why,susC:c.sus,s};
+  S.L(ok?'<b>Salió sin ser descubierto.</b>':'<b>'+reason+'</b>',ok?'g':'r');
+  if(why.length)S.L('Señales: '+why.join(', ')+'.','y');
+}
+function monteCarlo(plan,N){
+  let ok=0;const why={};
+  for(let i=0;i<N;i++){const S=newSim(plan,false);let g=0;while(!S.done&&g<3200){step(S,.1);g++}
+    if(S.result&&S.result.ok)ok++;else{const r=(S.result&&S.result.reason||'Abandonó').replace(/\(.*?\)/g,'').split(':')[0].slice(0,60);why[r]=(why[r]||0)+1}}
+  return {p:ok/N,why:Object.entries(why).sort((a,b)=>b[1]-a[1]).slice(0,3)};
+}
+
+// ---------- UI ----------
+const $=id=>document.getElementById(id);
+const itBox=$('items');let sel=[];
+function renderItems(){
+  itBox.innerHTML='';const used=sel.reduce((a,i)=>a+i.size,0);
+  for(const it of ITEMS){const on=sel.includes(it);const fits=it.size<=CAP&&(on||(sel.length<2&&used+it.size<=CAP+1e-9));
+    const l=document.createElement('label');if(!fits&&!on)l.className='no';
+    const why=it.size>CAP?'no cabe en el abrigo':it.noise>.5?'muy ruidoso':it.noise>.2?'algo de ruido':'silencioso';
+    l.innerHTML=`<input type="checkbox" id="it-${it.id}" ${on?'checked':''} ${!fits&&!on?'disabled':''}><span>${it.n}<span class="tag">tam ${it.size} · ${why}</span></span>`;
+    l.querySelector('input').onchange=e=>{if(e.target.checked)sel.push(it);else sel=sel.filter(x=>x!==it);renderItems()};itBox.appendChild(l)}
+  $('capBar').style.width=(used/CAP*100)+'%';$('capTxt').textContent=`Bolsillo del abrigo: ${used.toFixed(1)} / ${CAP}  ·  ${sel.length}/2 objetos`;
+}
+sel=[ITEMS[2],ITEMS[0]];renderItems();
+
+const stats={n:0,ok:0};let S=null,auto=false,restartAt=0,acc=0,last=0;
+function getPlan(){return {items:sel.slice(),hora:$('hora').value,cover:$('cover').value,style:$('style').value}}
+function randomPlan(){
+  const pool=ITEMS.filter(i=>i.size<=CAP);sel=[];const a=pool[ri(0,pool.length-1)];sel.push(a);
+  const b=pool.filter(i=>i!==a&&a.size+i.size<=CAP);if(b.length&&R()<.6)sel.push(b[ri(0,b.length-1)]);
+  $('hora').value=['manana','mediodia','pico'][ri(0,2)];$('cover').value=R()<.6?'buy':'none';$('style').value=R()<.6?'calm':'fast';renderItems();
+}
+function start(){
+  const plan=getPlan();if(!plan.items.length){$('pWhy').textContent='Elige al menos un objeto.';return}
+  const mc=monteCarlo(plan,150);
+  $('pEst').textContent=`Éxito ≈ ${Math.round(mc.p*100)}%`;$('pEst').style.color=mc.p>.5?'var(--ok)':mc.p>.25?'var(--warn)':'var(--bad)';
+  $('pWhy').innerHTML=mc.why.length?'Fallos más comunes:<br>'+mc.why.map(([r,n])=>`· ${r} — ${Math.round(n/1.5)}%`).join('<br>'):'Ningún fallo en la muestra.';
+  S=newSim(plan,true);restartAt=0;$('log').innerHTML='';
+  $('hNpc').textContent=S.npcTarget;$('hWx').textContent=S.hot?'caluroso':'fresco';
+}
+$('go').onclick=()=>{auto=false;start()};
+$('auto').onclick=()=>{auto=true;randomPlan();start()};
+$('stop').onclick=()=>{auto=false;S=null;restartAt=0;$('hState').textContent='parado'};
+
+// ---------- RENDER ----------
+const cv=$('cv'),g=cv.getContext('2d');const W=cv.width,SC=W/100;
+const P=(v)=>v*SC;
+function fan(o,rays){const pts=[[o.x,o.y]];for(let i=0;i<=rays;i++){const an=(o.a-o.fov/2+o.fov*i/rays)*D2R;const ex=o.x+Math.cos(an)*o.r,ey=o.y+Math.sin(an)*o.r;let tm=1;for(const ob of TALL){const t=segT(o.x,o.y,ex,ey,ob,-.3);if(t>=0&&t<tm)tm=t}pts.push([o.x+(ex-o.x)*tm,o.y+(ey-o.y)*tm])}return pts}
+const CAMFAN=CAMS.map(c=>fan(c,70));
+function poly(pts,fill){g.beginPath();pts.forEach((p,i)=>i?g.lineTo(P(p[0]),P(p[1])):g.moveTo(P(p[0]),P(p[1])));g.closePath();g.fillStyle=fill;g.fill()}
+function draw(){
+  g.fillStyle='#0b0f0d';g.fillRect(0,0,W,cv.height);
+  g.fillStyle='#efe6d4';g.fillRect(0,0,P(100),P(88));g.fillRect(P(30),P(88),P(38),P(14));
+  g.strokeStyle='#ddd1ba';g.lineWidth=1;g.beginPath();for(let i=0;i<=100;i+=4){g.moveTo(P(i),0);g.lineTo(P(i),P(88));g.moveTo(0,P(i*0.88));g.lineTo(P(100),P(i*.88))}g.stroke();
+  // conos cámara
+  CAMFAN.forEach((f,i)=>poly(f,(S&&S.cash.state==='monitor')?'rgba(127,183,255,.22)':'rgba(127,183,255,.10)'));
+  for(const o of OB){g.fillStyle=o.k==='L'?'#f3eaa8':o.k==='pos'?'#e06b6b':o.k==='fr'?'#7fae80':o.k==='wall'?'#111':'#fbf7ee';
+    g.fillRect(P(o.x),P(o.y),P(o.w),P(o.h));g.strokeStyle='#3a3226';g.lineWidth=1.2;g.strokeRect(P(o.x),P(o.y),P(o.w),P(o.h))}
+  g.strokeStyle='#111';g.lineWidth=P(1.2);g.strokeRect(P(.6),P(.6),P(98.8),P(87.4));
+  g.fillStyle='#efe6d4';g.fillRect(P(30.6),P(86),P(37),P(3.6));
+  // objetos
+  g.font=`${P(1.9)}px IBM Plex Mono, monospace`;
+  for(const it of ITEMS){const on=S?S.plan.items.includes(it):sel.includes(it);const taken=S&&S.th.items.includes(it);
+    g.fillStyle=taken?'#999':on?'#d9822b':'#b9ad97';g.beginPath();g.arc(P(it.spot[0]+(it.face===0?2.6:it.face===180?-2.6:0)),P(it.spot[1]+(it.face===90?2.4:it.face===-90?-2.4:0)),P(on?1.2:.7),0,7);g.fill()}
+  // cámaras
+  for(const c of CAMS){g.fillStyle='#1b2a3d';g.beginPath();g.arc(P(c.x),P(c.y),P(1.3),0,7);g.fill();g.fillStyle='#ef5b5b';g.beginPath();g.arc(P(c.x),P(c.y),P(.45),0,7);g.fill()}
+  g.fillStyle='#333';g.fillRect(P(MON.x-1.5),P(MON.y-1),P(3),P(2));
+  if(!S){g.fillStyle='#3a3226';g.fillText('Elige un plan y pulsa «Calcular y simular»',P(18),P(95));return}
+  const people=[S.cash,...(S.clerk?[S.clerk]:[]),...S.npcs.filter(n=>n.wait<=0)];
+  for(const o of people){const col=o.kind==='cash'?'239,91,91':o.kind==='clerk'?'95,160,110':'90,120,200';
+    poly(fan(o,22),`rgba(${col},${.06+.12*(o.att||0)})`)}
+  for(const o of people){const col=o.kind==='cash'?'#c43d3d':o.kind==='clerk'?'#3f8a52':'#4a6bc4';
+    g.fillStyle=col;g.beginPath();g.arc(P(o.x),P(o.y),P(1.5),0,7);g.fill();
+    if(o.sus>.05){g.strokeStyle=o.sus>.5?'#ef5b5b':'#f2b84b';g.lineWidth=2;g.beginPath();g.arc(P(o.x),P(o.y),P(2.3),-Math.PI/2,-Math.PI/2+o.sus*Math.PI*2);g.stroke()}
+    g.strokeStyle='#fff';g.lineWidth=1.5;g.beginPath();g.moveTo(P(o.x),P(o.y));g.lineTo(P(o.x+Math.cos(o.a*D2R)*2),P(o.y+Math.sin(o.a*D2R)*2));g.stroke()}
+  const th=S.th;g.fillStyle='#2b2b2b';g.beginPath();g.arc(P(th.x),P(th.y),P(1.7),0,7);g.fill();
+  g.strokeStyle='#d9822b';g.lineWidth=2;g.stroke();
+  g.fillStyle='#d9822b';g.fillText('LADRÓN',P(th.x-3.5),P(th.y-2.6));
+  g.font=`600 ${P(2)}px IBM Plex Sans, sans-serif`;
+  S.bubbles=S.bubbles.filter(b=>b.until>S.t);
+  for(const b of S.bubbles){const w=g.measureText(b.txt).width+10;g.fillStyle='rgba(15,20,18,.9)';g.fillRect(P(b.a.x)-w/2,P(b.a.y-6.5),w,P(3.2));g.fillStyle='#fff';g.fillText(b.txt,P(b.a.x)-w/2+5,P(b.a.y-4.2))}
+  if(S.done){g.fillStyle=S.result.ok?'rgba(40,120,70,.85)':'rgba(150,40,40,.85)';g.fillRect(0,P(40),W,P(12));g.fillStyle='#fff';g.font=`600 ${P(4)}px IBM Plex Sans, sans-serif`;
+    g.fillText(S.result.ok?'ESCAPÓ':'ATRAPADO',P(4),P(47.5));g.font=`${P(1.9)}px IBM Plex Sans, sans-serif`;g.fillText('Reinicia con otro escenario en unos segundos…',P(4),P(50.5))}
+}
+function setM(id,v,txt){$('m'+id).style.width=(v*100)+'%';$('m'+id).style.background=v>.5?'var(--bad)':v>.25?'var(--warn)':'var(--ok)';$('v'+id).textContent=txt??Math.round(v*100)+'%'}
+let logN=0;
+function ui(){
+  if(!S)return;
+  $('hTime').textContent=Math.round(S.t)+'s';
+  $('hState').textContent=S.done?(S.result.ok?'escapó':'atrapado'):S.cash.state==='monitor'?'cajero mira el monitor':S.cash.state==='serving'?'cajero atendiendo':'en curso';
+  setM('Cash',S.cash.sus);if(S.clerk)setM('Clerk',S.clerk.sus);else setM('Clerk',0,'no hay');
+  setM('Npc',S.npcs.reduce((a,n)=>Math.max(a,n.sus),0));setM('Risk',S.risk);setM('Rec',S.recVis);
+  const lg=$('log');if(S.log.length!==logN){lg.innerHTML=S.log.map(l=>`<div class="${l.c||''}">[${String(Math.round(l.t)).padStart(3,' ')}s] ${l.m}</div>`).join('');lg.scrollTop=1e6;logN=S.log.length}
+}
+function loop(ts){
+  const dtR=Math.min(.1,(ts-last)/1000||0);last=ts;
+  if(S&&!S.done){acc+=dtR*(+$('speed').value);while(acc>=.1&&!S.done){step(S,.1);acc-=.1}
+    if(S.done){stats.n++;if(S.result.ok)stats.ok++;$('sN').firstChild.nodeValue=stats.n;$('sOk').firstChild.nodeValue=stats.ok;$('sBad').firstChild.nodeValue=stats.n-stats.ok;$('sPct').firstChild.nodeValue=Math.round(stats.ok/stats.n*100)+'%';restartAt=ts+4500}}
+  else if(S&&S.done&&restartAt&&ts>restartAt){restartAt=0;if(auto)randomPlan();start()}
+  draw();ui();requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
