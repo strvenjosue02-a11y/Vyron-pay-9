@@ -134,7 +134,10 @@ const ITEMS=[
 const CAP=1.2;
 const CAMS=[
  {x:1.5,y:15,a:35,fov:80,r:75},{x:98.5,y:15,a:145,fov:80,r:75},
- {x:51,y:73,a:90,fov:100,r:22},{x:98.5,y:86,a:-125,fov:80,r:60},{x:1.5,y:66,a:-35,fov:80,r:60}
+ {x:51,y:73,a:90,fov:100,r:22},{x:98.5,y:86,a:-125,fov:80,r:60},{x:1.5,y:66,a:-35,fov:80,r:60},
+ // cámaras en las estanterías: una por pasillo mirando a lo largo + domo en el fondo de cada pasillo
+ ...[16.5,33,50,66.5,83].map(x=>({x,y:20,a:90,fov:36,r:50})),
+ ...[16.5,33,50,66.5,83].map(x=>({x,y:65,a:-90,fov:36,r:45}))
 ];
 const LX=[16.5,33,50,66.5,83];
 const PAY=[51,71], DOOR=[50,87], OUT=[50,99], FR2=[86,76], WAITQ=[50,67];
@@ -169,6 +172,9 @@ function path(from,to){
 function sees(o,x,y){ // visibilidad 0..1
   const dx=x-o.x,dy=y-o.y,d=Math.hypot(dx,dy);if(d>o.r||d<.01)return d<.01?1:0;
   let da=Math.atan2(dy,dx)/D2R-o.a;da=((da+540)%360)-180;if(Math.abs(da)>o.fov/2)return 0;
+  if(o.kind==='cash'){ // el cajero ve un poco entre/por encima de los productos
+    let f=1;for(const ob of TALL){if(segT(o.x,o.y,x,y,ob,-.3)>=0){if(ob.k==='shelf'&&ob.y>20)f*=.4;else return 0}}
+    return (1-d/o.r)*f;}
   if(losBlocked(o.x,o.y,x,y))return 0;return 1-d/o.r;
 }
 
@@ -179,7 +185,7 @@ function newSim(plan,live){
     hot:R()<.4, npcs:[], npcTarget:ri(H.npc[0],H.npc[1]), payLock:null, alert:null, detected:null, reasons:[]};
   const L=(m,c)=>{if(live)S.log.push({t:S.t,m,c})};S.L=L;
   S.say=(a,txt)=>{if(live)S.bubbles.push({a,txt,until:S.t+2.2})};
-  S.cash={kind:'cash',x:CASH.x,y:CASH.y,a:-90,fov:120,r:55,sus:0,state:'idle',stT:0,att:.6,lastSaw:0,trained:1.3,name:'el cajero'};
+  S.cash={kind:'cash',x:CASH.x,y:CASH.y,a:-90,fov:170,r:85,sus:0,state:'idle',stT:0,att:.6,lastSaw:0,trained:1.3,name:'el cajero'};
   S.clerk=R()<H.clerk?{kind:'clerk',x:16.5,y:30,a:0,fov:120,r:45,sus:0,att:.35,trained:1.6,tasks:[],path:[],sp:7,name:'el reponedor'}:null;
   const th=S.th={x:OUT[0],y:OUT[1],a:-90,path:[],sp:8,items:[],nerv:plan.style==='fast'?.35:.1,tasks:[],stay:0,lx:0,ly:0,bought:false,inside:false,hidden:0};
   // tareas del ladrón
@@ -240,7 +246,7 @@ function step(S,dt){
   if(serving){c.state='serving';c.a=-90;c.att=.15}
   else if(c.state==='monitor'){c.a=Math.atan2(MON.y-c.y,MON.x-c.x)/D2R;c.att=0;if(c.stT>3.5){c.state='idle';c.stT=0}}
   else{c.state='idle';c.att=.6;c.a=-90+Math.sin(S.t*.5)*55;if(c.sus>.45&&th.inside){c.a=Math.atan2(th.y-c.y,th.x-c.x)/D2R;c.att=.9}
-    if(R()<dt*(c.sus>.45?.18:.07)){c.state='monitor';c.stT=0}}
+    if(R()<dt*(c.sus>.45?.25:.11)){c.state='monitor';c.stT=0}}
   // ladrón
   const tt=th.tasks[0];let concealing=false,glance=false;
   if(tt){
@@ -301,9 +307,10 @@ function step(S,dt){
 function observers(S){const a=[S.cash];if(S.clerk)a.push(S.clerk);for(const n of S.npcs)if(n.wait<=0&&n.y<88)a.push(n);return a}
 function exitCheck(S){
   const th=S.th,c=S.cash,why=[];let stop=0;
-  if(!th.bought&&sees({...c,fov:200},th.x,th.y)>0){c.sus=cl(c.sus+.12);why.push('salió sin comprar delante del cajero')}
+  // salir de la nada sin comprar: el cajero lo vio entrar con abrigo y se va con las manos vacías
+  if(!th.bought){const qk=S.t<90?.3:.2;c.sus=cl(c.sus+qk);why.push(S.t<90?'entró y salió rápido sin comprar nada':'salió sin comprar delante del cajero')}
   const s=Math.max(c.sus,S.clerk?S.clerk.sus*.9:0);
-  stop=th.bought?cl((s-.45)*1.4):cl((s-.25)*1.6);
+  stop=th.bought?cl((s-.4)*1.5):cl((s-.15)*1.8);
   let ok=true,reason='';
   if(S.detected){ok=false;reason='Detenido en la puerta: lo delató '+S.detected+'.'}
   else if(R()<stop){ok=false;reason=`El cajero sospechaba (${Math.round(s*100)}%) y le pide revisar el abrigo.`}
@@ -360,6 +367,7 @@ const cv=$('cv'),g=cv.getContext('2d');const W=cv.width,SC=W/100;
 const P=(v)=>v*SC;
 function fan(o,rays){const pts=[[o.x,o.y]];for(let i=0;i<=rays;i++){const an=(o.a-o.fov/2+o.fov*i/rays)*D2R;const ex=o.x+Math.cos(an)*o.r,ey=o.y+Math.sin(an)*o.r;let tm=1;for(const ob of TALL){const t=segT(o.x,o.y,ex,ey,ob,-.3);if(t>=0&&t<tm)tm=t}pts.push([o.x+(ex-o.x)*tm,o.y+(ey-o.y)*tm])}return pts}
 const CAMFAN=CAMS.map(c=>fan(c,70));
+function fanFull(o){const pts=[[o.x,o.y]];for(let i=0;i<=30;i++){const an=(o.a-o.fov/2+o.fov*i/30)*D2R;pts.push([o.x+Math.cos(an)*o.r,o.y+Math.sin(an)*o.r])}return pts}
 function poly(pts,fill){g.beginPath();pts.forEach((p,i)=>i?g.lineTo(P(p[0]),P(p[1])):g.moveTo(P(p[0]),P(p[1])));g.closePath();g.fillStyle=fill;g.fill()}
 function draw(){
   g.fillStyle='#0b0f0d';g.fillRect(0,0,W,cv.height);
@@ -381,7 +389,7 @@ function draw(){
   if(!S){g.fillStyle='#3a3226';g.fillText('Elige un plan y pulsa «Calcular y simular»',P(18),P(95));return}
   const people=[S.cash,...(S.clerk?[S.clerk]:[]),...S.npcs.filter(n=>n.wait<=0)];
   for(const o of people){const col=o.kind==='cash'?'239,91,91':o.kind==='clerk'?'95,160,110':'90,120,200';
-    poly(fan(o,22),`rgba(${col},${.06+.12*(o.att||0)})`)}
+    if(o.kind==='cash')poly(fanFull(o),`rgba(${col},${.05+.08*(o.att||0)})`);else poly(fan(o,22),`rgba(${col},${.06+.12*(o.att||0)})`)}
   for(const o of people){const col=o.kind==='cash'?'#c43d3d':o.kind==='clerk'?'#3f8a52':'#4a6bc4';
     g.fillStyle=col;g.beginPath();g.arc(P(o.x),P(o.y),P(1.5),0,7);g.fill();
     if(o.sus>.05){g.strokeStyle=o.sus>.5?'#ef5b5b':'#f2b84b';g.lineWidth=2;g.beginPath();g.arc(P(o.x),P(o.y),P(2.3),-Math.PI/2,-Math.PI/2+o.sus*Math.PI*2);g.stroke()}
