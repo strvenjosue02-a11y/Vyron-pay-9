@@ -2,8 +2,13 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+solc = "0.8.26"
+optimizer = true
+optimizer_runs = 200
+bytecode_hash = "none"
+# OJO: cambiar estas opciones cambia el bytecode y por lo tanto la direccion de cada alcancia.
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
 [fuzz]
-runs = 10000
+runs = 2000

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "cafe-demo",
+    "description": "Demo pequeña para probar todo rápido: con 5 USDC de prueba se llena y se puede cerrar al instante.",
+    "image": "☕",
+    "params": {
+      "creator": "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
+      "name": "Cafe Comunitario",
+      "symbol": "CAFE",
+      "softcap": "2000000",
+      "hardcap": "5000000",
+      "saleTokens": "1000000000000000000000000",
+      "creatorTokens": "500000000000000000000000",
+      "saleEnd": 1798675200,
+      "initialBps": 1000,
+      "milestones": 3,
+      "milestonePeriod": 2592000
+    }
+  },
+  {
+    "id": "reciclaje-demo",
+    "description": "App que paga a la gente por reciclar. Meta mínima 300 USDC, máxima 1.000 USDC.",
+    "image": "♻️",
+    "params": {
+      "creator": "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
+      "name": "Recicla Ya",
+      "symbol": "RECI",
+      "softcap": "300000000",
+      "hardcap": "1000000000",
+      "saleTokens": "10000000000000000000000000",
+      "creatorTokens": "4000000000000000000000000",
+      "saleEnd": 1801353600,
+      "initialBps": 1000,
+      "milestones": 3,
+      "milestonePeriod": 5184000
+    }
+  }
+]
