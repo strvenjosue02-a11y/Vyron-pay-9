@@ -1,0 +1,86 @@
+{
+  "schema": "brand-identity/audit@1",
+  "findings": [
+    {
+      "id": "logo.ids",
+      "component": "logo",
+      "severity": "info",
+      "measured": null,
+      "threshold": null,
+      "message": "symbol.svg: 1 element(s) without an id",
+      "suggested_fix": "give every primitive a semantic id so edits change one element per round"
+    },
+    {
+      "id": "logo.contrast",
+      "component": "logo",
+      "severity": "warn",
+      "measured": 1.58,
+      "threshold": ">= 3.0:1 (WCAG 2.2 SC 1.4.11, practice)",
+      "message": "full-color: primary #c9ced6 on #ffffff is 1.58:1",
+      "suggested_fix": "use a one-colour version on this ground, or declare logo.device tile|outline",
+      "roles": [
+        "primary"
+      ]
+    },
+    {
+      "id": "logo.contrast",
+      "component": "logo",
+      "severity": "warn",
+      "measured": 1.58,
+      "threshold": ">= 3.0:1 (WCAG 2.2 SC 1.4.11, practice)",
+      "message": "on-light-background: primary #c9ced6 on #ffffff is 1.58:1",
+      "suggested_fix": "use a one-colour version on this ground, or declare logo.device tile|outline",
+      "roles": [
+        "primary"
+      ]
+    },
+    {
+      "id": "logo.light-swap",
+      "component": "logo",
+      "severity": "info",
+      "measured": 1.58,
+      "threshold": null,
+      "message": "symbol-only: primary #c9ced6 is 1.58:1 on #ffffff; drawn in the light text colour #171c26 (a colour stays only where it reads)",
+      "suggested_fix": null,
+      "roles": [
+        "primary"
+      ]
+    },
+    {
+      "id": "logo.light-swap",
+      "component": "logo",
+      "severity": "info",
+      "measured": 1.58,
+      "threshold": null,
+      "message": "favicon-16: primary #c9ced6 is 1.58:1 on #ffffff; drawn in the light text colour #171c26 (a colour stays only where it reads)",
+      "suggested_fix": null,
+      "roles": [
+        "primary"
+      ]
+    },
+    {
+      "id": "logo.light-swap",
+      "component": "logo",
+      "severity": "info",
+      "measured": 1.58,
+      "threshold": null,
+      "message": "favicon-32: primary #c9ced6 is 1.58:1 on #ffffff; drawn in the light text colour #171c26 (a colour stays only where it reads)",
+      "suggested_fix": null,
+      "roles": [
+        "primary"
+      ]
+    },
+    {
+      "id": "logo.light-swap",
+      "component": "logo",
+      "severity": "info",
+      "measured": 1.58,
+      "threshold": null,
+      "message": "favicon-48: primary #c9ced6 is 1.58:1 on #ffffff; drawn in the light text colour #171c26 (a colour stays only where it reads)",
+      "suggested_fix": null,
+      "roles": [
+        "primary"
+      ]
+    }
+  ]
+}

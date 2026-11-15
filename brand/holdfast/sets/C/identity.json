@@ -1,0 +1,373 @@
+{
+  "schema": "brand-identity/identity@1",
+  "brand": {
+    "name": "Holdfast",
+    "tagline": "Hold fast to what you back.",
+    "languages": [
+      "en"
+    ],
+    "doc_lang": "es",
+    "sector": "Launchpad cripto: financiación de proyectos con USDC",
+    "numbers": true,
+    "copy": {
+      "sentence": {
+        "en": "Back the projects you believe in. Your money stays locked until the team delivers."
+      },
+      "nav": [
+        "Projects",
+        "Launch",
+        "Portfolio"
+      ],
+      "cta": "Invest"
+    }
+  },
+  "set": {
+    "id": "C",
+    "name": "Vault Slot",
+    "recommended": false,
+    "mechanism": "Una bóveda sellada con una sola ranura: una cápsula maciza que guarda firme, la grotesca extendida Archivo como placa grabada y una paleta obsidiana y mercurio con una luz cobalto.",
+    "expression_move": "El fondo obsidiana con superficies oscuras es lo dominante; el símbolo y la letra se mantienen planos y plateados.",
+    "differs_by": "Los competidores son claros y coloridos; Vault Slot es oscuro, metálico y extendido, como el empaque de un dispositivo, y se presta mejor que nadie al logo 3D."
+  },
+  "axes": {
+    "classic_contemporary": 1,
+    "warm_cool": 2,
+    "quiet_loud": 1,
+    "premium_accessible": -2
+  },
+  "components": {
+    "logo": {
+      "mode": "new",
+      "status": "proposed",
+      "source": null,
+      "sha256": null
+    },
+    "type": {
+      "mode": "new",
+      "status": "proposed",
+      "source": null,
+      "sha256": null
+    },
+    "palette": {
+      "mode": "new",
+      "status": "proposed",
+      "source": null,
+      "sha256": null
+    }
+  },
+  "type": {
+    "pairing_mode": "single-family",
+    "display": {
+      "family": "Archivo",
+      "source": "google",
+      "license": "OFL-1.1",
+      "weights": [
+        600
+      ],
+      "location": {
+        "wght": 600,
+        "wdth": 125
+      },
+      "features": [],
+      "case": "upper",
+      "tracking": 60,
+      "fallback": "system-ui, sans-serif",
+      "file": null
+    },
+    "text": {
+      "family": "Archivo",
+      "source": "google",
+      "license": "OFL-1.1",
+      "weights": [
+        400,
+        500,
+        600
+      ],
+      "location": {
+        "wght": 400,
+        "wdth": 100
+      },
+      "features": [
+        "tnum"
+      ],
+      "case": "as-is",
+      "tracking": 0,
+      "fallback": "system-ui, sans-serif",
+      "file": null
+    },
+    "mono": null
+  },
+  "logo": {
+    "type": "symbol+wordmark",
+    "concept": "Una alcancía reducida a lo esencial: una cápsula cerrada con una ranura; entra dinero, sale solo con reglas.",
+    "symbol": "logo/symbol.svg",
+    "wordmark": {
+      "text": "Holdfast",
+      "role": "display",
+      "location": null,
+      "tracking": 60,
+      "case": "upper"
+    },
+    "monogram": null,
+    "lockups": [
+      "horizontal",
+      "stacked"
+    ],
+    "colors": {
+      "capsule": "text",
+      "wordmark": "text"
+    },
+    "tags": [
+      "abstract-geometric"
+    ],
+    "clear_space": {
+      "unit": "cap-height",
+      "multiple": 1,
+      "inferred": true
+    },
+    "min_size": {
+      "px": 20,
+      "mm": 6
+    },
+    "defect": "La cápsula mercurio no llegaba a 3:1 sobre fondo claro; ahora toma la tinta de cada fondo."
+  },
+  "palette": "palette.json",
+  "defaults_used": [],
+  "rationale": [
+    {
+      "claim": "Archivo tiene eje de ancho: la misma familia sirve extendida para la marca y normal para leer, con cifras tabulares.",
+      "evidence": "measured",
+      "source": "brand.py fonts audit"
+    },
+    {
+      "claim": "La ranura es una pista literal (alcancía); ayuda a una marca nueva a explicar el depósito en garantía.",
+      "evidence": "limited",
+      "source": "Luffarelli et al. 2019"
+    }
+  ],
+  "derived": [
+    {
+      "file": "card.png",
+      "requires": [
+        "logo",
+        "type",
+        "palette"
+      ],
+      "inputs_sha256": "a7c61e84ff53890fcb63dfa9f34e14927f54192bb9e82828afab18df415572ba"
+    }
+  ],
+  "audit": {
+    "schema": "brand-identity/audit@1",
+    "passed": true,
+    "counts": {
+      "gate": 0,
+      "warn": 5,
+      "info": 10
+    },
+    "findings": [
+      {
+        "id": "palette.contrast.light.primary-on-background",
+        "component": "palette",
+        "severity": "warn",
+        "measured": 1.58,
+        "threshold": 3.0,
+        "message": "light: primary #c9ced6 on background #ffffff is 1.58:1, below 3.0:1 (primary fill against the page (needs a label or border if lower); WCAG 2, no rounding)",
+        "suggested_fix": {
+          "change": "modes.light.primary",
+          "from": "#c9ced6",
+          "to": "#7c8189",
+          "how": "use primary-600 (same scale)",
+          "ratio_after": 3.92
+        },
+        "roles": [
+          "light.primary",
+          "light.background"
+        ]
+      },
+      {
+        "id": "palette.contrast.light.border-on-background",
+        "component": "palette",
+        "severity": "info",
+        "measured": 1.25,
+        "threshold": 3.0,
+        "message": "light: border #e4e6e9 on background #ffffff is 1.25:1, below 3.0:1 (borders: dividers are exempt, input outlines need 3:1; WCAG 2, no rounding)",
+        "suggested_fix": {
+          "change": "modes.light.border",
+          "from": "#e4e6e9",
+          "to": "#6e737e",
+          "how": "use neutral-500 (same scale)",
+          "ratio_after": 4.75
+        },
+        "roles": [
+          "light.border",
+          "light.background"
+        ]
+      },
+      {
+        "id": "palette.contrast.dark.border-on-background",
+        "component": "palette",
+        "severity": "info",
+        "measured": 1.87,
+        "threshold": 3.0,
+        "message": "dark: border #3b414d on background #0d0f13 is 1.87:1, below 3.0:1 (borders: dividers are exempt, input outlines need 3:1; WCAG 2, no rounding)",
+        "suggested_fix": {
+          "change": "modes.dark.border",
+          "from": "#3b414d",
+          "to": "#6e737e",
+          "how": "use neutral-500 (same scale)",
+          "ratio_after": 4.03
+        },
+        "roles": [
+          "dark.border",
+          "dark.background"
+        ]
+      },
+      {
+        "id": "palette.gamut.brand-2",
+        "component": "palette",
+        "severity": "info",
+        "measured": 1.0,
+        "threshold": 0.9,
+        "message": "#4c7dff sits at the sRGB gamut edge (100% of max chroma); vivid colours like this often fall outside CMYK process gamut: specify Lab D50 + tolerance, check with the printer, consider a spot colour",
+        "suggested_fix": null,
+        "roles": [
+          "brand-2"
+        ]
+      },
+      {
+        "id": "type.display+text.coverage.en_Latn.extended",
+        "component": "type",
+        "severity": "info",
+        "measured": "101/102",
+        "threshold": "100% auxiliary + punctuation",
+        "message": "Archivo lacks English auxiliary/punctuation characters: ʻ",
+        "suggested_fix": "fine if the brand never writes them (loanwords, names); else another family"
+      },
+      {
+        "id": "type.display+text.web-weight",
+        "component": "type",
+        "severity": "info",
+        "measured": 75,
+        "threshold": null,
+        "message": "Archivo: ~75 KB WOFF2 for the brief's characters (one variable file, all weights; estimate)",
+        "suggested_fix": null
+      },
+      {
+        "id": "logo.ids",
+        "component": "logo",
+        "severity": "info",
+        "measured": null,
+        "threshold": null,
+        "message": "symbol.svg: 1 element(s) without an id",
+        "suggested_fix": "give every primitive a semantic id so edits change one element per round"
+      },
+      {
+        "id": "logo.contrast",
+        "component": "logo",
+        "severity": "warn",
+        "measured": 1.58,
+        "threshold": ">= 3.0:1 (WCAG 2.2 SC 1.4.11, practice)",
+        "message": "full-color: primary #c9ced6 on #ffffff is 1.58:1",
+        "suggested_fix": "use a one-colour version on this ground, or declare logo.device tile|outline",
+        "roles": [
+          "primary"
+        ]
+      },
+      {
+        "id": "logo.contrast",
+        "component": "logo",
+        "severity": "warn",
+        "measured": 1.58,
+        "threshold": ">= 3.0:1 (WCAG 2.2 SC 1.4.11, practice)",
+        "message": "on-light-background: primary #c9ced6 on #ffffff is 1.58:1",
+        "suggested_fix": "use a one-colour version on this ground, or declare logo.device tile|outline",
+        "roles": [
+          "primary"
+        ]
+      },
+      {
+        "id": "logo.light-swap",
+        "component": "logo",
+        "severity": "info",
+        "measured": 1.58,
+        "threshold": null,
+        "message": "symbol-only: primary #c9ced6 is 1.58:1 on #ffffff; drawn in the light text colour #171c26 (a colour stays only where it reads)",
+        "suggested_fix": null,
+        "roles": [
+          "primary"
+        ]
+      },
+      {
+        "id": "logo.light-swap",
+        "component": "logo",
+        "severity": "info",
+        "measured": 1.58,
+        "threshold": null,
+        "message": "favicon-16: primary #c9ced6 is 1.58:1 on #ffffff; drawn in the light text colour #171c26 (a colour stays only where it reads)",
+        "suggested_fix": null,
+        "roles": [
+          "primary"
+        ]
+      },
+      {
+        "id": "logo.light-swap",
+        "component": "logo",
+        "severity": "info",
+        "measured": 1.58,
+        "threshold": null,
+        "message": "favicon-32: primary #c9ced6 is 1.58:1 on #ffffff; drawn in the light text colour #171c26 (a colour stays only where it reads)",
+        "suggested_fix": null,
+        "roles": [
+          "primary"
+        ]
+      },
+      {
+        "id": "logo.light-swap",
+        "component": "logo",
+        "severity": "info",
+        "measured": 1.58,
+        "threshold": null,
+        "message": "favicon-48: primary #c9ced6 is 1.58:1 on #ffffff; drawn in the light text colour #171c26 (a colour stays only where it reads)",
+        "suggested_fix": null,
+        "roles": [
+          "primary"
+        ]
+      },
+      {
+        "id": "cohesion.sets-close",
+        "component": "cohesion",
+        "severity": "warn",
+        "measured": [
+          "A–C"
+        ],
+        "threshold": "2 axes, 2 steps",
+        "message": "sets too alike on the axes: A–C differ by 2+ steps on fewer than 2 axes (heuristic)",
+        "suggested_fix": null
+      },
+      {
+        "id": "i18n.missing",
+        "component": "card",
+        "severity": "warn",
+        "measured": 39,
+        "threshold": 0,
+        "message": "no es translation of the tool text; 39 label(s) shown in English",
+        "suggested_fix": "translate assets/i18n/en.json (keep keys and {placeholders}) to es and save it as <work>/i18n.json with \"_lang\": \"es\", then re-run"
+      }
+    ],
+    "defaults": {
+      "matched": []
+    }
+  },
+  "card": {
+    "ground": "dark"
+  },
+  "palette_build": {
+    "strategy": null,
+    "accent": null,
+    "light_bg": null,
+    "dark_bg": "#0D0F13",
+    "neutral_tint": null,
+    "neutral_chroma": null,
+    "extra": []
+  }
+}

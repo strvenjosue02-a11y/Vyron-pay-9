@@ -1,0 +1,301 @@
+{
+  "schema": "brand-identity/identity@1",
+  "brand": {
+    "name": "Holdfast",
+    "tagline": "Hold fast to what you back.",
+    "languages": [
+      "en"
+    ],
+    "doc_lang": "es",
+    "sector": "Launchpad cripto: financiación de proyectos con USDC",
+    "numbers": true,
+    "copy": {
+      "sentence": {
+        "en": "Back the projects you believe in. Your money stays locked until the team delivers."
+      },
+      "nav": [
+        "Projects",
+        "Launch",
+        "Portfolio"
+      ],
+      "cta": "Invest"
+    }
+  },
+  "set": {
+    "id": "A",
+    "name": "Equal Halves",
+    "recommended": true,
+    "mechanism": "Dos mitades que se sostienen con un espacio exacto entre ambas, como una mano que agarra firme: esa misma precisión define la grotesca Geist y una paleta de grafito con una sola mitad en color brasa.",
+    "expression_move": "La mitad derecha del símbolo en brasa es el único color saturado de toda la marca.",
+    "differs_by": "pump.fun es caricaturesco y verde neón, Fjord y CoinList usan azul fintech y sans genéricas; Equal Halves es grafito sobre porcelana fría con una sola nota cálida, más cerca de un producto de hardware que de una app cripto."
+  },
+  "axes": {
+    "classic_contemporary": 2,
+    "warm_cool": 1,
+    "quiet_loud": -1,
+    "premium_accessible": -2
+  },
+  "components": {
+    "logo": {
+      "mode": "new",
+      "status": "proposed",
+      "source": null,
+      "sha256": null
+    },
+    "type": {
+      "mode": "new",
+      "status": "proposed",
+      "source": null,
+      "sha256": null
+    },
+    "palette": {
+      "mode": "new",
+      "status": "proposed",
+      "source": null,
+      "sha256": null
+    }
+  },
+  "type": {
+    "pairing_mode": "single-family",
+    "display": {
+      "family": "Geist",
+      "source": "google",
+      "license": "OFL-1.1",
+      "weights": [
+        600
+      ],
+      "location": {
+        "wght": 600
+      },
+      "features": [],
+      "case": "as-is",
+      "tracking": -35,
+      "fallback": "system-ui, sans-serif",
+      "file": null
+    },
+    "text": {
+      "family": "Geist",
+      "source": "google",
+      "license": "OFL-1.1",
+      "weights": [
+        400,
+        500,
+        600
+      ],
+      "location": {
+        "wght": 400
+      },
+      "features": [
+        "tnum"
+      ],
+      "case": "as-is",
+      "tracking": 0,
+      "fallback": "system-ui, sans-serif",
+      "file": null
+    },
+    "mono": null
+  },
+  "logo": {
+    "type": "symbol+wordmark",
+    "concept": "Dos medios discos que se sujetan uno al otro sin tocarse; el hueco entre ellos es donde queda guardado el dinero hasta que el equipo cumple.",
+    "symbol": "logo/symbol.svg",
+    "wordmark": {
+      "text": "Holdfast",
+      "role": "display",
+      "location": null,
+      "tracking": -35,
+      "case": "as-is"
+    },
+    "monogram": null,
+    "lockups": [
+      "horizontal",
+      "stacked"
+    ],
+    "colors": {
+      "half-left": "primary",
+      "half-right": "brand-2",
+      "wordmark": "text"
+    },
+    "tags": [
+      "abstract-geometric"
+    ],
+    "clear_space": {
+      "unit": "cap-height",
+      "multiple": 1,
+      "inferred": true
+    },
+    "min_size": {
+      "px": 20,
+      "mm": 6
+    },
+    "defect": "La mitad brasa se resolvía a un tono UI más oscuro (#be3b17); ahora usa el hex de marca."
+  },
+  "palette": "palette.json",
+  "defaults_used": [],
+  "rationale": [
+    {
+      "claim": "Geist tiene cifras tabulares y una sola familia variable de ~26 KB: cumple con números y carga rápido en celular.",
+      "evidence": "measured",
+      "source": "brand.py fonts audit"
+    },
+    {
+      "claim": "La lectura de 'iguales' viene de la simetría desplazada; es una decisión de diseño, no un efecto probado.",
+      "evidence": "judgement",
+      "source": "designer"
+    }
+  ],
+  "derived": [
+    {
+      "file": "card.png",
+      "requires": [
+        "logo",
+        "type",
+        "palette"
+      ],
+      "inputs_sha256": "ac07310e96bf84e5d9080be473111a08407827871e0c4e73121e1c7624b7d69e"
+    }
+  ],
+  "audit": {
+    "schema": "brand-identity/audit@1",
+    "passed": true,
+    "counts": {
+      "gate": 0,
+      "warn": 2,
+      "info": 7
+    },
+    "findings": [
+      {
+        "id": "palette.contrast.light.border-on-background",
+        "component": "palette",
+        "severity": "info",
+        "measured": 1.25,
+        "threshold": 3.0,
+        "message": "light: border #e6e6e6 on background #ffffff is 1.25:1, below 3.0:1 (borders: dividers are exempt, input outlines need 3:1; WCAG 2, no rounding)",
+        "suggested_fix": {
+          "change": "modes.light.border",
+          "from": "#e6e6e6",
+          "to": "#737373",
+          "how": "use neutral-500 (same scale)",
+          "ratio_after": 4.74
+        },
+        "roles": [
+          "light.border",
+          "light.background"
+        ]
+      },
+      {
+        "id": "palette.contrast.dark.link-on-text",
+        "component": "palette",
+        "severity": "info",
+        "measured": 2.46,
+        "threshold": 3.0,
+        "message": "dark: link #f77656 on text #f3f3f3 is 2.46:1, below 3.0:1 (underline links in dark mode (WCAG G183: without underline a link needs 3:1 against body text); WCAG 2, no rounding)",
+        "suggested_fix": {
+          "change": "modes.dark.link",
+          "from": "#f77656",
+          "to": "#e2512c",
+          "how": "use accent-600 (same scale)",
+          "ratio_after": 3.47
+        },
+        "roles": [
+          "dark.link",
+          "dark.text"
+        ]
+      },
+      {
+        "id": "palette.contrast.dark.border-on-background",
+        "component": "palette",
+        "severity": "info",
+        "measured": 1.88,
+        "threshold": 3.0,
+        "message": "dark: border #414141 on background #0f0f0f is 1.88:1, below 3.0:1 (borders: dividers are exempt, input outlines need 3:1; WCAG 2, no rounding)",
+        "suggested_fix": {
+          "change": "modes.dark.border",
+          "from": "#414141",
+          "to": "#737373",
+          "how": "use neutral-500 (same scale)",
+          "ratio_after": 4.04
+        },
+        "roles": [
+          "dark.border",
+          "dark.background"
+        ]
+      },
+      {
+        "id": "palette.harmony.primary-accent",
+        "component": "palette",
+        "severity": "info",
+        "measured": -0.62,
+        "threshold": -0.3,
+        "message": "Ou-Luo two-colour model scores #18191d + #be3b17 at -0.62 (negative = less harmonious on a grey CRT test, no context): model signal only; the pairing table in references/pairing.md takes precedence",
+        "suggested_fix": null,
+        "roles": [
+          "light.primary",
+          "light.accent"
+        ]
+      },
+      {
+        "id": "type.display+text.coverage.en_Latn.extended",
+        "component": "type",
+        "severity": "info",
+        "measured": "95/102",
+        "threshold": "100% auxiliary + punctuation",
+        "message": "Geist lacks English auxiliary/punctuation characters: Ĕ Ĭ Ŏ ĕ ĭ ŏ ʻ",
+        "suggested_fix": "fine if the brand never writes them (loanwords, names); else another family"
+      },
+      {
+        "id": "type.display+text.web-weight",
+        "component": "type",
+        "severity": "info",
+        "measured": 26,
+        "threshold": null,
+        "message": "Geist: ~26 KB WOFF2 for the brief's characters (one variable file, all weights; estimate)",
+        "suggested_fix": null
+      },
+      {
+        "id": "logo.role-tone",
+        "component": "logo",
+        "severity": "info",
+        "measured": "#be3b17",
+        "threshold": "#e2512c",
+        "message": "accent resolves to #be3b17 (UI tone); use brand-2 for #e2512c",
+        "suggested_fix": "data-color=\"brand-2\" (or logo.colors) for the exact brand colour",
+        "roles": [
+          "accent"
+        ]
+      },
+      {
+        "id": "cohesion.sets-close",
+        "component": "cohesion",
+        "severity": "warn",
+        "measured": [
+          "A–C"
+        ],
+        "threshold": "2 axes, 2 steps",
+        "message": "sets too alike on the axes: A–C differ by 2+ steps on fewer than 2 axes (heuristic)",
+        "suggested_fix": null
+      },
+      {
+        "id": "i18n.missing",
+        "component": "card",
+        "severity": "warn",
+        "measured": 36,
+        "threshold": 0,
+        "message": "no es translation of the tool text; 36 label(s) shown in English",
+        "suggested_fix": "translate assets/i18n/en.json (keep keys and {placeholders}) to es and save it as <work>/i18n.json with \"_lang\": \"es\", then re-run"
+      }
+    ],
+    "defaults": {
+      "matched": []
+    }
+  },
+  "palette_build": {
+    "strategy": null,
+    "accent": null,
+    "light_bg": null,
+    "dark_bg": null,
+    "neutral_tint": null,
+    "neutral_chroma": null,
+    "extra": []
+  }
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "sha256": "e141d674637984f5fea760686d5ca93c10241852d1fdb598facc50a9192da0a0",
+    "anchors": 18,
+    "defect": ""
+  },
+  {
+    "sha256": "3894b9e5c89840fb19a0b5c869ab908f855ec0fceae6f70b6f5d01f5cb92ff31",
+    "anchors": 18,
+    "defect": "El signo igual era m\u00e1s pesado que la serif y le robaba la voz; barras m\u00e1s finas y cortas."
+  }
+]

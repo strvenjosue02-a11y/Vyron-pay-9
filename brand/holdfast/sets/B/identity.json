@@ -1,0 +1,312 @@
+{
+  "schema": "brand-identity/identity@1",
+  "brand": {
+    "name": "Holdfast",
+    "tagline": "Hold fast to what you back.",
+    "languages": [
+      "en"
+    ],
+    "doc_lang": "es",
+    "sector": "Launchpad cripto: financiación de proyectos con USDC",
+    "numbers": true,
+    "copy": {
+      "sentence": {
+        "en": "Back the projects you believe in. Your money stays locked until the team delivers."
+      },
+      "nav": [
+        "Projects",
+        "Launch",
+        "Portfolio"
+      ],
+      "cta": "Invest"
+    }
+  },
+  "set": {
+    "id": "B",
+    "name": "Fine Print",
+    "recommended": false,
+    "mechanism": "La letra chica del contrato hecha con cuidado: una serif editorial para la voz, una grotesca sobria para los números y dos barras paralelas, como una prensa que sujeta, en tinta y verdín sobre papel.",
+    "expression_move": "La serif Newsreader en tamaño grande es lo único expresivo; el símbolo son solo dos barras que sujetan.",
+    "differs_by": "Ningún competidor usa serif: el sector va de sans técnicas y colores eléctricos; Fine Print se ve como una publicación financiera seria, no como una app."
+  },
+  "axes": {
+    "classic_contemporary": -2,
+    "warm_cool": -1,
+    "quiet_loud": -2,
+    "premium_accessible": -2
+  },
+  "components": {
+    "logo": {
+      "mode": "new",
+      "status": "proposed",
+      "source": null,
+      "sha256": null
+    },
+    "type": {
+      "mode": "new",
+      "status": "proposed",
+      "source": null,
+      "sha256": null
+    },
+    "palette": {
+      "mode": "new",
+      "status": "proposed",
+      "source": null,
+      "sha256": null
+    }
+  },
+  "type": {
+    "pairing_mode": "contrast",
+    "display": {
+      "family": "Newsreader",
+      "source": "google",
+      "license": "OFL-1.1",
+      "weights": [
+        500
+      ],
+      "location": {
+        "wght": 500,
+        "opsz": 72
+      },
+      "features": [],
+      "case": "as-is",
+      "tracking": -15,
+      "fallback": "Georgia, serif",
+      "file": null
+    },
+    "text": {
+      "family": "Hanken Grotesk",
+      "source": "google",
+      "license": "OFL-1.1",
+      "weights": [
+        400,
+        500,
+        600
+      ],
+      "location": {
+        "wght": 400
+      },
+      "features": [
+        "tnum"
+      ],
+      "case": "as-is",
+      "tracking": 0,
+      "fallback": "system-ui, sans-serif",
+      "file": null
+    },
+    "mono": null
+  },
+  "logo": {
+    "type": "wordmark",
+    "concept": "La palabra Holdfast en serif editorial; las dos barras son la prensa que mantiene el dinero en su lugar.",
+    "symbol": "logo/symbol.svg",
+    "wordmark": {
+      "text": "Holdfast",
+      "role": "display",
+      "location": null,
+      "tracking": -15,
+      "case": "as-is"
+    },
+    "monogram": null,
+    "lockups": [
+      "horizontal",
+      "stacked"
+    ],
+    "colors": {
+      "bar-top": "primary",
+      "bar-bottom": "brand-2",
+      "wordmark": "text"
+    },
+    "tags": [
+      "typographic"
+    ],
+    "clear_space": {
+      "unit": "cap-height",
+      "multiple": 1,
+      "inferred": true
+    },
+    "min_size": {
+      "px": 24,
+      "mm": 8
+    },
+    "defect": "El signo igual era más pesado que la serif y le robaba la voz; barras más finas y cortas."
+  },
+  "palette": "palette.json",
+  "defaults_used": [],
+  "rationale": [
+    {
+      "claim": "Instrument Serif se descartó porque no tiene cifras tabulares; Newsreader sí y tiene eje óptico para títulos grandes.",
+      "evidence": "measured",
+      "source": "brand.py fonts audit"
+    },
+    {
+      "claim": "El verdín se eligió para no usar el azul ni el morado habituales en cripto.",
+      "evidence": "judgement",
+      "source": "designer"
+    }
+  ],
+  "derived": [
+    {
+      "file": "card.png",
+      "requires": [
+        "logo",
+        "type",
+        "palette"
+      ],
+      "inputs_sha256": "5ef23202595d6e73fc2233b133b3376c0e604e1429ce7dbe58e054717e4e7d41"
+    }
+  ],
+  "audit": {
+    "schema": "brand-identity/audit@1",
+    "passed": true,
+    "counts": {
+      "gate": 0,
+      "warn": 4,
+      "info": 6
+    },
+    "findings": [
+      {
+        "id": "palette.distinct.light.success-accent",
+        "component": "palette",
+        "severity": "warn",
+        "measured": 8.16,
+        "threshold": 10.0,
+        "message": "light: success #087b4e and accent #2c7a67 are only CIEDE2000 8.2 apart; users may read one as the other",
+        "suggested_fix": {
+          "change": "modes.light.success",
+          "from": "#087b4e",
+          "to": "#006c40",
+          "how": "darken by OKLCH L -0.05, same hue"
+        },
+        "roles": [
+          "light.success",
+          "light.accent"
+        ]
+      },
+      {
+        "id": "palette.cvd.dark.deutan.success-danger",
+        "component": "palette",
+        "severity": "warn",
+        "measured": 7.16,
+        "threshold": 10.0,
+        "message": "dark: success and danger collapse to CIEDE2000 7.2 for deutanopia (#b5ad8d vs #bfb175)",
+        "suggested_fix": {
+          "change": "modes.dark.danger",
+          "from": "#fe8477",
+          "to": "#de685c",
+          "how": "never carry meaning by colour alone (icon/label); or darken by OKLCH L -0.09, same hue"
+        },
+        "roles": [
+          "dark.success",
+          "dark.danger"
+        ]
+      },
+      {
+        "id": "palette.contrast.light.border-on-background",
+        "component": "palette",
+        "severity": "info",
+        "measured": 1.25,
+        "threshold": 3.0,
+        "message": "light: border #e6e6e6 on background #ffffff is 1.25:1, below 3.0:1 (borders: dividers are exempt, input outlines need 3:1; WCAG 2, no rounding)",
+        "suggested_fix": {
+          "change": "modes.light.border",
+          "from": "#e6e6e6",
+          "to": "#737373",
+          "how": "use neutral-500 (same scale)",
+          "ratio_after": 4.74
+        },
+        "roles": [
+          "light.border",
+          "light.background"
+        ]
+      },
+      {
+        "id": "palette.contrast.dark.border-on-background",
+        "component": "palette",
+        "severity": "info",
+        "measured": 1.88,
+        "threshold": 3.0,
+        "message": "dark: border #414141 on background #0f0f0f is 1.88:1, below 3.0:1 (borders: dividers are exempt, input outlines need 3:1; WCAG 2, no rounding)",
+        "suggested_fix": {
+          "change": "modes.dark.border",
+          "from": "#414141",
+          "to": "#737373",
+          "how": "use neutral-500 (same scale)",
+          "ratio_after": 4.04
+        },
+        "roles": [
+          "dark.border",
+          "dark.background"
+        ]
+      },
+      {
+        "id": "type.display.coverage.en_Latn.extended",
+        "component": "type",
+        "severity": "info",
+        "measured": "101/102",
+        "threshold": "100% auxiliary + punctuation",
+        "message": "Newsreader lacks English auxiliary/punctuation characters: ʻ",
+        "suggested_fix": "fine if the brand never writes them (loanwords, names); else another family"
+      },
+      {
+        "id": "type.display.web-weight",
+        "component": "type",
+        "severity": "info",
+        "measured": 105,
+        "threshold": null,
+        "message": "Newsreader: ~105 KB WOFF2 for the brief's characters (one variable file, all weights; estimate)",
+        "suggested_fix": null
+      },
+      {
+        "id": "type.text.coverage.en_Latn.extended",
+        "component": "type",
+        "severity": "info",
+        "measured": "101/102",
+        "threshold": "100% auxiliary + punctuation",
+        "message": "Hanken Grotesk lacks English auxiliary/punctuation characters: ʻ",
+        "suggested_fix": "fine if the brand never writes them (loanwords, names); else another family"
+      },
+      {
+        "id": "type.text.web-weight",
+        "component": "type",
+        "severity": "info",
+        "measured": 29,
+        "threshold": null,
+        "message": "Hanken Grotesk: ~29 KB WOFF2 for the brief's characters (one variable file, all weights; estimate)",
+        "suggested_fix": null
+      },
+      {
+        "id": "cohesion.sets-close",
+        "component": "cohesion",
+        "severity": "warn",
+        "measured": [
+          "A–C"
+        ],
+        "threshold": "2 axes, 2 steps",
+        "message": "sets too alike on the axes: A–C differ by 2+ steps on fewer than 2 axes (heuristic)",
+        "suggested_fix": null
+      },
+      {
+        "id": "i18n.missing",
+        "component": "card",
+        "severity": "warn",
+        "measured": 38,
+        "threshold": 0,
+        "message": "no es translation of the tool text; 38 label(s) shown in English",
+        "suggested_fix": "translate assets/i18n/en.json (keep keys and {placeholders}) to es and save it as <work>/i18n.json with \"_lang\": \"es\", then re-run"
+      }
+    ],
+    "defaults": {
+      "matched": []
+    }
+  },
+  "palette_build": {
+    "strategy": null,
+    "accent": null,
+    "light_bg": null,
+    "dark_bg": null,
+    "neutral_tint": null,
+    "neutral_chroma": null,
+    "extra": []
+  }
+}

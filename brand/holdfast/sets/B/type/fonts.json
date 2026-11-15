@@ -1,0 +1,29 @@
+{
+  "display": {
+    "family": "Newsreader",
+    "file": "/root/.cache/brand-identity/fonts/instances/Newsreader-2d473d8890df3d51.ttf",
+    "location": {
+      "wght": 500,
+      "opsz": 72
+    },
+    "weights": [
+      500
+    ],
+    "features": []
+  },
+  "text": {
+    "family": "Hanken Grotesk",
+    "file": "/root/.cache/brand-identity/fonts/instances/HankenGrotesk-cb05c3745ddd267d.ttf",
+    "location": {
+      "wght": 400
+    },
+    "weights": [
+      400,
+      500,
+      600
+    ],
+    "features": [
+      "tnum"
+    ]
+  }
+}

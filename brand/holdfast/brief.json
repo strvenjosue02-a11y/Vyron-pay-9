@@ -1,0 +1,43 @@
+{
+ "schema": "brand-identity/brief@1",
+ "brand": "Holdfast",
+ "tagline": "Hold fast to what you back.",
+ "site": null,
+ "languages": [
+  "en"
+ ],
+ "doc_lang": "es",
+ "numbers": true,
+ "components": {
+  "logo": "new",
+  "type": "new",
+  "palette": "new"
+ },
+ "sources": {},
+ "sets": 3,
+ "sector": "Launchpad cripto: financiación de proyectos con USDC",
+ "audience": "Inversores cripto de todo el mundo y creadores que buscan capital semilla",
+ "attributes": [
+  "premium",
+  "minimalista",
+  "transparente"
+ ],
+ "competitors": [
+  "pump.fun",
+  "Fjord Foundry",
+  "Juicebox",
+  "CoinList"
+ ],
+ "axes": [],
+ "copy": {
+  "sentence": {
+   "en": "Back the projects you believe in. Your money stays locked until the team delivers."
+  },
+  "nav": [
+   "Projects",
+   "Launch",
+   "Portfolio"
+  ],
+  "cta": "Invest"
+ }
+}

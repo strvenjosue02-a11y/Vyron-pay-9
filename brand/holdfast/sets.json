@@ -1,0 +1,491 @@
+{
+ "schema": "brand-identity/sets@1",
+ "sets": [
+  {
+   "identity": {
+    "set": {
+     "id": "A",
+     "name": "Equal Halves",
+     "recommended": true,
+     "mechanism": "Dos mitades que se sostienen con un espacio exacto entre ambas, como una mano que agarra firme: esa misma precisión define la grotesca Geist y una paleta de grafito con una sola mitad en color brasa.",
+     "expression_move": "La mitad derecha del símbolo en brasa es el único color saturado de toda la marca.",
+     "differs_by": "pump.fun es caricaturesco y verde neón, Fjord y CoinList usan azul fintech y sans genéricas; Equal Halves es grafito sobre porcelana fría con una sola nota cálida, más cerca de un producto de hardware que de una app cripto."
+    },
+    "axes": {
+     "classic_contemporary": 2,
+     "warm_cool": 1,
+     "quiet_loud": -1,
+     "premium_accessible": -2
+    },
+    "type": {
+     "pairing_mode": "single-family",
+     "display": {
+      "family": "Geist",
+      "source": "google",
+      "license": "OFL-1.1",
+      "weights": [
+       600
+      ],
+      "location": {
+       "wght": 600
+      },
+      "features": [],
+      "case": "as-is",
+      "tracking": -35,
+      "fallback": "system-ui, sans-serif",
+      "file": null
+     },
+     "text": {
+      "family": "Geist",
+      "source": "google",
+      "license": "OFL-1.1",
+      "weights": [
+       400,
+       500,
+       600
+      ],
+      "location": {
+       "wght": 400
+      },
+      "features": [
+       "tnum"
+      ],
+      "case": "as-is",
+      "tracking": 0,
+      "fallback": "system-ui, sans-serif",
+      "file": null
+     },
+     "mono": null
+    },
+    "logo": {
+     "type": "symbol+wordmark",
+     "concept": "Dos medios discos que se sujetan uno al otro sin tocarse; el hueco entre ellos es donde queda guardado el dinero hasta que el equipo cumple.",
+     "symbol": "logo/symbol.svg",
+     "wordmark": {
+      "text": "Holdfast",
+      "role": "display",
+      "location": null,
+      "tracking": -35,
+      "case": "as-is"
+     },
+     "monogram": null,
+     "lockups": [
+      "horizontal",
+      "stacked"
+     ],
+     "colors": {
+      "half-left": "primary",
+      "half-right": "brand-2",
+      "wordmark": "text"
+     },
+     "tags": [
+      "abstract-geometric"
+     ],
+     "clear_space": {
+      "unit": "cap-height",
+      "multiple": 1,
+      "inferred": true
+     },
+     "min_size": {
+      "px": 20,
+      "mm": 6
+     },
+     "defect": "La mitad brasa se resolvía a un tono UI más oscuro (#be3b17); ahora usa el hex de marca."
+    },
+    "palette_build": {
+     "strategy": null,
+     "accent": null,
+     "light_bg": null,
+     "dark_bg": null,
+     "neutral_tint": null,
+     "neutral_chroma": null,
+     "extra": []
+    },
+    "defaults_used": [],
+    "rationale": [
+     {
+      "claim": "Geist tiene cifras tabulares y una sola familia variable de ~26 KB: cumple con números y carga rápido en celular.",
+      "evidence": "measured",
+      "source": "brand.py fonts audit"
+     },
+     {
+      "claim": "La lectura de 'iguales' viene de la simetría desplazada; es una decisión de diseño, no un efecto probado.",
+      "evidence": "judgement",
+      "source": "designer"
+     }
+    ]
+   },
+   "palette": {
+    "schema": "brand-identity/palette@1",
+    "name": "Equal Halves",
+    "direction": "Grafito sobre porcelana fría, con una mitad en brasa.",
+    "brand": [
+     {
+      "id": "brand-1",
+      "name": "Graphite",
+      "hex": "#18191D",
+      "source": "chosen",
+      "locked": true,
+      "usage": "logo, texto, superficies principales",
+      "print": {
+       "lab_d50": null,
+       "cmyk": null,
+       "pantone_ref": null
+      }
+     },
+     {
+      "id": "brand-2",
+      "name": "Ember",
+      "hex": "#E2512C",
+      "source": "chosen",
+      "locked": true,
+      "usage": "la mitad derecha del símbolo y el botón principal",
+      "print": {
+       "lab_d50": null,
+       "cmyk": null,
+       "pantone_ref": null
+      }
+     }
+    ],
+    "feels": [
+     "preciso",
+     "sereno",
+     "humano"
+    ]
+   },
+   "symbol_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><path id=\"half-left\" data-color=\"primary\" d=\"M44 26A30 30 0 0 0 44 86Z\"/><path id=\"half-right\" data-color=\"accent\" d=\"M56 14A30 30 0 0 1 56 74Z\"/></svg>",
+   "symbol_small_svg": null,
+   "wordmark_detail_svg": null
+  },
+  {
+   "identity": {
+    "set": {
+     "id": "B",
+     "name": "Fine Print",
+     "recommended": false,
+     "mechanism": "La letra chica del contrato hecha con cuidado: una serif editorial para la voz, una grotesca sobria para los números y dos barras paralelas, como una prensa que sujeta, en tinta y verdín sobre papel.",
+     "expression_move": "La serif Newsreader en tamaño grande es lo único expresivo; el símbolo son solo dos barras que sujetan.",
+     "differs_by": "Ningún competidor usa serif: el sector va de sans técnicas y colores eléctricos; Fine Print se ve como una publicación financiera seria, no como una app."
+    },
+    "axes": {
+     "classic_contemporary": -2,
+     "warm_cool": -1,
+     "quiet_loud": -2,
+     "premium_accessible": -2
+    },
+    "type": {
+     "pairing_mode": "contrast",
+     "display": {
+      "family": "Newsreader",
+      "source": "google",
+      "license": "OFL-1.1",
+      "weights": [
+       500
+      ],
+      "location": {
+       "wght": 500,
+       "opsz": 72
+      },
+      "features": [],
+      "case": "as-is",
+      "tracking": -15,
+      "fallback": "Georgia, serif",
+      "file": null
+     },
+     "text": {
+      "family": "Hanken Grotesk",
+      "source": "google",
+      "license": "OFL-1.1",
+      "weights": [
+       400,
+       500,
+       600
+      ],
+      "location": {
+       "wght": 400
+      },
+      "features": [
+       "tnum"
+      ],
+      "case": "as-is",
+      "tracking": 0,
+      "fallback": "system-ui, sans-serif",
+      "file": null
+     },
+     "mono": null
+    },
+    "logo": {
+     "type": "wordmark",
+     "concept": "La palabra Holdfast en serif editorial; las dos barras son la prensa que mantiene el dinero en su lugar.",
+     "symbol": "logo/symbol.svg",
+     "wordmark": {
+      "text": "Holdfast",
+      "role": "display",
+      "location": null,
+      "tracking": -15,
+      "case": "as-is"
+     },
+     "monogram": null,
+     "lockups": [
+      "horizontal",
+      "stacked"
+     ],
+     "colors": {
+      "bar-top": "primary",
+      "bar-bottom": "brand-2",
+      "wordmark": "text"
+     },
+     "tags": [
+      "typographic"
+     ],
+     "clear_space": {
+      "unit": "cap-height",
+      "multiple": 1,
+      "inferred": true
+     },
+     "min_size": {
+      "px": 24,
+      "mm": 8
+     },
+     "defect": "El signo igual era más pesado que la serif y le robaba la voz; barras más finas y cortas."
+    },
+    "palette_build": {
+     "strategy": null,
+     "accent": null,
+     "light_bg": null,
+     "dark_bg": null,
+     "neutral_tint": null,
+     "neutral_chroma": null,
+     "extra": []
+    },
+    "defaults_used": [],
+    "rationale": [
+     {
+      "claim": "Instrument Serif se descartó porque no tiene cifras tabulares; Newsreader sí y tiene eje óptico para títulos grandes.",
+      "evidence": "measured",
+      "source": "brand.py fonts audit"
+     },
+     {
+      "claim": "El verdín se eligió para no usar el azul ni el morado habituales en cripto.",
+      "evidence": "judgement",
+      "source": "designer"
+     }
+    ]
+   },
+   "palette": {
+    "schema": "brand-identity/palette@1",
+    "name": "Fine Print",
+    "direction": "Tinta casi negra sobre papel frío, con un acento verdín.",
+    "brand": [
+     {
+      "id": "brand-1",
+      "name": "Ink",
+      "hex": "#141619",
+      "source": "chosen",
+      "locked": true,
+      "usage": "texto y logotipo",
+      "print": {
+       "lab_d50": null,
+       "cmyk": null,
+       "pantone_ref": null
+      }
+     },
+     {
+      "id": "brand-2",
+      "name": "Verdigris",
+      "hex": "#2C7A67",
+      "source": "chosen",
+      "locked": true,
+      "usage": "signo igual, enlaces y botón principal",
+      "print": {
+       "lab_d50": null,
+       "cmyk": null,
+       "pantone_ref": null
+      }
+     }
+    ],
+    "feels": [
+     "serio",
+     "editorial",
+     "claro"
+    ]
+   },
+   "symbol_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><rect id=\"bar-top\" data-color=\"primary\" x=\"22\" y=\"36\" width=\"56\" height=\"9\" rx=\"4.5\"/><rect id=\"bar-bottom\" data-color=\"accent\" x=\"22\" y=\"55\" width=\"56\" height=\"9\" rx=\"4.5\"/></svg>",
+   "symbol_small_svg": null,
+   "wordmark_detail_svg": null
+  },
+  {
+   "identity": {
+    "set": {
+     "id": "C",
+     "name": "Vault Slot",
+     "recommended": false,
+     "mechanism": "Una bóveda sellada con una sola ranura: una cápsula maciza que guarda firme, la grotesca extendida Archivo como placa grabada y una paleta obsidiana y mercurio con una luz cobalto.",
+     "expression_move": "El fondo obsidiana con superficies oscuras es lo dominante; el símbolo y la letra se mantienen planos y plateados.",
+     "differs_by": "Los competidores son claros y coloridos; Vault Slot es oscuro, metálico y extendido, como el empaque de un dispositivo, y se presta mejor que nadie al logo 3D."
+    },
+    "axes": {
+     "classic_contemporary": 1,
+     "warm_cool": 2,
+     "quiet_loud": 1,
+     "premium_accessible": -2
+    },
+    "type": {
+     "pairing_mode": "single-family",
+     "display": {
+      "family": "Archivo",
+      "source": "google",
+      "license": "OFL-1.1",
+      "weights": [
+       600
+      ],
+      "location": {
+       "wght": 600,
+       "wdth": 125
+      },
+      "features": [],
+      "case": "upper",
+      "tracking": 60,
+      "fallback": "system-ui, sans-serif",
+      "file": null
+     },
+     "text": {
+      "family": "Archivo",
+      "source": "google",
+      "license": "OFL-1.1",
+      "weights": [
+       400,
+       500,
+       600
+      ],
+      "location": {
+       "wght": 400,
+       "wdth": 100
+      },
+      "features": [
+       "tnum"
+      ],
+      "case": "as-is",
+      "tracking": 0,
+      "fallback": "system-ui, sans-serif",
+      "file": null
+     },
+     "mono": null
+    },
+    "logo": {
+     "type": "symbol+wordmark",
+     "concept": "Una alcancía reducida a lo esencial: una cápsula cerrada con una ranura; entra dinero, sale solo con reglas.",
+     "symbol": "logo/symbol.svg",
+     "wordmark": {
+      "text": "Holdfast",
+      "role": "display",
+      "location": null,
+      "tracking": 60,
+      "case": "upper"
+     },
+     "monogram": null,
+     "lockups": [
+      "horizontal",
+      "stacked"
+     ],
+     "colors": {
+      "capsule": "text",
+      "wordmark": "text"
+     },
+     "tags": [
+      "abstract-geometric"
+     ],
+     "clear_space": {
+      "unit": "cap-height",
+      "multiple": 1,
+      "inferred": true
+     },
+     "min_size": {
+      "px": 20,
+      "mm": 6
+     },
+     "defect": "La cápsula mercurio no llegaba a 3:1 sobre fondo claro; ahora toma la tinta de cada fondo."
+    },
+    "card": {
+     "ground": "dark"
+    },
+    "palette_build": {
+     "strategy": null,
+     "accent": null,
+     "light_bg": null,
+     "dark_bg": "#0D0F13",
+     "neutral_tint": null,
+     "neutral_chroma": null,
+     "extra": []
+    },
+    "defaults_used": [],
+    "rationale": [
+     {
+      "claim": "Archivo tiene eje de ancho: la misma familia sirve extendida para la marca y normal para leer, con cifras tabulares.",
+      "evidence": "measured",
+      "source": "brand.py fonts audit"
+     },
+     {
+      "claim": "La ranura es una pista literal (alcancía); ayuda a una marca nueva a explicar el depósito en garantía.",
+      "evidence": "limited",
+      "source": "Luffarelli et al. 2019"
+     }
+    ]
+   },
+   "palette": {
+    "schema": "brand-identity/palette@1",
+    "name": "Vault Slot",
+    "direction": "Obsidiana y mercurio, con una luz cobalto.",
+    "brand": [
+     {
+      "id": "brand-1",
+      "name": "Mercury",
+      "hex": "#C9CED6",
+      "source": "chosen",
+      "locked": true,
+      "usage": "símbolo y texto sobre oscuro",
+      "print": {
+       "lab_d50": null,
+       "cmyk": null,
+       "pantone_ref": null
+      }
+     },
+     {
+      "id": "brand-2",
+      "name": "Cobalt Light",
+      "hex": "#4C7DFF",
+      "source": "chosen",
+      "locked": true,
+      "usage": "estado activo y botón principal",
+      "print": {
+       "lab_d50": null,
+       "cmyk": null,
+       "pantone_ref": null
+      }
+     },
+     {
+      "id": "brand-3",
+      "name": "Obsidian",
+      "hex": "#0D0F13",
+      "source": "chosen",
+      "locked": true,
+      "usage": "fondo",
+      "print": {
+       "lab_d50": null,
+       "cmyk": null,
+       "pantone_ref": null
+      }
+     }
+    ],
+    "feels": [
+     "sólido",
+     "técnico",
+     "silencioso"
+    ]
+   },
+   "symbol_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><g id=\"capsule\" data-color=\"primary\"><rect x=\"20\" y=\"2\" width=\"60\" height=\"96\" rx=\"30\"/><rect id=\"slot\" data-op=\"subtract\" x=\"36\" y=\"34\" width=\"28\" height=\"8\" rx=\"4\"/></g></svg>",
+   "symbol_small_svg": null,
+   "wordmark_detail_svg": null
+  }
+ ]
+}

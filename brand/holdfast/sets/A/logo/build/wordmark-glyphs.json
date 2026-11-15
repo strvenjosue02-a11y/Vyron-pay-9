@@ -1,0 +1,136 @@
+{
+ "units": "wordmark: cap height 100, cap top y=0, baseline y=100, x from the pen origin; index = data-glyph",
+ "text": "Holdfast",
+ "glyphs": [
+  {
+   "index": 1,
+   "char": "H",
+   "x0": 11.27,
+   "x1": 90.0,
+   "pen_x": 0.0,
+   "advance": 99.86,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     11.27,
+     29.58
+    ],
+    [
+     71.69,
+     90.0
+    ]
+   ]
+  },
+  {
+   "index": 2,
+   "char": "o",
+   "x0": 100.42,
+   "x1": 174.37,
+   "pen_x": 94.93,
+   "advance": 84.23,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     100.42,
+     119.15
+    ],
+    [
+     155.63,
+     174.37
+    ]
+   ]
+  },
+  {
+   "index": 3,
+   "char": "l",
+   "x0": 184.08,
+   "x1": 213.24,
+   "pen_x": 174.23,
+   "advance": 40.7,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     184.08,
+     202.11
+    ]
+   ]
+  },
+  {
+   "index": 4,
+   "char": "d",
+   "x0": 215.49,
+   "x1": 287.61,
+   "pen_x": 210.0,
+   "advance": 81.83,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     215.49,
+     234.23
+    ],
+    [
+     269.58,
+     287.61
+    ]
+   ]
+  },
+  {
+   "index": 5,
+   "char": "f",
+   "x0": 294.08,
+   "x1": 342.54,
+   "pen_x": 286.9,
+   "advance": 56.2,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     304.79,
+     322.82
+    ]
+   ]
+  },
+  {
+   "index": 6,
+   "char": "a",
+   "x0": 343.66,
+   "x1": 417.75,
+   "pen_x": 338.17,
+   "advance": 80.56,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": []
+  },
+  {
+   "index": 7,
+   "char": "s",
+   "x0": 419.3,
+   "x1": 486.2,
+   "pen_x": 413.8,
+   "advance": 73.94,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": []
+  },
+  {
+   "index": 8,
+   "char": "t",
+   "x0": 489.15,
+   "x1": 538.87,
+   "pen_x": 482.82,
+   "advance": 60.14,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     500.99,
+     519.01
+    ]
+   ]
+  }
+ ]
+}

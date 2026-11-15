@@ -1,0 +1,150 @@
+{
+ "units": "wordmark: cap height 100, cap top y=0, baseline y=100, x from the pen origin; index = data-glyph",
+ "text": "Holdfast",
+ "glyphs": [
+  {
+   "index": 1,
+   "char": "H",
+   "x0": 4.48,
+   "x1": 113.71,
+   "pen_x": 0.0,
+   "advance": 114.76,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     16.5,
+     35.1
+    ],
+    [
+     83.08,
+     101.68
+    ]
+   ]
+  },
+  {
+   "index": 2,
+   "char": "o",
+   "x0": 117.41,
+   "x1": 188.6,
+   "pen_x": 112.66,
+   "advance": 80.63,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     117.41,
+     135.04
+    ],
+    [
+     170.91,
+     188.6
+    ]
+   ]
+  },
+  {
+   "index": 3,
+   "char": "l",
+   "x0": 191.47,
+   "x1": 228.53,
+   "pen_x": 191.19,
+   "advance": 39.79,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     202.87,
+     219.3
+    ]
+   ]
+  },
+  {
+   "index": 4,
+   "char": "d",
+   "x0": 233.78,
+   "x1": 312.87,
+   "pen_x": 228.88,
+   "advance": 84.97,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     233.88,
+     251.01
+    ],
+    [
+     285.59,
+     302.03
+    ]
+   ]
+  },
+  {
+   "index": 5,
+   "char": "f",
+   "x0": 313.64,
+   "x1": 377.83,
+   "pen_x": 311.75,
+   "advance": 51.19,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     325.17,
+     341.96
+    ]
+   ]
+  },
+  {
+   "index": 6,
+   "char": "a",
+   "x0": 366.08,
+   "x1": 435.8,
+   "pen_x": 360.84,
+   "advance": 73.57,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     381.42,
+     392.15
+    ],
+    [
+     405.17,
+     421.54
+    ]
+   ]
+  },
+  {
+   "index": 7,
+   "char": "s",
+   "x0": 436.78,
+   "x1": 487.55,
+   "pen_x": 432.31,
+   "advance": 60.21,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     448.26,
+     483.16
+    ]
+   ]
+  },
+  {
+   "index": 8,
+   "char": "t",
+   "x0": 492.59,
+   "x1": 544.76,
+   "pen_x": 490.42,
+   "advance": 53.92,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     502.1,
+     518.46
+    ]
+   ]
+  }
+ ]
+}

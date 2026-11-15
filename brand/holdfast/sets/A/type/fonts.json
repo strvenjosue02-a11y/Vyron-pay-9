@@ -1,0 +1,28 @@
+{
+  "display": {
+    "family": "Geist",
+    "file": "/root/.cache/brand-identity/fonts/instances/Geist-5a2f3a1f54f16719.ttf",
+    "location": {
+      "wght": 600
+    },
+    "weights": [
+      600
+    ],
+    "features": []
+  },
+  "text": {
+    "family": "Geist",
+    "file": "/root/.cache/brand-identity/fonts/instances/Geist-9ea38a2eebbf4d36.ttf",
+    "location": {
+      "wght": 400
+    },
+    "weights": [
+      400,
+      500,
+      600
+    ],
+    "features": [
+      "tnum"
+    ]
+  }
+}

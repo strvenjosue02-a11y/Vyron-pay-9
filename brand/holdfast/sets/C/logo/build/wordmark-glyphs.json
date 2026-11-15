@@ -1,0 +1,145 @@
+{
+ "units": "wordmark: cap height 100, cap top y=0, baseline y=100, x from the pen origin; index = data-glyph",
+ "text": "HOLDFAST",
+ "glyphs": [
+  {
+   "index": 1,
+   "char": "H",
+   "x0": 14.12,
+   "x1": 126.35,
+   "pen_x": 0.0,
+   "advance": 140.47,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     14.12,
+     36.24
+    ],
+    [
+     104.22,
+     126.35
+    ]
+   ]
+  },
+  {
+   "index": 2,
+   "char": "O",
+   "x0": 158.95,
+   "x1": 287.63,
+   "pen_x": 149.2,
+   "advance": 148.18,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     160.05,
+     183.32
+    ],
+    [
+     263.37,
+     286.53
+    ]
+   ]
+  },
+  {
+   "index": 3,
+   "char": "L",
+   "x0": 320.23,
+   "x1": 405.82,
+   "pen_x": 306.11,
+   "advance": 104.08,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     320.23,
+     342.36
+    ]
+   ]
+  },
+  {
+   "index": 4,
+   "char": "D",
+   "x0": 433.04,
+   "x1": 545.12,
+   "pen_x": 418.92,
+   "advance": 135.95,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     433.04,
+     455.17
+    ],
+    [
+     520.76,
+     544.1
+    ]
+   ]
+  },
+  {
+   "index": 5,
+   "char": "F",
+   "x0": 577.73,
+   "x1": 672.93,
+   "pen_x": 563.61,
+   "advance": 104.66,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     577.73,
+     599.85
+    ]
+   ]
+  },
+  {
+   "index": 6,
+   "char": "A",
+   "x0": 680.49,
+   "x1": 805.68,
+   "pen_x": 677.0,
+   "advance": 132.17,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     699.7,
+     721.92
+    ],
+    [
+     762.65,
+     786.47
+    ]
+   ]
+  },
+  {
+   "index": 7,
+   "char": "S",
+   "x0": 826.49,
+   "x1": 933.77,
+   "pen_x": 817.9,
+   "advance": 123.73,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": []
+  },
+  {
+   "index": 8,
+   "char": "T",
+   "x0": 954.15,
+   "x1": 1065.07,
+   "pen_x": 950.36,
+   "advance": 118.49,
+   "cap_top": 0,
+   "baseline": 100,
+   "stems": [
+    [
+     998.54,
+     1020.67
+    ]
+   ]
+  }
+ ]
+}
