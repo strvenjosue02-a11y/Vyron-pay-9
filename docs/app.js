@@ -14,7 +14,7 @@ const chain = defineChain({
   id: CONFIG.chainId, name: CONFIG.chainName,
   nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
   rpcUrls: { default: { http: [RPC] } },
-  blockExplorers: { default: { name: "Basescan", url: CONFIG.explorer } },
+  blockExplorers: { default: { name: "Explorer", url: CONFIG.explorer } },
   contracts: { multicall3: { address: "0xcA11bde05977b3631167028862bE2a173976CA11" } },
 });
 const pub = createPublicClient({ chain, transport: http(RPC) });
