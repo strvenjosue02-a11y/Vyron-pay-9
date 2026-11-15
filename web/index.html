@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Peer</title>
+<meta name="description" content="Gente que financia a gente. Invierte en proyectos con USDC; el dinero queda en un contrato sin dueño y el equipo lo recibe por etapas que votan los inversores.">
+<meta name="theme-color" content="#e9efea">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="logo" href="#/" aria-label="Peer, inicio">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="9" cy="13" r="7" fill="var(--pine)"/><circle cx="17" cy="13" r="7" fill="var(--sprout)" style="mix-blend-mode:multiply"/></svg>
+      Peer
+    </a>
+    <nav class="links" aria-label="Principal">
+      <a href="#/" data-nav="home">Proyectos</a>
+      <a href="#/crear" data-nav="crear">Subir proyecto</a>
+      <a href="#/mis-proyectos" data-nav="mis">Mis proyectos</a>
+      <a href="#/admin" data-nav="admin" class="d-none" id="nav-admin">Panel del dueño</a>
+    </nav>
+    <div class="top-r">
+      <span class="net" id="net"></span>
+      <button class="btn btn-main btn-sm" id="connect">Conectar wallet</button>
+    </div>
+  </div>
+</header>
+<nav class="tabs" aria-label="Principal">
+  <a href="#/" data-nav="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Proyectos</a>
+  <a href="#/crear" data-nav="crear"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Subir</a>
+  <a href="#/mis-proyectos" data-nav="mis"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Mis proyectos</a>
+  <a href="#/admin" data-nav="admin" class="d-none" id="tab-admin"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Panel</a>
+</nav>
+<main id="app"></main>
+<footer class="foot">
+  <span>Peer no guarda tu dinero: cada proyecto tiene su propio contrato sin administrador.</span>
+  <a href="https://github.com/strvenjosue02-a11y/Vyron-pay-9" target="_blank" rel="noopener">Código abierto</a>
+</footer>
+<div class="veil" id="veil"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-live="polite"></div>
+<div class="toast" id="toast" role="status"></div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
