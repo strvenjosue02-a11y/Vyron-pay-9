@@ -19,7 +19,8 @@ Antes de hacerlo, pregunta con la herramienta de preguntas, con 2 a 4 opciones y
 Una pregunta por decisión, en lenguaje simple. Si la respuesta ya se dio antes en la conversación, no vuelvas a preguntar.
 
 ## 2. Nada de webs genéricas
-- Antes de tocar cualquier interfaz, carga la skill `frontend-design`. Si sirve, usa también `theme-factory`.
+- Antes de tocar cualquier interfaz, carga la skill `frontend-design` y `design-spacing-rhythm` (espaciado). Para logo, tipografía o colores usa `brand-identity`. Si sirve, usa también `theme-factory`.
+- Antes de rediseñar, pregunta cómo debe ser cada parte (logo, portada, qué muestra cada pantalla y cómo la ve cada tipo de usuario).
 - Sin emojis como íconos: usa íconos SVG y tipografía cuidada.
 - Estilo de producto profesional, como los grandes launchpads y exchanges: jerarquía clara, espaciado consistente y estados de carga, error y éxito.
 - Primero el celular: se prueba a 360 y 390 px de ancho, sin scroll horizontal.
