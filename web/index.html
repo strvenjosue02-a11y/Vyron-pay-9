@@ -1,45 +1,46 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Peer</title>
-<meta name="description" content="Gente que financia a gente. Invierte en proyectos con USDC; el dinero queda en un contrato sin dueño y el equipo lo recibe por etapas que votan los inversores.">
-<meta name="theme-color" content="#e9efea">
+<title>Holdfast</title>
+<meta name="description" content="Back early-stage projects with USDC. Your money stays locked in a contract no one owns, and teams are paid in stages only when backers vote yes.">
+<meta name="theme-color" content="#f4f5f2">
+<link rel="icon" href="./assets/holdfast-mark.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-<header class="top">
-  <div class="top-in">
-    <a class="logo" href="#/" aria-label="Peer, inicio">
-      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="9" cy="13" r="7" fill="var(--pine)"/><circle cx="17" cy="13" r="7" fill="var(--sprout)" style="mix-blend-mode:multiply"/></svg>
-      Peer
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="#/" aria-label="Holdfast home">
+      <svg width="24" height="24" viewBox="14 14 72 72" aria-hidden="true"><path d="M44 26A30 30 0 0 0 44 86Z" fill="#18191D"/><path d="M56 14A30 30 0 0 1 56 74Z" fill="#E2512C"/></svg>
+      Holdfast
     </a>
-    <nav class="links" aria-label="Principal">
-      <a href="#/" data-nav="home">Proyectos</a>
-      <a href="#/crear" data-nav="crear">Subir proyecto</a>
-      <a href="#/mis-proyectos" data-nav="mis">Mis proyectos</a>
-      <a href="#/admin" data-nav="admin" class="d-none" id="nav-admin">Panel del dueño</a>
+    <nav class="links" aria-label="Main">
+      <a href="#/" data-nav="home">Projects</a>
+      <a href="#/launch" data-nav="launch">Launch</a>
+      <a href="#/portfolio" data-nav="portfolio">Portfolio</a>
+      <a href="#/owner" data-nav="owner" class="d-none" id="nav-owner">Owner</a>
     </nav>
-    <div class="top-r">
-      <span class="net" id="net"></span>
-      <button class="btn btn-main btn-sm" id="connect">Conectar wallet</button>
+    <div class="nav-r">
+      <span class="net" id="net"><i></i><span></span></span>
+      <button class="btn btn-dark btn-sm" id="connect">Connect wallet</button>
     </div>
   </div>
 </header>
-<nav class="tabs" aria-label="Principal">
-  <a href="#/" data-nav="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Proyectos</a>
-  <a href="#/crear" data-nav="crear"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Subir</a>
-  <a href="#/mis-proyectos" data-nav="mis"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Mis proyectos</a>
-  <a href="#/admin" data-nav="admin" class="d-none" id="tab-admin"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Panel</a>
+<nav class="tabs" aria-label="Main">
+  <a href="#/" data-nav="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Projects</a>
+  <a href="#/launch" data-nav="launch"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Launch</a>
+  <a href="#/portfolio" data-nav="portfolio"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="6.5" width="17" height="13" rx="3"/><path d="M8.5 6.5V5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/></svg>Portfolio</a>
+  <a href="#/owner" data-nav="owner" class="d-none" id="tab-owner"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Owner</a>
 </nav>
 <main id="app"></main>
 <footer class="foot">
-  <span>Peer no guarda tu dinero: cada proyecto tiene su propio contrato sin administrador.</span>
-  <a href="https://github.com/strvenjosue02-a11y/Vyron-pay-9" target="_blank" rel="noopener">Código abierto</a>
+  <span>Holdfast never holds your money. Every project has its own contract with no admin.</span>
+  <a href="https://github.com/strvenjosue02-a11y/Vyron-pay-9" target="_blank" rel="noopener">Open source</a>
 </footer>
 <div class="veil" id="veil"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-live="polite"></div>

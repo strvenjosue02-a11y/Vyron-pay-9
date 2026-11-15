@@ -11,6 +11,6 @@ export default async function handler(req, res) {
     const projects = subs.map((s) => ({ ...s.data, decision: byId[s.data.project.id] || null, updates: ups[s.data.project.id] || [] }));
     send(res, 200, { projects });
   } catch (e) {
-    send(res, 500, { error: "No se pudieron leer los proyectos." });
+    send(res, 500, { error: "Projects couldn't be loaded." });
   }
 }

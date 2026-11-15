@@ -98,11 +98,11 @@ export async function aiReview(project) {
     const { text } = await generateText({
       model: MODEL,
       maxOutputTokens: 700,
-      system: "Eres analista de riesgo de un launchpad cripto. Revisas proyectos antes de que el dueño los apruebe. " +
-        "Busca señales de estafa (promesas de ganancias garantizadas, urgencia, datos vagos, metas desproporcionadas, " +
-        "equipo que se queda demasiados tokens, entrega inicial alta, textos copiados o sin sentido). " +
-        "Responde SOLO un JSON: {\"riesgo\":\"bajo|medio|alto\",\"resumen\":\"una o dos frases\",\"senales\":[\"...\"],\"preguntas\":[\"...\"]}. " +
-        "Escribe en español simple. Máximo 4 señales y 3 preguntas para hacerle al creador.",
+      system: "You are a risk analyst for a crypto launchpad. You review projects before the owner approves them. " +
+        "Look for scam signals (guaranteed returns, urgency, vague details, outsized goals, a team keeping too many tokens, " +
+        "a high upfront release, copied or meaningless text). " +
+        "Reply ONLY with JSON: {\"riesgo\":\"bajo|medio|alto\",\"resumen\":\"one or two sentences\",\"senales\":[\"...\"],\"preguntas\":[\"...\"]}. " +
+        "Use riesgo bajo=low, medio=medium, alto=high. Write in plain English. At most 4 signals and 3 questions to ask the creator.",
       prompt: JSON.stringify(facts),
     });
     const j = JSON.parse(text.match(/\{[\s\S]*\}/)[0]);
@@ -110,6 +110,6 @@ export async function aiReview(project) {
       senales: (j.senales || []).slice(0, 4).map(String), preguntas: (j.preguntas || []).slice(0, 3).map(String), model: MODEL, at: Date.now() };
   } catch (e) {
     console.error("aiReview", e);
-    return { ok: false, error: "La revisión con IA no está disponible para este proyecto. Revísalo a mano antes de aprobarlo.", at: Date.now() };
+    return { ok: false, error: "AI review isn't available for this project. Review it by hand before approving.", at: Date.now() };
   }
 }

@@ -3,7 +3,7 @@
 // explorer https://basescan.org, USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913.
 export const CONFIG = {
   chainId: 11155111,
-  chainName: "Sepolia (prueba)",
+  chainName: "Sepolia testnet",
   rpc: "https://ethereum-sepolia-rpc.publicnode.com",
   explorer: "https://sepolia.etherscan.io",
   // USDC de prueba de Circle en Sepolia (se pide gratis en faucet.circle.com)

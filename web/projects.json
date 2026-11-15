@@ -2,10 +2,10 @@
   {
     "id": "cafe-demo",
     "meta": {
-      "category": "Alimentos",
+      "category": "Food & drink",
       "color": "#8A4B12",
-      "tagline": "Cafetería cooperativa de barrio, propiedad de sus clientes.",
-      "about": "Café Comunitario abrirá una cafetería en la que los clientes que apoyan el proyecto reciben tokens CAFE, canjeables por descuentos y con derecho a votar cada entrega de fondos al equipo. Esta es una demo con una meta pequeña, pensada para probar el ciclo completo con pocos USDC de prueba."
+      "tagline": "A neighbourhood coffee co-op owned by the people who drink there.",
+      "about": "Cafe Comunitario is opening a co-op coffee shop where backers receive CAFE tokens, redeemable for discounts and used to vote on every release of funds to the team. This is a demo with a small goal, so the full cycle can be tested with a few test USDC."
     },
     "params": {
       "creator": "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
@@ -24,10 +24,10 @@
   {
     "id": "reciclaje-demo",
     "meta": {
-      "category": "Medio ambiente",
-      "color": "#1F5E4B",
-      "tagline": "App que paga a las personas por reciclar en su ciudad.",
-      "about": "Recicla Ya conecta a personas que separan residuos con centros de acopio y las recompensa con tokens RECI por cada entrega verificada. Los fondos se usarán en tres etapas: desarrollo de la app, piloto en una ciudad y expansión a tres ciudades más."
+      "category": "Environment",
+      "color": "#2F5D50",
+      "tagline": "An app that pays people to recycle in their city.",
+      "about": "Recicla Ya connects people who sort their waste with collection points and rewards every verified drop-off with RECI tokens. Funds are used in three stages: building the app, a pilot in one city, and expansion to three more."
     },
     "params": {
       "creator": "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
