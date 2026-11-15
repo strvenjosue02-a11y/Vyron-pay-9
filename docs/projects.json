@@ -1,8 +1,10 @@
 [
   {
     "id": "cafe-demo",
-    "description": "Demo pequeña para probar todo rápido: con 5 USDC de prueba se llena y se puede cerrar al instante.",
-    "image": "☕",
+    "category": "Alimentos y bebidas",
+    "color": "#b45309",
+    "tagline": "Cafetería cooperativa de barrio, propiedad de sus clientes.",
+    "about": "Café Comunitario abrirá una cafetería en la que los clientes que apoyan el proyecto reciben tokens CAFE, canjeables por descuentos y con derecho a votar cada entrega de fondos al equipo. Esta es una demo con una meta pequeña, pensada para probar el ciclo completo con pocos USDC de prueba.",
     "params": {
       "creator": "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
       "name": "Cafe Comunitario",
@@ -19,8 +21,10 @@
   },
   {
     "id": "reciclaje-demo",
-    "description": "App que paga a la gente por reciclar. Meta mínima 300 USDC, máxima 1.000 USDC.",
-    "image": "♻️",
+    "category": "Medio ambiente",
+    "color": "#047857",
+    "tagline": "App que paga a las personas por reciclar en su ciudad.",
+    "about": "Recicla Ya conecta a personas que separan residuos con centros de acopio y las recompensa con tokens RECI por cada entrega verificada. Los fondos se usarán en tres etapas: desarrollo de la app, piloto en una ciudad y expansión a tres ciudades más.",
     "params": {
       "creator": "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
       "name": "Recicla Ya",

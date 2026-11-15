@@ -2,75 +2,35 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vyron Launchpad</title>
-<meta name="description" content="Apoya proyectos con USDC. Tu dinero queda bloqueado en una alcancía sin dueño.">
-<style>
-  :root {
-    --bg: #0d1117; --card: #161b22; --line: #2a313c; --text: #e6edf3; --muted: #8b949e;
-    --accent: #3b82f6; --accent-text: #fff; --ok: #22c55e; --warn: #f59e0b; --bad: #ef4444;
-  }
-  @media (prefers-color-scheme: light) {
-    :root { --bg: #f6f8fa; --card: #fff; --line: #d0d7de; --text: #1f2328; --muted: #57606a; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between;
-    gap: 8px; padding: 12px 16px; background: var(--bg); border-bottom: 1px solid var(--line); }
-  header h1 { font-size: 18px; margin: 0; }
-  main { max-width: 640px; margin: 0 auto; padding: 16px; }
-  .net { font-size: 12px; color: var(--warn); }
-  button { font: inherit; font-weight: 600; border: 0; border-radius: 10px; padding: 10px 14px;
-    background: var(--accent); color: var(--accent-text); cursor: pointer; }
-  button.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
-  button.ok { background: var(--ok); } button.bad { background: var(--bad); }
-  button:disabled { opacity: .5; cursor: default; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
-  .top { display: flex; gap: 12px; align-items: center; }
-  .emoji { font-size: 36px; }
-  .card h2 { margin: 0; font-size: 18px; }
-  .muted { color: var(--muted); font-size: 14px; }
-  .badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); }
-  .bar { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 12px 0 6px; position: relative; }
-  .bar > div { height: 100%; background: var(--accent); }
-  .bar .soft { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--warn); }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; font-size: 14px; }
-  .grid b { display: block; font-size: 16px; }
-  .risk { border-radius: 10px; padding: 12px; margin: 12px 0; background: color-mix(in srgb, var(--ok) 12%, transparent); font-size: 14px; }
-  .risk.warn { background: color-mix(in srgb, var(--warn) 14%, transparent); }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-  input { font: inherit; flex: 1; min-width: 0; padding: 10px; border-radius: 10px; border: 1px solid var(--line);
-    background: var(--bg); color: var(--text); }
-  .addr { font-family: ui-monospace, monospace; font-size: 12px; word-break: break-all; }
-  a { color: var(--accent); }
-  #toast { position: fixed; left: 16px; right: 16px; bottom: 16px; max-width: 608px; margin: 0 auto; padding: 12px 14px;
-    border-radius: 12px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 6px 24px #0006; display: none; z-index: 10; }
-  details { margin-top: 12px; font-size: 14px; }
-</style>
+<meta name="description" content="Financia proyectos con USDC. Los fondos quedan en un contrato sin administrador, con reembolso garantizado y entregas por etapas votadas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-<header>
-  <div>
-    <h1>🐷 Vyron Launchpad</h1>
-    <div class="net" id="net"></div>
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="#/">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="var(--accent)"/><path d="M8 9l6 11 6-11" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Vyron</span>
+    </a>
+    <div class="nav-r">
+      <span class="net" id="net"><i></i><span></span></span>
+      <button class="btn btn-primary btn-sm" id="connect">Conectar wallet</button>
+    </div>
   </div>
-  <button id="connect">Conectar wallet</button>
 </header>
-<main>
-  <div class="card" id="help">
-    <b>¿Cómo funciona?</b>
-    <p class="muted" style="margin:6px 0 0">Pones USDC en la alcancía del proyecto y recibes sus tokens.
-      La alcancía <b>no tiene dueño</b>: si no se llega a la meta, recuperas el 100%. Si se llega,
-      el creador recibe el dinero <b>por etapas</b> y los compradores votan cada etapa.
-      La alcancía no existe hasta que alguien compra: el primer comprador la crea por centavos.</p>
-    <p class="muted" id="phantom-tip" style="display:none;margin:8px 0 0">📱 Desde el celular, abre esta página dentro de Phantom:
-      <a id="phantom-link" href="#">Abrir en Phantom</a></p>
-  </div>
-  <div id="projects"><p class="muted">Cargando proyectos…</p></div>
-  <p class="muted" style="text-align:center">Código abierto · Contrato sin dueño · <a id="src" href="https://github.com/strvenjosue02-a11y/Vyron-pay-9">GitHub</a></p>
-</main>
-<div id="toast"></div>
+<main id="app"></main>
+<footer class="foot">
+  <div>Contratos de código abierto · Sin administrador · Comisión 1% USDC + 1,5% tokens solo en proyectos financiados</div>
+  <a href="https://github.com/strvenjosue02-a11y/Vyron-pay-9" target="_blank" rel="noopener">Código fuente</a>
+</footer>
+<div class="sheet-bg" id="sheet-bg"></div>
+<div class="sheet" id="sheet" role="dialog" aria-live="polite"></div>
+<div class="toast" id="toast"></div>
 <script type="module" src="./app.js"></script>
 </body>
 </html>
