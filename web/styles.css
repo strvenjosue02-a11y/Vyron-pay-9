@@ -946,3 +946,13 @@ body.sw-l #app { animation: swl .35s ease; } body.sw-r #app { animation: swr .35
 .vt-btns { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; margin-top: 16px; } .vt-btns .btn { border-radius: 999px; }
 .st-vote { margin: 4px 0 14px; padding: 12px 14px; border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(255,46,136,.35); }
 .note.ok { color: #ffc2dc !important; background: rgba(255,46,136,.08) !important; border-color: rgba(255,46,136,.3) !important; }
+/* lado derecho simple */
+.pos-c { border-radius: 24px; border: 0; background: linear-gradient(180deg, #141315, #0d0c0e); box-shadow: 0 0 0 1px rgba(255,255,255,.07); }
+.pos-top { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .pos-top span { display: block; font-size: 12.5px; color: #8d8f95; } .pos-top b { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.pos-safe { margin: 14px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.03); font-size: 13.5px; color: #e0dcda; }
+.pos-card { margin-top: 12px; background: none; border: 0; color: #ff7ab8; font: 500 13.5px var(--font); cursor: pointer; padding: 0; }
+.fold { border-radius: 20px; box-shadow: 0 0 0 1px rgba(255,255,255,.07); margin-top: 16px; }
+.fold > summary { list-style: none; cursor: pointer; padding: 16px 20px; display: flex; justify-content: space-between; font-weight: 500; }
+.fold > summary::after { content: "+"; color: #ff2e88; font-size: 20px; line-height: 1; } .fold[open] > summary::after { content: "–"; } .fold > summary::-webkit-details-marker { display: none; }
+.fold > .panel { margin: 0; box-shadow: none !important; }
+.aside > * + * { margin-top: 16px; }

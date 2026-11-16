@@ -591,6 +591,13 @@ function creatorHistory(p) {
   return `<section class="hist"><b>Creator track record</b><div class="hist-n"><div><strong>${mine.length}</strong><span>Other projects</span></div><div><strong>${ok}</strong><span>Funded</span></div><div><strong>${done}</strong><span>Releases delivered</span></div><div><strong>${bad}</strong><span>Cancelled</span></div></div>
     <div class="hist-l">${mine.slice(0, 4).map((x) => `<a href="#/p/${x.id}">${esc(x.q.name)} <em>${phase(x).t}</em></a>`).join("")}</div></section>`;
 }
+function asideFor(p) {
+  const mine = S.me && p.u.contributed > 0n, s = p.s, voting = s.voteEnd > 0n && S.now < Number(s.voteEnd);
+  const main = p.mk && S.me ? tradePanel(p) : pInvest(p);
+  if (mine && voting) return `${pVote(p)}${pPosition(p)}<details class="fold"><summary>${p.mk ? `Buy or sell ${esc(p.q.symbol)}` : "Back more"}</summary>${main}</details>`;
+  if (mine) return `${pPosition(p)}${main}${pVote(p)}`;
+  return `${main}${pVote(p)}`;
+}
 function vProject(p) {
   const { q } = p, ph = phase(p), step = (10000 - q.initialBps) / q.milestones / 100;
   return `
@@ -618,7 +625,7 @@ function vProject(p) {
       <div class="ptabs" role="tablist" aria-label="Project sections">${TABS_ALL(p).slice(0).filter(([k]) => k !== "team" || true).map(([k, t]) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${S.tab === k}">${t}</button>`).join("")}</div>
       <div class="ptab-body">${tabBody(p)}</div>
     </div>
-    <aside class="aside">${p.mk && S.me ? tradePanel(p) : pInvest(p)}${S.me && p.u.contributed > 0n ? pPosition(p) : ""}${pVote(p)}</aside>
+    <aside class="aside">${asideFor(p)}</aside>
   </div>
   ${buyBar(p)}`;
 }
@@ -679,7 +686,7 @@ function tabBody(p) {
       <div><span class="muted">Network</span><span>${esc(CONFIG.chainName)}</span></div></div>`;
   return `<p class="prose">${esc(p.meta.about)}</p>
     ${moneyBar(p)}${creatorHistory(p)}
-    <section class="sim" aria-label="Investment simulator">
+${phase(p).c === "open" ? `    <section class="sim" aria-label="Investment simulator">
       <div class="sim-h"><h3>Simulate your backing</h3><b id="sim-v">$100</b></div>
       <input id="sim" type="range" min="10" max="1000" step="10" value="100" aria-label="Amount to simulate">
       <div class="sim-rows">
@@ -687,7 +694,7 @@ function tabBody(p) {
         <div class="sim-case"><span>Team stops after release 1</span><b id="sim-stop"></b><i class="sim-bar"><s id="bar-stop"></s></i></div>
         <div class="sim-case"><span>Every release approved</span><b>You keep all your tokens</b><i class="sim-bar"><s style="width:100%"></s></i></div>
       </div>
-    </section>
+    </section>` : ""}
 `;
 }
 function bindTab(p) {
@@ -805,26 +812,15 @@ function pInvest(p) {
 }
 function pPosition(p) {
   const { s, u, q } = p;
-  let top = "";
-  if (s.state === 1) {
-    const kept = s.poolAfterFees - s.usdcReleased, inPool = s.liquidityUsdc || 0n, fee = (s.totalRaised * 100n) / 10000n;
-    top = `<div class="muted" style="font-size:14px">Most you could lose today</div><div class="big" data-testid="risk">${maxLoss(p).toFixed(1)}%</div>
-      <div class="split"><i style="width:${pct(kept, s.totalRaised)}%;background:var(--ink)"></i><i style="width:${pct(s.usdcReleased, s.totalRaised)}%;background:var(--ember)"></i><i style="width:${pct(inPool, s.totalRaised)}%;background:#ff7ab8"></i><i style="width:${pct(fee, s.totalRaised)}%;background:var(--rule-2)"></i></div>
-      <div class="keys"><span style="--c:var(--ink)">Locked $${usd(kept)}</span><span style="--c:var(--ember)">Released $${usd(s.usdcReleased)}</span>${inPool > 0n ? `<span style="--c:#ff7ab8">In pool $${usd(inPool)}</span>` : ""}<span style="--c:var(--rule-2)">Fee $${usd(fee)}</span></div>`;
-  }
-  if (s.state === 0) top = `<div class="note ok" style="margin:0 0 8px">Fully protected until the raise closes.</div>`;
   const back = s.state === 2 && s.totalRaised > 0n ? (s.refundPool * u.contributed) / s.totalRaised : 0n;
   const btns = [];
-  if (s.succeeded && !u.claimed) btns.push(`<button class="btn btn-dark btn-block" data-act="claimTokens" data-testid="claim">Claim my tokens</button>`);
-  if (s.state === 2 && !u.settled) btns.push(`<button class="btn btn-dark btn-block" data-act="refund" data-testid="refund">Get my money back</button>`);
-  btns.push(`<button class="btn btn-line btn-block" data-act="card" data-testid="backer-card">Get my backer card</button>`);
-  return `<div class="panel"><h3>Your position</h3>${top}
-    <div class="lines" style="margin-top:12px">
-      <div><span>You put in</span><b>$${usd(u.contributed)}</b></div>
-      <div><span>Your tokens</span><b>${tok(u.balance)} ${esc(q.symbol)}</b></div>
-      ${s.succeeded && !u.claimed ? `<div><span>Tokens to claim</span><b>${tok((u.contributed * q.saleTokens) / q.hardcap)} ${esc(q.symbol)}</b></div>` : ""}
-      ${s.state === 2 ? `<div><span>Refund</span><b>${u.settled ? "Withdrawn" : "$" + usd(back)}</b></div>` : ""}
-    </div>${btns.length ? `<div style="display:grid;gap:8px;margin-top:16px">${btns.join("")}</div>` : ""}</div>`;
+  if (s.succeeded && !u.claimed) btns.push(`<button class="btn btn-ember btn-block" data-act="claimTokens" data-testid="claim">Claim my tokens</button>`);
+  if (s.state === 2 && !u.settled) btns.push(`<button class="btn btn-ember btn-block" data-act="refund" data-testid="refund">Get my money back</button>`);
+  const safe = s.state === 0 ? "100% protected until the raise closes" : s.state === 1 ? `${(100 - maxLoss(p)).toFixed(0)}% of your money is still protected` : s.state === 2 ? (u.settled ? "Refund withdrawn" : `Refund ready: $${usd(back)}`) : "";
+  return `<div class="panel pos-c"><div class="pos-top"><div><span>Your investment</span><b>$${usd(u.contributed)}</b></div><div><span>Your tokens</span><b>${tok(s.succeeded && !u.claimed ? (u.contributed * q.saleTokens) / q.hardcap : u.balance)} ${esc(q.symbol)}</b></div></div>
+    ${safe ? `<p class="pos-safe" data-testid="risk">🛡 ${safe}</p>` : ""}
+    ${btns.length ? `<div style="display:grid;gap:8px;margin-top:12px">${btns.join("")}</div>` : ""}
+    <button class="pos-card" type="button" data-act="card" data-testid="backer-card">Get my backer card →</button></div>`;
 }
 function pVote(p) {
   const { s, u, q } = p;

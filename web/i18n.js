@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Your investment": "Tu inversión", "Your tokens": "Tus tokens", "100% protected until the raise closes": "100% protegido hasta que cierre la ronda", "Get my backer card →": "Mi carta de inversor →", "Claim my tokens": "Reclamar mis tokens", "Get my money back": "Recuperar mi dinero", "Back more": "Invertir más",
   "They promised": "Prometieron", "Check the Updates tab, then vote. Your vote weighs as much as you put in.": "Revisa la pestaña Avances y luego vota. Tu voto pesa lo que invertiste.", "Approve release": "Aprobar entrega", "Reject": "Rechazar", "You voted on this release. Results update live.": "Ya votaste en esta entrega. Los resultados se actualizan en vivo.", "Only backers can vote.": "Solo los inversores pueden votar.", "Voting ended": "Votación terminada", "Release vote": "Votación de entrega",
   "Rejected once · second chance until": "Rechazada una vez · segunda oportunidad hasta",
   "Creator studio": "Estudio del creador", "Your projects, what needs your attention, and your reputation as backers see it.": "Tus proyectos, lo que necesita tu atención y tu reputación tal como la ven los inversores.", "Needs your attention": "Necesita tu atención", "Your projects": "Tus proyectos", "Your reputation": "Tu reputación",
@@ -127,6 +128,7 @@ const ES = {
 
 // Textos con números u otras partes variables.
 const RULES = [
+  [/^🛡 (\d+)% of your money is still protected$/, (m) => `🛡 El ${m[1]}% de tu dinero sigue protegido`], [/^Buy or sell (.+)$/, (m) => `Comprar o vender ${m[1]}`], [/^Refund ready: (.+)$/, (m) => `Reembolso listo: ${m[1]}`],
   [/^Release (\d+) of (\d+)( · second chance)?$/, (m) => `Entrega ${m[1]} de ${m[2]}${m[3] ? " · segunda oportunidad" : ""}`],
   [/^Closes (.+)$/, (m) => `Cierra el ${m[1]}`], [/^Vote on release (\d+)$/, (m) => `Votación de la entrega ${m[1]}`],
   [/^Approve \$(.+?)( · (\d+)%)?$/, (m) => `Aprobar $${m[1]}${m[2] ? ` · ${m[3]}%` : ""}`], [/^Reject \$(.+?)( · (\d+)%)?$/, (m) => `Rechazar $${m[1]}${m[2] ? ` · ${m[3]}%` : ""}`],
