@@ -2,7 +2,7 @@
 // Para el lanzamiento real se usa Base: chainId 8453, rpc https://mainnet.base.org,
 // explorer https://basescan.org, USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913.
 export const CONFIG = {
-  demo: false,
+  demo: new URLSearchParams(location.search).has("demo"), // ?demo=1 abre el modo demostración (cadena simulada)
   chainId: 11155111,
   chainName: "Sepolia testnet",
   rpc: "https://ethereum-sepolia-rpc.publicnode.com",
@@ -16,5 +16,5 @@ export const CONFIG = {
   swapRouter: "0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E",
   quoter: "0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3",
   // Wallet que recibe 1% USDC + 1,5% tokens
-  platform: "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
+  platform: new URLSearchParams(location.search).has("demo") ? "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" : "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
 };

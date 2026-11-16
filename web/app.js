@@ -221,7 +221,7 @@ function tradePanel(p) {
     <div class="cy-toggle" role="tablist"><button type="button" data-side="buy" aria-selected="${side === "buy"}">Buy</button><button type="button" data-side="sell" aria-selected="${side === "sell"}">Sell</button></div>
     <label class="cy-lab" for="tamt">${side === "buy" ? "You pay" : "You sell"}</label>
     <div class="field-amt cy-field"><input id="tamt" type="number" inputmode="decimal" min="0" step="any" placeholder="0" data-testid="trade-amount"><span class="u">${side === "buy" ? "USDC" : esc(p.q.symbol)}</span></div>
-    <div class="tx-q">${[25, 50, 100].map((v) => `<button type="button" data-pct="${v}">${v === 100 ? "Max" : v + "%"}</button>`).join("")}</div>
+    ${side === "buy" ? `<div class="tx-q tx-amts">${[5, 10, 25, 50, 100].map((v) => `<button type="button" data-amt="${v}">$${v}</button>`).join("")}<button type="button" data-pct="100">Max</button></div>` : `<div class="tx-q">${[25, 50, 100].map((v) => `<button type="button" data-pct="${v}">${v === 100 ? "Max" : v + "%"}</button>`).join("")}</div>`}
     <div class="under"><span>Balance ${side === "buy" ? `${usd(S.usdc)} USDC` : `${tok(p.u.balance)} ${esc(p.q.symbol)}`}</span><span class="tx-slip">Slippage ${[0.5, 1, 2].map((v) => `<button type="button" data-slip="${v}" aria-pressed="${(S.slip || 1) === v}">${v}%</button>`).join("")}</span></div>
     <div class="lines cy-sum"><div><span>You receive</span><b id="tout">–</b></div><div><span>Minimum you'll get</span><b id="tmin">–</b></div><div><span>Price impact</span><b id="timp">–</b></div><div><span>Pool fee</span><b>0.3%</b></div></div>
     <button class="btn btn-cyber btn-block" data-act="swap" data-testid="swap">${side === "buy" ? `Buy ${esc(p.q.symbol)}` : `Sell ${esc(p.q.symbol)}`}</button>
@@ -234,6 +234,7 @@ function bindTrade(p) {
   el.oninput = () => { clearTimeout(quoteT); quoteT = setTimeout(() => quote(p), 250); };
   document.querySelectorAll("[data-pct]").forEach((b) => (b.onclick = () => { const side = S.side || "buy", bal = side === "buy" ? S.usdc : p.u.balance, d = side === "buy" ? 6 : 18;
     const v = (bal * BigInt(b.dataset.pct)) / 100n; el.value = formatUnits(v, d).replace(/(\.\d{0,6})\d*$/, "$1"); el.oninput(); }));
+  document.querySelectorAll("[data-amt]").forEach((b) => (b.onclick = () => { el.value = b.dataset.amt; el.oninput(); }));
   document.querySelectorAll("[data-slip]").forEach((b) => (b.onclick = () => { S.slip = Number(b.dataset.slip); document.querySelectorAll("[data-slip]").forEach((x) => x.setAttribute("aria-pressed", x === b)); }));
 }
 async function quote(p) {
@@ -538,8 +539,8 @@ function startTerminal(p) {
   bindTrade(p);
   const es = (localStorage.getItem("hf-lang") || "en") === "es";
   chartOff = mountChart($("#chartpro"), { id: p.id, fsTarget: document.querySelector(".term"), periods: Object.keys(PERIODS), period: S.period || "5m", onPeriod: (k) => (S.period = k),
-    getData: (per) => (p.mk ? { candles: buildCandles(p, per), round: p.mk.round } : { candles: [], round: 0 }),
-    labels: es ? { candles: "Velas", line: "Línea", ma: "Promedios", draw: "Dibujar", clear: "Borrar", full: "Pantalla completa", exit: "Salir", vol: "Vol" } : {} });
+    getData: (per) => (p.mk ? { candles: buildCandles(p, per), round: p.mk.round, supply: p.supply ? Number(p.supply) / 1e18 : 0 } : { candles: [], round: 0, supply: 0 }),
+    labels: es ? { cap: "Valor total", price: "Precio", candles: "Velas", line: "Línea", ma: "Promedios", draw: "Dibujar", clear: "Borrar", full: "Pantalla completa", exit: "Salir", vol: "Vol" } : {} });
   const stats = () => { if (!p.mk) return; const x = stats24(p), d = $("#tt-delta"); if (!d) return; d.className = x.chg >= 0 ? "u" : "d"; d.textContent = `${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(2)}% 24h`;
     $("#tx-hi").textContent = fmtP(x.hi); $("#tx-lo").textContent = fmtP(x.lo); $("#tt-vol").textContent = "$" + usd(x.vol); if (x.cap) $("#tx-cap").textContent = "$" + x.cap.toLocaleString("en-US", { maximumFractionDigits: 0 }); };
   const reTerm = () => { if (!$("#term-tab")) return; chartOff?.update(); $("#term-tab").innerHTML = termTab(p); stats(); };

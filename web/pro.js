@@ -1,19 +1,20 @@
 // Gráfico de trading "pro" (SVG puro, sin librerías): velas rosa (sube) / violeta (baja), volumen, promedios MA7/MA25,
 // cruz con precio exacto, dibujar líneas de tendencia, vista línea/velas y pantalla completa.
 const UP = "#e8508f", DN = "#8f6be8";
-const fmt = (x) => (x >= 0.01 ? x.toLocaleString("en-US", { maximumFractionDigits: 4 }) : x.toPrecision(3));
+let CAP = false;
+const fmt = (x) => (CAP && x >= 1000 ? (x >= 1e9 ? (x / 1e9).toFixed(2) + "B" : x >= 1e6 ? (x / 1e6).toFixed(2) + "M" : (x / 1e3).toFixed(1) + "K") : x >= 0.01 ? x.toLocaleString("en-US", { maximumFractionDigits: 4 }) : x.toPrecision(3));
 const ma = (cs, n) => cs.map((_, i) => (i + 1 < n ? null : cs.slice(i + 1 - n, i + 1).reduce((a, c) => a + c.c, 0) / n));
 
 export function mountChart(el, { id, getData, periods, period, onPeriod, labels = {}, fsTarget }) {
   const L = { candles: "Candles", line: "Line", ma: "MA", draw: "Draw", clear: "Clear", full: "Full screen", exit: "Exit", vol: "Vol", ...labels };
   const key = `hf-lines-${id}`;
   let lines = []; try { lines = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
-  const st = { mode: "candle", ma: true, draw: false, pending: null, hover: null, period };
+  const st = { cap: false, mode: "candle", ma: true, draw: false, pending: null, hover: null, period };
   el.classList.add("cp");
   el.innerHTML = `<div class="cp-bar">
       <div class="cp-per" role="tablist">${periods.map((k) => `<button type="button" data-per="${k}" aria-selected="${k === period}">${k}</button>`).join("")}</div>
       <div class="cp-tools">
-        <button type="button" data-t="mode" title="${L.line}">${L.candles}</button>
+        <button type="button" data-t="unit" title="Price / Market cap">${L.price || "Price"}</button><button type="button" data-t="mode" title="${L.line}">${L.candles}</button>
         <button type="button" data-t="ma" aria-pressed="true">${L.ma}</button>
         <button type="button" data-t="draw" aria-pressed="false" title="${L.draw}">✎ ${L.draw}</button>
         <button type="button" data-t="clear" title="${L.clear}">⌫</button>
@@ -24,8 +25,8 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   const box = el.querySelector(".cp-svg"), info = el.querySelector(".cp-info");
   const save = () => { try { localStorage.setItem(key, JSON.stringify(lines)); } catch {} };
 
-  function render() {
-    const d = getData(st.period), cs = d.candles; if (!cs.length) { box.innerHTML = ""; return; }
+  function render() { CAP = st.cap;
+    const d0 = getData(st.period), k = st.cap && d0.supply ? d0.supply : 1, d = { ...d0, round: d0.round * k }, cs = d0.candles.map((c) => ({ ...c, o: c.o * k, h: c.h * k, l: c.l * k, c: c.c * k })); if (!cs.length) { box.innerHTML = ""; return; }
     const W = Math.max(300, box.clientWidth || el.clientWidth || 600), H = Math.max(240, box.clientHeight || 380);
     const AX = 66, BX = 22, VH = Math.round(H * 0.17), PH = H - BX - VH - 6, cw = (W - AX) / cs.length;
     const hi = Math.max(...cs.map((c) => c.h), d.round) * 1.02, lo = Math.min(...cs.map((c) => c.l), d.round) * 0.98;
@@ -52,7 +53,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     }
     if (st.ma) for (const [n, cls] of [[7, "m7"], [25, "m25"]]) { const m = ma(cs, n), pts = m.map((v, i) => (v == null ? "" : `${m[i - 1] == null ? "M" : "L"}${xc(i).toFixed(1)} ${y(v).toFixed(1)}`)).join(" "); if (pts.trim()) s += `<path d="${pts}" class="cp-ma ${cls}"/>`; }
     // líneas dibujadas (en coordenadas de vela y precio)
-    s += lines.map((l) => `<line x1="${xc(l[0])}" y1="${y(l[1])}" x2="${xc(l[2])}" y2="${y(l[3])}" class="cp-draw"/><circle cx="${xc(l[0])}" cy="${y(l[1])}" r="3" class="cp-dot"/><circle cx="${xc(l[2])}" cy="${y(l[3])}" r="3" class="cp-dot"/>`).join("");
+    s += lines.map((l) => `<line x1="${xc(l[0])}" y1="${y(l[1] * k)}" x2="${xc(l[2])}" y2="${y(l[3] * k)}" class="cp-draw"/><circle cx="${xc(l[0])}" cy="${y(l[1] * k)}" r="3" class="cp-dot"/><circle cx="${xc(l[2])}" cy="${y(l[3] * k)}" r="3" class="cp-dot"/>`).join("");
     if (st.pending) s += `<circle cx="${xc(st.pending[0])}" cy="${y(st.pending[1])}" r="4" class="cp-dot on"/>`;
     // precio actual
     const last = cs[cs.length - 1], lup = last.c >= (cs[cs.length - 2]?.c ?? last.o);
@@ -69,7 +70,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     hit.onpointermove = (e) => { const a = at(e); if (!st.hover || st.hover.i !== a.i || Math.abs(st.hover.py - a.py) > 2) { st.hover = a; render(); } };
     hit.onpointerleave = () => { st.hover = null; render(); };
     hit.onpointerdown = (e) => { if (!st.draw) return; const a = at(e), pt = [a.fi, inv(a.py)];
-      if (!st.pending) st.pending = pt; else { lines.push([...st.pending, ...pt]); st.pending = null; save(); }
+      if (!st.pending) st.pending = pt; else { lines.push([st.pending[0], st.pending[1] / k, pt[0], pt[1] / k]); st.pending = null; save(); }
       render(); };
   }
   function tlabel(t, per) { if (!t) return ""; const d = new Date(t * 1000);
@@ -78,6 +79,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     const b = e.target.closest("button"); if (!b) return;
     if (b.dataset.per) { st.period = b.dataset.per; el.querySelectorAll("[data-per]").forEach((x) => x.setAttribute("aria-selected", x === b)); onPeriod?.(st.period); render(); return; }
     const t = b.dataset.t;
+    if (t === "unit") { st.cap = !st.cap; b.textContent = st.cap ? (L.cap || "Market cap") : (L.price || "Price"); }
     if (t === "mode") { st.mode = st.mode === "candle" ? "line" : "candle"; b.textContent = st.mode === "candle" ? L.candles : L.line; }
     if (t === "ma") { st.ma = !st.ma; b.setAttribute("aria-pressed", st.ma); }
     if (t === "draw") { st.draw = !st.draw; st.pending = null; b.setAttribute("aria-pressed", st.draw); }

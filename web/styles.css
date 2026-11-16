@@ -1178,3 +1178,5 @@ body:has(.term.t-fs) { overflow: hidden; }
 .lb .nm { display: block; min-width: 0; color: #f0ecea; } .lb .nm small { display: block; }
 @media (max-width: 760px) { .lb li button { grid-template-columns: 22px 34px minmax(90px, 1fr) auto; } .lb .nm { overflow: visible; white-space: normal; } }
 @media (min-width: 761px) { .lb { width: 100%; max-width: 640px; } .lb li { display: block; } .lb li button { grid-template-columns: 28px 40px minmax(140px, 1fr) 96px 60px; padding: 10px 8px; } .lb .nm { white-space: nowrap; } .lb b { text-align: right; } }
+
+.tx-amts { grid-template-columns: repeat(6, 1fr); } .tx-amts button { font-size: 12.5px; padding: 8px 0; }
