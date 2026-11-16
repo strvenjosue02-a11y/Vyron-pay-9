@@ -36,6 +36,7 @@ contract Alcancia is ERC20, ReentrancyGuard {
     uint256 public constant FEE_TOKEN_BPS = 150; // 1,5% del supply final -> plataforma
     uint256 public constant BPS = 10_000;
     uint64 public constant VOTE_DURATION = 7 days;
+    uint64 public constant RETRY_WINDOW = 14 days; // segunda oportunidad tras perder un voto
     uint64 public constant LP_LOCK = 365 days; // bloqueo de la liquidez
     uint24 public constant POOL_FEE = 3000; // pool de 0,3% (tickSpacing 60)
     int24 internal constant MIN_TICK = -887220;
@@ -107,6 +108,7 @@ contract Alcancia is ERC20, ReentrancyGuard {
     uint256 public votesYes;
     uint256 public votesNo;
     uint256 public voteRound;
+    bool public retrying; // true = esta etapa ya perdió un voto; si pierde otra vez, se cancela
     mapping(uint256 => mapping(address => bool)) public voted;
 
     // ----------------------------------------------------------------- eventos
@@ -116,6 +118,7 @@ contract Alcancia is ERC20, ReentrancyGuard {
     event Refunded(address indexed buyer, uint256 usdcAmount);
     event VoteOpened(uint256 indexed round, uint64 voteEnd);
     event Voted(address indexed voter, uint256 indexed round, bool yes, uint256 weight);
+    event SecondChance(uint8 milestone, uint64 deadline);
     event Released(uint256 usdcAmount, uint256 tokenAmount, uint8 milestonesDone);
     event Cancelled(uint256 refundPool);
     event LiquidityAdded(address pool, uint256 tokenId, uint256 usdcAmount, uint256 tokenAmount, uint64 unlock);
@@ -266,9 +269,17 @@ contract Alcancia is ERC20, ReentrancyGuard {
         if (voteEnd == 0 || block.timestamp < voteEnd) revert NoVote();
         voteEnd = 0;
         if (votesNo > votesYes) {
+            if (!retrying) {
+                // segunda oportunidad: no se libera dinero; el creador tiene 14 días para volver a presentarse
+                retrying = true;
+                deadline = uint64(block.timestamp) + RETRY_WINDOW;
+                emit SecondChance(milestonesDone + 1, deadline);
+                return;
+            }
             _cancel();
             return;
         }
+        retrying = false;
         milestonesDone++;
         deadline = uint64(block.timestamp) + milestonePeriod;
         uint256 bps = (BPS - initialBps) / milestones;

@@ -90,7 +90,7 @@ async function loadCatalog() {
   }));
 }
 
-const READS = ["pool", "lpUnlock", "liquidityUsdc", "state", "totalRaised", "poolAfterFees", "usdcReleased", "milestonesDone", "voteEnd", "votesYes", "votesNo", "deadline", "succeeded", "refundPool", "voteRound"];
+const READS = ["pool", "lpUnlock", "liquidityUsdc", "state", "totalRaised", "poolAfterFees", "usdcReleased", "milestonesDone", "voteEnd", "votesYes", "votesNo", "deadline", "succeeded", "refundPool", "voteRound", "retrying"];
 async function loadChain(p) {
   const code = await pub.getCode({ address: p.address });
   p.exists = !!code && code !== "0x"; p.s = blankS(); p.u = blankU();
@@ -759,7 +759,7 @@ function stages(p) {
   for (let i = 0; i < q.milestones; i++) {
     const done = i < s.milestonesDone, now = s.state === 1 && i === s.milestonesDone;
     let sub = done ? "Approved by backers" : "Pending";
-    if (now) sub = s.voteEnd > 0n ? `Voting until ${day(s.voteEnd)}` : `The team must request it by ${day(s.deadline)}`;
+    if (now) sub = s.voteEnd > 0n ? `Voting until ${day(s.voteEnd)}${s.retrying ? " · second chance" : ""}` : s.retrying ? `Rejected once · second chance until ${day(s.deadline)}` : `The team must request it by ${day(s.deadline)}`;
     if (s.state === 2 && !done) sub = "Cancelled, funds returned to backers";
     items.push({ t: `Release ${i + 1}`, pct: step, done, now, sub });
   }
@@ -839,7 +839,8 @@ function pVote(p) {
     else if (open && u.voted) b += `<div class="note">You've voted on this release.</div>`;
     if (!open) b += `<button class="btn btn-dark btn-block" style="margin-top:16px" data-act="closeVote" data-testid="close-vote">Apply the result</button>`;
   } else if (S.now <= Number(s.deadline)) {
-    b = `<p class="muted" style="margin:0">The team must request release ${s.milestonesDone + 1} by ${day(s.deadline)}.</p>`;
+    b = s.retrying ? `<div class="note warn">Backers rejected release ${s.milestonesDone + 1}. Second chance: the team has until ${day(s.deadline)} to show progress and ask again. No money is released meanwhile; if they lose again, what's left returns to backers.</div>`
+      : `<p class="muted" style="margin:0">The team must request release ${s.milestonesDone + 1} by ${day(s.deadline)}.</p>`;
     if (isMe(q.creator)) b += `<button class="btn btn-line btn-block" style="margin-top:16px" data-act="requestRelease" data-testid="request">Request release ${s.milestonesDone + 1}</button>`;
   } else {
     b = `<p class="muted" style="margin:0">The team missed the deadline. Anyone can cancel the project and return what's left.</p>
@@ -1068,7 +1069,7 @@ function alertsFor(p) {
   if (phase(p).c === "open") out.push([dleft <= 5 ? "warn" : "info", `${dleft} days left in your raise`, `$${usd(s.totalRaised)} of $${usd(q.hardcap)} raised. Share your project to reach the goal.`]);
   if (s.state === 1 && s.milestonesDone < q.milestones) {
     if (s.voteEnd > 0n) out.push(["info", `Backers are voting on release ${s.milestonesDone + 1}`, `Voting closes ${day(s.voteEnd)}. Post an update showing what you delivered.`]);
-    else { const d = Math.ceil((Number(s.deadline) - S.now) / 86400); out.push([d <= 7 ? "warn" : "info", `Request release ${s.milestonesDone + 1} within ${Math.max(0, d)} days`, `Deadline ${day(s.deadline)}. If you miss it, what's left returns to backers.`, `#/p/${p.id}`, "Request release"]); }
+    else { const d = Math.ceil((Number(s.deadline) - S.now) / 86400); out.push([d <= 7 || s.retrying ? "warn" : "info", s.retrying ? `Second chance: present release ${s.milestonesDone + 1} again within ${Math.max(0, d)} days` : `Request release ${s.milestonesDone + 1} within ${Math.max(0, d)} days`, `Deadline ${day(s.deadline)}. If you miss it, what's left returns to backers.`, `#/p/${p.id}`, "Request release"]); }
   }
   const open = (p.qa || []).filter((x) => !x.answer).length;
   if (open) out.push(["warn", `${open} question${open === 1 ? "" : "s"} waiting for your answer`, "Answering fast builds trust.", `#/p/${p.id}`, "Answer"]);

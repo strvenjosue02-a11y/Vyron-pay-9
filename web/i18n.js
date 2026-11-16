@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Rejected once · second chance until": "Rechazada una vez · segunda oportunidad hasta",
   "Creator studio": "Estudio del creador", "Your projects, what needs your attention, and your reputation as backers see it.": "Tus proyectos, lo que necesita tu atención y tu reputación tal como la ven los inversores.", "Needs your attention": "Necesita tu atención", "Your projects": "Tus proyectos", "Your reputation": "Tu reputación",
   "This is what backers see on every project you launch. It can't be edited: it comes from the blockchain.": "Esto es lo que ven los inversores en cada proyecto que lances. No se puede editar: viene de la blockchain.", "Updates posted": "Avances publicados", "Post update": "Publicar avance", "Open project": "Abrir proyecto", "Paid to you": "Pagado a ti", "Request release": "Pedir entrega", "Answer": "Responder", "In review": "En revisión", "No update in 30 days": "Sin avances en 30 días", "Releases": "Entregas", "Raised": "Recaudado",
   "Four short steps. Holdfast reviews every project before it goes live. Signing is free.": "Cuatro pasos cortos. Holdfast revisa cada proyecto antes de publicarlo. Firmar es gratis.", "Project": "Proyecto", "Money": "Dinero", "Review": "Revisar",
@@ -125,6 +126,18 @@ const ES = {
 
 // Textos con números u otras partes variables.
 const RULES = [
+  [/^Rejected once · second chance until (.+)$/, (m) => `Rechazada una vez · segunda oportunidad hasta el ${m[1]}`],
+  [/^Voting until (.+) · second chance$/, (m) => `Votación hasta el ${m[1]} · segunda oportunidad`],
+  [/^(\d+) days left in your raise$/, (m) => `Quedan ${m[1]} días de recaudación`],
+  [/^Request release (\d+) within (\d+) days$/, (m) => `Pide la entrega ${m[1]} en ${m[2]} días`],
+  [/^Backers are voting on release (\d+)$/, (m) => `Los inversores están votando la entrega ${m[1]}`],
+  [/^(\d+) questions? waiting for your answer$/, (m) => `${m[1]} pregunta${m[1] === "1" ? "" : "s"} esperando tu respuesta`],
+  [/^(.+) · Deadline (.+)\. If you miss it, what's left returns to backers\.$/, (m) => `${m[1]} · Fecha límite ${m[2]}. Si no llegas, lo que queda vuelve a los inversores.`],
+  [/^(.+) · Backers trust teams that show progress\. Post an update\.$/, (m) => `${m[1]} · Los inversores confían en equipos que muestran avances. Publica uno.`],
+  [/^(.+) · \$(.+) of \$(.+) raised\. Share your project to reach the goal\.$/, (m) => `${m[1]} · $${m[2]} de $${m[3]} recaudado. Comparte tu proyecto para llegar a la meta.`],
+  [/^(.+) · Answering fast builds trust\.$/, (m) => `${m[1]} · Responder rápido genera confianza.`],
+  [/^Backers rejected release (\d+)\. Second chance: the team has until (.+) to show progress and ask again\. No money is released meanwhile; if they lose again, what's left returns to backers\.$/, (m) => `Los inversores rechazaron la entrega ${m[1]}. Segunda oportunidad: el equipo tiene hasta el ${m[2]} para mostrar avances y pedirla de nuevo. Mientras tanto no se libera dinero; si vuelve a perder, lo que queda regresa a los inversores.`],
+  [/^Second chance: present release (\d+) again within (\d+) days$/, (m) => `Segunda oportunidad: presenta la entrega ${m[1]} de nuevo en ${m[2]} días`],
   [/^Connect your wallet to buy or sell (.+)\. Anyone can buy with USDC\.$/, (m) => `Conecta tu wallet para comprar o vender ${m[1]}. Cualquiera puede comprar con USDC.`], [/^(.+) \/ USDC$/, (m) => `${m[1]} / USDC`],
   [/^In pool \$(.+)$/, (m) => `En el pool $${m[1]}`],
   [/^per (.+)$/, (m) => `por ${m[1]}`], [/^([+-]?[\d.]+)% vs round price$/, (m) => `${m[1]}% frente al precio de la ronda`], [/^Buy ([A-Z0-9]+)$/, (m) => `Comprar ${m[1]}`], [/^Sell ([A-Z0-9]+)$/, (m) => `Vender ${m[1]}`], [/^Balance (.+)$/, (m) => `Saldo ${m[1]}`],

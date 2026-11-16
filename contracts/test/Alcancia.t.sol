@@ -207,6 +207,21 @@ contract AlcanciaTest is Test {
         a.vote(true);
         vm.warp(vm.getBlockTimestamp() + 7 days);
         a.closeVote();
+        // primera derrota: segunda oportunidad, nada se libera
+        assertEq(uint256(a.state()), uint256(Alcancia.State.Active));
+        assertTrue(a.retrying());
+        assertEq(usdc.balanceOf(creator), 990 * U + 2_970 * U);
+        assertEq(a.deadline(), uint64(vm.getBlockTimestamp()) + 14 days);
+
+        // se presenta de nuevo y vuelve a perder: ahora sí se cancela
+        vm.prank(creator);
+        a.requestRelease();
+        vm.prank(bob);
+        a.vote(false);
+        vm.prank(alice);
+        a.vote(true);
+        vm.warp(vm.getBlockTimestamp() + 7 days);
+        a.closeVote();
         assertEq(uint256(a.state()), uint256(Alcancia.State.Refunding));
 
         // queda el 60% de 9.900 = 5.940, repartido 30/70
@@ -222,6 +237,47 @@ contract AlcanciaTest is Test {
         vm.prank(creator);
         vm.expectRevert(Alcancia.WrongState.selector);
         a.requestRelease(); // no puede pedir más
+    }
+
+    function test_secondChance_approvedOnRetry_and_missedRetryWindow() public {
+        Alcancia a = _lazyDeploy(_params(), alice);
+        _buy(a, alice, 4_000 * U);
+        _buy(a, bob, 6_000 * U);
+        a.finalize();
+        uint256 c0 = usdc.balanceOf(creator);
+        // pierde el primer voto
+        vm.prank(creator);
+        a.requestRelease();
+        vm.prank(bob);
+        a.vote(false);
+        vm.warp(vm.getBlockTimestamp() + 7 days);
+        a.closeVote();
+        assertTrue(a.retrying());
+        assertEq(usdc.balanceOf(creator), c0);
+        // se presenta otra vez con avances y gana: se libera la etapa y se reinicia la segunda oportunidad
+        vm.prank(creator);
+        a.requestRelease();
+        vm.prank(bob);
+        a.vote(true);
+        vm.warp(vm.getBlockTimestamp() + 7 days);
+        a.closeVote();
+        assertFalse(a.retrying());
+        assertEq(a.milestonesDone(), 1);
+        assertEq(usdc.balanceOf(creator) - c0, 2_970 * U);
+        // pierde la etapa 2 y no vuelve en 14 días: cualquiera cancela
+        vm.prank(creator);
+        a.requestRelease();
+        vm.prank(bob);
+        a.vote(false);
+        vm.warp(vm.getBlockTimestamp() + 7 days);
+        a.closeVote();
+        assertTrue(a.retrying());
+        vm.warp(vm.getBlockTimestamp() + 15 days);
+        vm.prank(creator);
+        vm.expectRevert(Alcancia.TooEarly.selector);
+        a.requestRelease();
+        a.abandon();
+        assertEq(uint256(a.state()), uint256(Alcancia.State.Refunding));
     }
 
     function test_creatorDisappears_anyoneCanCancel() public {
@@ -306,6 +362,16 @@ contract AlcanciaTest is Test {
                 a.vote(i != noAt);
                 vm.warp(vm.getBlockTimestamp() + 7 days);
                 a.closeVote();
+                if (a.retrying()) { // segunda oportunidad: se vuelve a votar NO
+                    vm.prank(creator);
+                    a.requestRelease();
+                    vm.prank(alice);
+                    a.vote(false);
+                    vm.prank(bob);
+                    a.vote(false);
+                    vm.warp(vm.getBlockTimestamp() + 7 days);
+                    a.closeVote();
+                }
                 if (a.state() == Alcancia.State.Refunding) break;
             }
         }
