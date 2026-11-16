@@ -1,20 +1,21 @@
 [
   {
-    "id": "cafe-demo",
+    "id": "kite-pay",
     "meta": {
-      "category": "Food & drink",
-      "color": "#8A4B12",
-      "tagline": "A neighbourhood coffee co-op owned by the people who drink there.",
-      "about": "Cafe Comunitario is opening a co-op coffee shop where backers receive CAFE tokens, redeemable for discounts and used to vote on every release of funds to the team. This is a demo with a small goal, so the full cycle can be tested with a few test USDC."
+      "category": "Technology",
+      "color": "#E0335C",
+      "logo": "./assets/tokens/kite.svg",
+      "tagline": "USDC payouts for Latin American freelancers, settled in seconds.",
+      "about": "Kite Pay lets clients pay freelancers in USDC and lets freelancers cash out to local bank accounts in Mexico, Colombia and Argentina. Release one ships the payout app, release two adds bank partners in two countries, release three opens the API for marketplaces. Demo with a small goal so the full cycle can be tested with a few test USDC."
     },
     "params": {
       "creator": "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
-      "name": "Cafe Comunitario",
-      "symbol": "CAFE",
+      "name": "Kite Pay",
+      "symbol": "KITE",
       "softcap": "2000000",
       "hardcap": "5000000",
       "saleTokens": "1000000000000000000000000",
-      "creatorTokens": "500000000000000000000000",
+      "creatorTokens": "400000000000000000000000",
       "saleEnd": 1798675200,
       "initialBps": 1000,
       "milestones": 3,
@@ -22,17 +23,18 @@
     }
   },
   {
-    "id": "reciclaje-demo",
+    "id": "atlas-oracle",
     "meta": {
-      "category": "Environment",
-      "color": "#2F5D50",
-      "tagline": "An app that pays people to recycle in their city.",
-      "about": "Recicla Ya connects people who sort their waste with collection points and rewards every verified drop-off with RECI tokens. Funds are used in three stages: building the app, a pilot in one city, and expansion to three more."
+      "category": "Technology",
+      "color": "#0E7490",
+      "logo": "./assets/tokens/atlas.svg",
+      "tagline": "Reliable on-chain prices for emerging-market currencies.",
+      "about": "Atlas Oracle publishes signed price feeds for currencies most oracles ignore, such as COP, ARS, NGN and PHP, so lending and payment protocols can serve those markets safely. Funds pay for independent data providers, an audit of the feed contracts and the first two production integrations."
     },
     "params": {
       "creator": "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
-      "name": "Recicla Ya",
-      "symbol": "RECI",
+      "name": "Atlas Oracle",
+      "symbol": "ATLS",
       "softcap": "300000000",
       "hardcap": "1000000000",
       "saleTokens": "10000000000000000000000000",
@@ -40,6 +42,29 @@
       "saleEnd": 1801353600,
       "initialBps": 1000,
       "milestones": 3,
+      "milestonePeriod": 5184000
+    }
+  },
+  {
+    "id": "lumen-wallet",
+    "meta": {
+      "category": "Technology",
+      "color": "#6B3A8C",
+      "logo": "./assets/tokens/lumen.svg",
+      "tagline": "A self-custody mobile wallet with social recovery and no seed phrase.",
+      "about": "Lumen Wallet replaces the seed phrase with recovery by trusted contacts and a hardware key, so people can hold their own crypto without the fear of losing twelve words. Releases cover the security audit, the iOS and Android betas and a public bug bounty."
+    },
+    "params": {
+      "creator": "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
+      "name": "Lumen Wallet",
+      "symbol": "LUMN",
+      "softcap": "500000000",
+      "hardcap": "2000000000",
+      "saleTokens": "20000000000000000000000000",
+      "creatorTokens": "8000000000000000000000000",
+      "saleEnd": 1802563200,
+      "initialBps": 1000,
+      "milestones": 4,
       "milestonePeriod": 5184000
     }
   }

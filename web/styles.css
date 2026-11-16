@@ -306,3 +306,10 @@ legend { font-family: var(--display); font-optical-sizing: auto; font-size: 20px
 .pc-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s1); margin: var(--s2) 0 0; padding-top: 12px; border-top: 1px solid var(--rule); }
 .pc-stats div { min-width: 0; } .pc-stats dt { font-size: 11.5px; color: var(--ink-3); } .pc-stats dd { margin: 2px 0 0; font-weight: 600; font-size: 15px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (prefers-reduced-motion: reduce) { .pcard { transform: none !important; } .pcard.legendary::before { animation: none; } }
+
+.mark.logo { object-fit: cover; padding: 0; background: var(--surface-2); border-radius: 50%; }
+.pc-coin { position: relative; width: 46%; aspect-ratio: 1; border-radius: 50%; box-shadow: 0 0 0 3px rgba(15,16,18,.6), 0 10px 30px rgba(0,0,0,.55); }
+.pc-tick { position: absolute; left: 12px; bottom: 10px; font-size: 12px; font-weight: 600; letter-spacing: .04em; color: rgba(242,242,239,.85); background: rgba(15,16,18,.55); padding: 2px 8px; border-radius: 999px; }
+.logo-pick { display: flex; align-items: center; gap: var(--s2); }
+.logo-prev { flex: none; width: 56px; height: 56px; border-radius: 50%; background: var(--surface-2) center / cover no-repeat; box-shadow: inset 0 0 0 1.5px var(--rule-2); }
+.logo-pick input { font-size: 14px; color: var(--ink-2); }

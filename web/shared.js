@@ -1,6 +1,6 @@
 // Código compartido entre la web y el servidor (sin dependencias).
 
-export const META_KEYS = ["category", "color", "tagline", "about"];
+export const META_KEYS = ["category", "color", "tagline", "about", "logo"];
 export const PARAM_KEYS = ["creator", "name", "symbol", "softcap", "hardcap", "saleTokens", "creatorTokens",
   "saleEnd", "initialBps", "milestones", "milestonePeriod"];
 
@@ -32,6 +32,7 @@ export function validate(p, nowSec) {
   if (!COLORS.includes(m.color)) return "Invalid colour.";
   if (!m.tagline || m.tagline.length < 10 || m.tagline.length > 120) return "The one-line summary must be 10 to 120 characters.";
   if (!m.about || m.about.length < 40 || m.about.length > 2000) return "The description must be 40 to 2,000 characters.";
+  if (m.logo && !(/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(m.logo) && m.logo.length <= 90000)) return "The token logo must be a PNG, JPG or WebP under 60 KB.";
   if (!/^0x[0-9a-fA-F]{40}$/.test(q.creator || "")) return "Invalid creator wallet.";
   if (!q.name || q.name.length < 3 || q.name.length > 40) return "The name must be 3 to 40 characters.";
   if (!/^[A-Z0-9]{2,8}$/.test(q.symbol || "")) return "The ticker must be 2 to 8 capital letters or digits.";

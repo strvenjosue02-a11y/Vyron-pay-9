@@ -139,7 +139,8 @@ function left(p) {
   const days = Math.floor(d / 86400);
   return days >= 1 ? `${days} day${days === 1 ? "" : "s"} left` : `${Math.ceil(d / 3600)} hours left`;
 }
-const mark = (p, lg = "") => `<div class="mark ${lg}" style="background:${esc(p.meta.color)}" aria-hidden="true">${esc(initials(p.q.name))}</div>`;
+const logoSrc = (p) => { const l = p.meta?.logo || ""; return /^data:image\/(webp|png|jpeg);base64,/.test(l) || /^\.\/assets\/tokens\/[\w-]+\.svg$/.test(l) ? l : ""; };
+const mark = (p, lg = "") => logoSrc(p) ? `<img class="mark ${lg} logo" src="${esc(logoSrc(p))}" alt="" width="64" height="64">` : `<div class="mark ${lg}" style="background:${esc(p.meta.color)}" aria-hidden="true">${esc(initials(p.q.name))}</div>`;
 const meter = (p) => `<div class="meter" role="img" aria-label="${pct(p.s.totalRaised, p.q.hardcap).toFixed(0)}% raised"><b style="width:${pct(p.s.totalRaised, p.q.hardcap)}%"></b><s style="left:${pct(p.q.softcap, p.q.hardcap)}%"></s></div>`;
 const maxLoss = (p) => (p.s.state === 1 ? 100 - pct(p.s.poolAfterFees - p.s.usdcReleased, p.s.totalRaised) : p.s.state === 2 ? null : 0);
 
@@ -189,7 +190,7 @@ function card(p) {
   return `<a class="pcard ${r.k}" href="#/p/${p.id}" data-testid="row-${p.id}" style="--pc:${esc(p.meta.color)}">
     <div class="pc-in">
       <div class="pc-top"><span class="pc-rar">${STAR.repeat(r.n)}<span>${r.t}</span></span><span class="pc-pct">${f.toFixed(0)}%</span></div>
-      <div class="pc-art" aria-hidden="true"><i class="pc-sun"></i><b>${esc(p.q.symbol)}</b></div>
+      <div class="pc-art" aria-hidden="true"><i class="pc-sun"></i>${logoSrc(p) ? `<img class="pc-coin" src="${esc(logoSrc(p))}" alt="">` : `<b>${esc(p.q.symbol)}</b>`}<span class="pc-tick">${esc(p.q.symbol)}</span></div>
       <div class="pc-body">
         <h3>${esc(p.q.name)}</h3>
         <p>${esc(p.meta.tagline)}</p>
@@ -356,6 +357,9 @@ function vLaunch() {
       </div>
       <div class="f"><label for="f-tag">One-line summary</label><input id="f-tag" name="tagline" maxlength="120" required placeholder="What you do and who it's for"></div>
       <div class="f"><label for="f-about">Description</label><textarea id="f-about" name="about" maxlength="2000" required placeholder="What the money is for, the timeline, and how backers will see progress."></textarea><small>40 to 2,000 characters.</small></div>
+      <div class="f"><label for="f-logo">Token logo</label>
+        <div class="logo-pick"><span class="logo-prev" id="logo-prev" aria-hidden="true"></span><input id="f-logo" type="file" accept="image/png,image/jpeg,image/webp"></div>
+        <small>Optional. PNG, JPG or WebP. It's shown on your project card and is part of what you sign.</small></div>
       <div class="f"><label>Colour</label><div class="chips swatch">${COLORS.map((c, i) => `<label><input type="radio" name="color" value="${c}" ${i ? "" : "checked"}><span style="--c:${c}" aria-label="Colour ${i + 1}"></span></label>`).join("")}</div></div>
     </fieldset>
     <fieldset><legend>The money</legend>
@@ -384,16 +388,32 @@ function readForm() {
   const name = g("name"), id = (name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36) || "project") + "-" + Math.random().toString(16).slice(2, 6);
   const usdc = (v) => { try { return parseUnits(v || "0", 6).toString(); } catch { return "0"; } };
   const toks = (v) => { try { return parseUnits(v || "0", 18).toString(); } catch { return "0"; } };
-  return { id, meta: { category: g("category"), color: g("color"), tagline: g("tagline"), about: g("about") },
+  return { id, meta: { category: g("category"), color: g("color"), tagline: g("tagline"), about: g("about"), logo: S.logo || "" },
     params: { creator: S.me, name, symbol: g("symbol").toUpperCase(), softcap: usdc(g("soft")), hardcap: usdc(g("hard")),
       saleTokens: toks(g("saleTokens")), creatorTokens: toks(g("creatorTokens")), saleEnd: String(Math.floor(Date.now() / 1000) + Number(g("days")) * 86400),
       initialBps: String(Number(g("initial")) * 100), milestones: g("ms"), milestonePeriod: String(Number(g("period")) * 86400) } };
+}
+async function pickLogo(e) {
+  const f = e.target.files?.[0];
+  if (!f) return;
+  try {
+    const img = await createImageBitmap(f);
+    const c = document.createElement("canvas"); c.width = c.height = 256;
+    const k = Math.max(256 / img.width, 256 / img.height), w = img.width * k, h = img.height * k;
+    c.getContext("2d").drawImage(img, (256 - w) / 2, (256 - h) / 2, w, h);
+    let url = c.toDataURL("image/webp", 0.85);
+    if (!url.startsWith("data:image/webp")) url = c.toDataURL("image/png");
+    if (url.length > 90000) return toast("That logo is too big. Try a simpler image.", true);
+    S.logo = url;
+    $("#logo-prev").style.backgroundImage = `url("${url}")`;
+    preview();
+  } catch { toast("That file isn't an image we can read.", true); }
 }
 function preview() {
   const p = readForm(), q = p.params, ms = Number(q.milestones), init = Number(q.initialBps) / 100, step = (100 - init) / ms;
   const hard = BigInt(q.hardcap || 0), soft = BigInt(q.softcap || 0);
   $("#preview").innerHTML = `<h3>How backers will see it</h3>
-    <div class="p-head" style="margin:0 0 16px"><div class="mark" style="background:${esc(p.meta.color)}">${esc(initials(q.name || "Your project"))}</div><div><b>${esc(q.name || "Your project")}</b><p style="font-size:14px">${esc(p.meta.tagline || "Your summary shows here")}</p></div></div>
+    <div class="p-head" style="margin:0 0 16px">${p.meta.logo ? `<img class="mark logo" src="${esc(p.meta.logo)}" alt="">` : `<div class="mark" style="background:${esc(p.meta.color)}">${esc(initials(q.name || "Your project"))}</div>`}<div><b>${esc(q.name || "Your project")}</b><p style="font-size:14px">${esc(p.meta.tagline || "Your summary shows here")}</p></div></div>
     <div class="lines">
       <div><span>Goal</span><b>$${usd(soft)} to $${usd(hard)}</b></div>
       <div><span>Price</span><b>${hard > 0n ? `1 USDC = ${tok((BigInt(q.saleTokens) * 1_000_000n) / hard)} ${esc(q.symbol || "TOKEN")}` : "-"}</b></div>
@@ -485,7 +505,7 @@ function route() {
   if (p) bindAmount(p);
   if (!p && key === "home") bindCards();
   if (p && keep && $("#amt")) { $("#amt").value = keep; $("#amt").dispatchEvent(new Event("input")); }
-  if ($("#form")) { $("#form").addEventListener("input", preview); $("#form").addEventListener("submit", submitProject); preview(); }
+  if ($("#form")) { $("#form").addEventListener("input", preview); $("#form").addEventListener("submit", submitProject); $("#f-logo").addEventListener("change", pickLogo); preview(); }
 }
 function bindAmount(p) {
   const el = $("#amt"); if (!el) return;
