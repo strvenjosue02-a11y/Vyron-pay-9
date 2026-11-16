@@ -1032,3 +1032,38 @@ body.sw-l #app { animation: swl .35s ease; } body.sw-r #app { animation: swr .35
   .tx-more { display: block; grid-column: 1 / -1; justify-self: start; background: none; border: 0; color: #ff7ab8; font: 500 13px var(--font); padding: 0; cursor: pointer; }
   .cp-ax { font-size: 12px; }
 }
+
+/* ===== Terminal limpia: neutro; rosa/violeta solo en gráfico, precio y botón principal ===== */
+.term.tx { --line: rgba(255,255,255,.07); }
+.term.tx::before, .term.tx::after { display: none !important; }
+.tx-top { border-bottom-color: var(--line); }
+.tx-px b { text-shadow: none; }
+.tx-stats > div { background: rgba(255,255,255,.025); box-shadow: inset 0 0 0 1px var(--line); }
+.tx-chart { background: #0b0b0d; box-shadow: 0 0 0 1px var(--line); }
+.tx-chart::after { display: none; }
+.cp-per, .cp-tools { background: rgba(255,255,255,.03); box-shadow: inset 0 0 0 1px var(--line); }
+.cp-bar button[aria-selected="true"], .cp-bar button[aria-pressed="true"] { color: #fff; background: rgba(255,255,255,.1); box-shadow: none; }
+.cp-grid { stroke: rgba(255,255,255,.05); }
+.term.tx .panel.cyber, .term.tx .tx-pos, .term.tx .tx-alert, .term.tx .tx-trust { background: #111113 !important; box-shadow: 0 0 0 1px var(--line) !important; }
+.term.tx .panel.cyber .cy-toggle button[aria-selected="true"] { background: rgba(255,255,255,.1); box-shadow: none; }
+.term.tx .panel.cyber .cy-live { color: #a3a1a6; } .term.tx .panel.cyber .cy-live i { background: #8d8f95; box-shadow: none; }
+.term.tx .tx-q button:hover { background: rgba(255,255,255,.1); }
+.term.tx .tx-slip button[aria-pressed="true"] { background: rgba(255,255,255,.12); }
+.term.tx .panel.cyber .btn { box-shadow: none; }
+.term.tx .term-tabs button[aria-selected="true"] { color: #fff; box-shadow: inset 0 -2px 0 #fff; background: none; }
+.term.tx .tx-trust a { color: #e9e6e4; } .term.tx .mk-star, .tx-fav.on { color: #ffd166; }
+.term.tx .coin3d { filter: none; }
+/* pantalla completa: toda la terminal */
+.term.t-fs { position: fixed !important; inset: 0; z-index: 2000; margin: 0 !important; max-width: none !important; width: 100vw; height: 100vh; overflow: auto; padding: 12px 16px 20px; background: #08080a; transform: none !important; }
+.term.t-fs > .back { display: none; }
+.term.t-fs .tx-top { grid-template-columns: auto auto 1fr auto; padding: 4px 0 10px; margin-bottom: 10px; }
+.term.t-fs .tx-top .coin3d { width: 44px; height: 44px; } .term.t-fs .tx-id h1 { font-size: 22px; } .term.t-fs .tx-px b { font-size: 28px; }
+.term.t-fs .tx-stats { grid-column: auto; grid-template-columns: repeat(6, auto); gap: 6px; } .term.t-fs .tx-stats > div { padding: 6px 10px; } .term.t-fs .tx-stats dd { font-size: 13px; }
+.term.t-fs .term-grid { grid-template-columns: minmax(0, 1fr) 340px; gap: 14px; }
+.term.t-fs .cp-svg { height: calc(100vh - 330px); min-height: 320px; }
+body:has(.term.t-fs) { overflow: hidden; }
+@media (max-width: 1000px) {
+  .term.t-fs .tx-top { grid-template-columns: auto 1fr; } .term.t-fs .tx-stats { display: none; }
+  .term.t-fs .term-grid { grid-template-columns: 1fr; } .term.t-fs .cp-svg { height: 55vh; }
+}
+.term.tx .panel.cyber::before { display: none !important; } .term.tx .panel.cyber { border-left: 0 !important; } .term.tx .cy-field .u, .term.tx .field-amt .u { color: #a3a1a6 !important; } .term.tx .cy-field { border-color: rgba(255,255,255,.1) !important; box-shadow: none !important; }

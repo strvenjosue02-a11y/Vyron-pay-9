@@ -4,7 +4,7 @@ const UP = "#ff2e88", DN = "#a855f7";
 const fmt = (x) => (x >= 0.01 ? x.toLocaleString("en-US", { maximumFractionDigits: 4 }) : x.toPrecision(3));
 const ma = (cs, n) => cs.map((_, i) => (i + 1 < n ? null : cs.slice(i + 1 - n, i + 1).reduce((a, c) => a + c.c, 0) / n));
 
-export function mountChart(el, { id, getData, periods, period, onPeriod, labels = {} }) {
+export function mountChart(el, { id, getData, periods, period, onPeriod, labels = {}, fsTarget }) {
   const L = { candles: "Candles", line: "Line", ma: "MA", draw: "Draw", clear: "Clear", full: "Full screen", exit: "Exit", vol: "Vol", ...labels };
   const key = `hf-lines-${id}`;
   let lines = []; try { lines = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
@@ -81,11 +81,11 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     if (t === "ma") { st.ma = !st.ma; b.setAttribute("aria-pressed", st.ma); }
     if (t === "draw") { st.draw = !st.draw; st.pending = null; b.setAttribute("aria-pressed", st.draw); }
     if (t === "clear") { lines = []; st.pending = null; save(); }
-    if (t === "full") { const on = !el.classList.contains("cp-fs"); el.classList.toggle("cp-fs", on); document.body.classList.toggle("cp-lock", on); b.textContent = on ? "✕" : "⛶"; b.title = on ? L.exit : L.full;
-      try { if (on && el.requestFullscreen) el.requestFullscreen().catch(() => {}); else if (!on && document.fullscreenElement) document.exitFullscreen(); } catch {} }
+    if (t === "full") { const tg = fsTarget || el, cls = fsTarget ? "t-fs" : "cp-fs", on = !tg.classList.contains(cls); tg.classList.toggle(cls, on); document.body.classList.toggle("cp-lock", on); b.textContent = on ? "✕" : "⛶"; b.title = on ? L.exit : L.full;
+      try { if (on && tg.requestFullscreen) tg.requestFullscreen().catch(() => {}); else if (!on && document.fullscreenElement) document.exitFullscreen(); } catch {} }
     render();
   };
-  const onFs = () => { if (!document.fullscreenElement && el.classList.contains("cp-fs")) { el.classList.remove("cp-fs"); document.body.classList.remove("cp-lock"); const b = el.querySelector(".cp-full"); b.textContent = "⛶"; } setTimeout(render, 50); };
+  const onFs = () => { const tg = fsTarget || el, cls = fsTarget ? "t-fs" : "cp-fs"; if (!document.fullscreenElement && tg.classList.contains(cls)) { tg.classList.remove(cls); document.body.classList.remove("cp-lock"); const b = el.querySelector(".cp-full"); b.textContent = "⛶"; } setTimeout(render, 50); };
   document.addEventListener("fullscreenchange", onFs);
   const ro = new ResizeObserver(() => render()); ro.observe(box);
   render();

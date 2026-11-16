@@ -425,7 +425,7 @@ function startTerminal(p) {
   else mountCoin($("#coin3d"), { logo: logoSrc(p), color: p.meta.color, symbol: p.q.symbol }).then((off) => (coinOff = off)).catch(() => {});
   bindTrade(p);
   const es = (localStorage.getItem("hf-lang") || "en") === "es";
-  chartOff = mountChart($("#chartpro"), { id: p.id, periods: Object.keys(PERIODS), period: S.period || "5m", onPeriod: (k) => (S.period = k),
+  chartOff = mountChart($("#chartpro"), { id: p.id, fsTarget: document.querySelector(".term"), periods: Object.keys(PERIODS), period: S.period || "5m", onPeriod: (k) => (S.period = k),
     getData: (per) => ({ candles: buildCandles(p, per), round: p.mk.round }),
     labels: es ? { candles: "Velas", line: "Línea", ma: "Promedios", draw: "Dibujar", clear: "Borrar", full: "Pantalla completa", exit: "Salir", vol: "Vol" } : {} });
   const stats = () => { const x = stats24(p), d = $("#tt-delta"); if (!d) return; d.className = x.chg >= 0 ? "u" : "d"; d.textContent = `${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(2)}% 24h`;
@@ -468,7 +468,7 @@ function left(p) {
   const days = Math.floor(d / 86400);
   return days >= 1 ? `${days} day${days === 1 ? "" : "s"} left` : `${Math.ceil(d / 3600)} hours left`;
 }
-const logoSrc = (p) => { const l = p.meta?.logo || ""; return /^data:image\/(webp|png|jpeg);base64,/.test(l) || /^\.\/assets\/tokens\/[\w-]+\.svg$/.test(l) ? l : ""; };
+const logoSrc = (p) => { const l = p.meta?.logo || ""; return /^data:image\/(webp|png|jpeg);base64,/.test(l) || /^\.\/assets\/tokens\/[\w-]+\.(svg|webp)$/.test(l) ? l : ""; };
 const coverSrc = (p) => { const c = p.meta?.cover || ""; return /^data:image\/(webp|png|jpeg);base64,/.test(c) || /^\.\/assets\/covers\/[\w-]+\.webp$/.test(c) ? c : ""; };
 const mark = (p, lg = "") => logoSrc(p) ? `<img class="mark ${lg} logo" src="${esc(logoSrc(p))}" alt="" width="64" height="64">` : `<div class="mark ${lg}" style="background:${esc(p.meta.color)}" aria-hidden="true">${esc(initials(p.q.name))}</div>`;
 const meter = (p) => `<div class="meter" role="img" aria-label="${pct(p.s.totalRaised, p.q.hardcap).toFixed(0)}% raised"><b style="width:${pct(p.s.totalRaised, p.q.hardcap)}%"></b><s style="left:${pct(p.q.softcap, p.q.hardcap)}%"></s></div>`;

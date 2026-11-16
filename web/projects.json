@@ -4,7 +4,7 @@
     "meta": {
       "category": "Technology",
       "color": "#E0335C",
-      "logo": "./assets/tokens/kite.svg",
+      "logo": "./assets/tokens/kite.webp",
       "cover": "./assets/covers/kite.webp",
       "tagline": "USDC payouts for Latin American freelancers, settled in seconds.",
       "about": "Kite Pay lets clients pay freelancers in USDC and lets freelancers cash out to local bank accounts in Mexico, Colombia and Argentina. Release one ships the payout app, release two adds bank partners in two countries, release three opens the API for marketplaces. Demo with a small goal so the full cycle can be tested with a few test USDC.",
@@ -30,7 +30,7 @@
     "meta": {
       "category": "Technology",
       "color": "#0E7490",
-      "logo": "./assets/tokens/atlas.svg",
+      "logo": "./assets/tokens/atlas.webp",
       "cover": "./assets/covers/atlas.webp",
       "tagline": "Reliable on-chain prices for emerging-market currencies.",
       "about": "Atlas Oracle publishes signed price feeds for currencies most oracles ignore, such as COP, ARS, NGN and PHP, so lending and payment protocols can serve those markets safely. Funds pay for independent data providers, an audit of the feed contracts and the first two production integrations.",
@@ -56,7 +56,7 @@
     "meta": {
       "category": "Technology",
       "color": "#6B3A8C",
-      "logo": "./assets/tokens/lumen.svg",
+      "logo": "./assets/tokens/lumen.webp",
       "cover": "./assets/covers/lumen.webp",
       "tagline": "A self-custody mobile wallet with social recovery and no seed phrase.",
       "about": "Lumen Wallet replaces the seed phrase with recovery by trusted contacts and a hardware key, so people can hold their own crypto without the fear of losing twelve words. Releases cover the security audit, the iOS and Android betas and a public bug bounty.",
