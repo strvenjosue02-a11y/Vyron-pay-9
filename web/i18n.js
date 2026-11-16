@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Markets": "Mercados", "All tokens": "Todos los tokens", "My PnL card": "Mi tarjeta de ganancia", "Download": "Descargar",
   "Whales": "Ballenas", "Share": "Compartir", "Image saved": "Imagen guardada", "No big trades yet.": "Todavía no hay operaciones grandes.",
   "Minimum you'll get": "Mínimo que recibes", "Pool fee": "Comisión del pool", "Your position": "Tu posición", "You hold": "Tienes", "Worth today": "Vale hoy", "vs what you paid": "frente a lo que pagaste", "More data": "Ver más datos", "Less": "Ver menos", "Show more": "Ver más",
   "The price changed while you were trading. You didn't lose anything: try again or raise the slippage.": "El precio cambió mientras operabas. No perdiste nada: intenta otra vez o sube la tolerancia.", "You cancelled it in your wallet. Nothing happened.": "Lo cancelaste en tu wallet. No pasó nada.",

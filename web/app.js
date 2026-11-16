@@ -357,6 +357,30 @@ const ICO = {
 };
 const whaleMin = (p) => Math.max(25, (Number(p.mk?.poolUsdc || 0n) / 1e6) * 0.05); // compra/venta >= 5% del pool
 const isWhale = (p, t) => Number(t.usdc) / 1e6 >= whaleMin(p);
+async function pnlCard(p) {
+  const x = myPos(p); if (!x) return; const up = x.pnl >= 0, col = up ? "#e8508f" : "#8f6be8", W = 1200, H = 675;
+  const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
+  g.fillStyle = "#09090b"; g.fillRect(0, 0, W, H);
+  const img = logoSrc(p) && await new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = logoSrc(p); });
+  if (img) { g.save(); g.globalAlpha = .55; const s = H; g.drawImage(img, W - s, 0, s, s); g.restore(); const fade = g.createLinearGradient(W - H, 0, W - H * .35, 0); fade.addColorStop(0, "#09090b"); fade.addColorStop(1, "rgba(9,9,11,0)"); g.fillStyle = fade; g.fillRect(W - H, 0, H, H); }
+  const glow = g.createRadialGradient(260, 380, 20, 260, 380, 520); glow.addColorStop(0, up ? "rgba(232,80,143,.22)" : "rgba(143,107,232,.22)"); glow.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = glow; g.fillRect(0, 0, W, H);
+  g.strokeStyle = "rgba(255,255,255,.08)"; g.lineWidth = 2; g.strokeRect(1, 1, W - 2, H - 2);
+  g.fillStyle = "#fff"; g.font = "600 44px 'Inter Tight', sans-serif"; g.fillText(`$${p.q.symbol}`, 70, 110);
+  g.fillStyle = "#8d8f95"; g.font = "400 26px 'Inter Tight', sans-serif"; g.fillText(p.q.name, 70, 150);
+  g.shadowColor = col; g.shadowBlur = 40; g.fillStyle = col; g.font = "800 150px 'Inter Tight', sans-serif"; g.fillText(`${x.pct >= 0 ? "+" : ""}${x.pct.toFixed(1)}%`, 60, 345); g.shadowBlur = 0;
+  g.fillStyle = "#fff"; g.font = "600 52px 'Inter Tight', sans-serif"; g.fillText(`${up ? "+" : "-"}$${Math.abs(x.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}`, 70, 425);
+  g.fillStyle = "#8d8f95"; g.font = "400 24px 'Inter Tight', sans-serif"; g.fillText("Holding", 70, 500); g.fillText("Worth today", 360, 500); g.fillText("Price now", 650, 500);
+  g.fillStyle = "#fff"; g.font = "600 30px 'Inter Tight', sans-serif"; g.fillText(`${x.bal.toLocaleString("en-US", { maximumFractionDigits: 0 })}`, 70, 540); g.fillText(`$${x.value.toLocaleString("en-US", { maximumFractionDigits: 2 })}`, 360, 540); g.fillText(fmtP(p.mk.price), 650, 540);
+  g.fillStyle = "#fff"; g.font = "600 30px 'Inter Tight', sans-serif"; g.fillText("Holdfast", 70, 620); g.fillStyle = "#6f6d72"; g.font = "400 22px 'Inter Tight', sans-serif"; g.fillText("Back it. Hold it. Trade it.", 220, 620);
+  const url = c.toDataURL("image/png"), ov = document.createElement("div"); ov.className = "pnl-ov";
+  ov.innerHTML = `<div class="pnl-box"><img src="${url}" alt="Your PnL card"><div class="pnl-act"><button type="button" class="btn btn-ember" data-pshare>Share</button><button type="button" class="btn btn-line" data-pdl>Download</button><button type="button" class="btn btn-line" data-px>Close</button></div></div>`;
+  document.body.appendChild(ov); requestAnimationFrame(() => ov.classList.add("on"));
+  const close = () => { ov.classList.remove("on"); setTimeout(() => ov.remove(), 250); };
+  ov.onclick = async (e) => { if (e.target === ov || e.target.closest("[data-px]")) return close();
+    if (e.target.closest("[data-pdl]") || e.target.closest("[data-pshare]")) { const blob = await (await fetch(url)).blob(), file = new File([blob], `${p.q.symbol}-pnl.png`, { type: "image/png" });
+      if (e.target.closest("[data-pshare]")) { try { if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text: `My ${p.q.symbol} on Holdfast` }); return; } } catch { return; } }
+      const l = document.createElement("a"); l.href = url; l.download = file.name; l.click(); toast("Image saved"); } };
+}
 async function shareToken(p) {
   const W = 1200, H = 630, c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d"), st = stats24(p), up = st.chg >= 0;
   x.fillStyle = "#0b0b0d"; x.fillRect(0, 0, W, H);
@@ -393,7 +417,7 @@ function myPos(p) {
 function posBox(p) {
   const x = myPos(p); if (!x) return "";
   return `<div class="panel tx-pos" id="tx-pos"><h3>Your position</h3><div class="tx-pos-n"><div><span>You hold</span><b>${x.bal.toLocaleString("en-US", { maximumFractionDigits: 0 })} ${esc(p.q.symbol)}</b></div><div><span>Worth today</span><b>$${x.value.toLocaleString("en-US", { maximumFractionDigits: 2 })}</b></div></div>
-    <div class="tx-pnl ${x.pnl >= 0 ? "u" : "d"}">${x.pnl >= 0 ? "▲ +" : "▼ "}$${Math.abs(x.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })} (${x.pct >= 0 ? "+" : ""}${x.pct.toFixed(1)}%)<small>vs what you paid</small></div></div>`;
+    <div class="tx-pnl ${x.pnl >= 0 ? "u" : "d"}">${x.pnl >= 0 ? "▲ +" : "▼ "}$${Math.abs(x.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })} (${x.pct >= 0 ? "+" : ""}${x.pct.toFixed(1)}%)<small>vs what you paid</small></div><button type="button" class="btn btn-line btn-sm tx-pnlbtn" data-pnl>My PnL card</button></div>`;
 }
 function vTerminal(p) {
   if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
@@ -409,8 +433,11 @@ function vTerminal(p) {
         <div><dt>24h high</dt><dd id="tx-hi">${fmtP(x.hi)}</dd></div><div><dt>24h low</dt><dd id="tx-lo">${fmtP(x.lo)}</dd></div><div><dt>Liquidity</dt><dd>$${usd(m.poolUsdc)}</dd></div><div><dt>Round price</dt><dd>${fmtP(m.round)}</dd></div>
       </dl><button type="button" class="tx-more" onclick="this.previousElementSibling.classList.toggle('open');this.textContent=this.previousElementSibling.classList.contains('open')?'Less':'More data'">More data</button>
     </header>
-    <div class="term-grid">
+    <div class="term-grid tx-3">
+      <nav class="tx-side" id="tx-side" aria-label="Markets"><div class="tx-side-h"><b>Markets</b><button type="button" class="tx-side-x" data-sidex aria-label="Close">✕</button></div>
+        ${S.list.filter((x) => x.mk).map((x) => { const c = x.trades ? stats24(x).chg : ((x.mk.price - x.mk.round) / x.mk.round) * 100; return `<a href="#/trade/${x.id}" class="tx-si${x.id === p.id ? " on" : ""}">${logoSrc(x) ? `<img src="${esc(logoSrc(x))}" alt="">` : `<i></i>`}<span><b>${esc(x.q.symbol)}</b><small>${fmtP(x.mk.price)}</small></span><em class="${c >= 0 ? "u" : "d"}">${c >= 0 ? "+" : ""}${c.toFixed(1)}%</em></a>`; }).join("")}</nav>
       <div class="term-main">
+        <button type="button" class="tx-side-open" data-sideopen>${ICO.flame} All tokens</button>
         <div class="tx-chart" id="chartpro"></div>
         <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["whales", "Whales"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${k === "whales" ? ICO.whale + " " : ""}${t}</button>`).join("")}</div>
         <div id="term-tab">${termTab(p)}</div>
@@ -465,8 +492,11 @@ function startTerminal(p) {
   const reTerm = () => { if (!$("#term-tab")) return; chartOff?.update(); $("#term-tab").innerHTML = termTab(p); stats(); };
   const hl = async () => { if (!p.order) await loadActivity(); await loadHolders(p); stats(); if ((S.ttab || "trades") === "holders") reTerm(); };
   if (!p.trades) loadTrades(p).then(() => { reTerm(); hl(); }); else { reTerm(); if (!p.holders) hl(); }
+  document.querySelector(".term-side").addEventListener("click", (e) => { if (e.target.closest("[data-pnl]")) pnlCard(p); });
   $("#term-tab").onclick = (e) => { if (e.target.closest("[data-trmore]")) { S.trN = (S.trN || 10) + 20; $("#term-tab").innerHTML = termTab(p); } };
   $("#share").onclick = () => shareToken(p);
+  document.querySelector("[data-sideopen]").onclick = () => $("#tx-side").classList.add("open");
+  document.querySelector("[data-sidex]").onclick = () => $("#tx-side").classList.remove("open");
   $("#fav").onclick = () => { let f = favs(); f = f.includes(p.id) ? f.filter((x) => x !== p.id) : [...f, p.id]; try { localStorage.setItem("hf-fav", JSON.stringify(f)); } catch {} $("#fav").classList.toggle("on", f.includes(p.id)); };
   $("#alert-set").onclick = () => { const v = $("#alert").value.trim(); try { v ? localStorage.setItem(`hf-alert-${p.id}`, v) : localStorage.removeItem(`hf-alert-${p.id}`); } catch {} p.alertSide = v ? (Number(v) >= p.mk.price ? "up" : "dn") : null; toast(v ? `Alert set at $${v}` : "Alert removed"); };
   { const v = Number(localStorage.getItem(`hf-alert-${p.id}`) || 0); p.alertSide = v ? (v >= p.mk.price ? "up" : "dn") : null; }
