@@ -1121,3 +1121,29 @@ body:has(.term.t-fs) { overflow: hidden; }
 .term.t-fs .cp-svg { height: calc(100vh - 235px); min-height: 300px; }
 .term.t-fs .tx-chart { margin-bottom: 8px; }
 .under { gap: 8px; flex-wrap: wrap; }
+/* pantalla completa simple: solo gráfico + comprar/vender */
+.term.t-fs .tx-alert, .term.t-fs .tx-trust, .term.t-fs .tx-pos, .term.t-fs .tx-side { display: none !important; }
+.term.t-fs .term-grid, .term.t-fs .term-grid.tx-3 { grid-template-columns: minmax(0, 1fr) 320px; }
+/* celular: solo gráfico + comprar/vender, cerca y simple */
+@media (max-width: 760px) {
+  .term-grid.tx-3 { display: flex; flex-direction: column; gap: 12px; }
+  .term-grid.tx-3 .term-main { display: contents; }
+  .tx-side-open { order: 0; align-self: flex-start; } .tx-chart { order: 1; } .term-side { order: 2; } .term-tabs { order: 3; } #term-tab { order: 4; }
+  .term-side > .tx-alert, .term-side > .tx-trust { display: none; }
+  .panel.cyber .cy-top, .panel.cyber .cy-fine, .panel.cyber .cy-sum div:nth-child(2), .panel.cyber .cy-sum div:nth-child(4) { display: none; }
+  .panel.cyber { padding: 14px; } .tx-pos { padding: 12px 14px; } .tx-pos-n b { font-size: 16px; }
+  .tx-top { padding: 8px 0 10px; } .tx-id h1 { font-size: 26px; } .tx-share span { display: none; } .tx-px b { font-size: 30px; }
+  .cp-svg { height: 300px; } .term.tx .cy-field { padding: 8px 12px; }
+}
+@media (max-width: 760px) {
+  .term.tx, .term-grid.tx-3 { max-width: 100%; overflow-x: clip; }
+  .term-grid.tx-3 > *, .tx-chart, .term-side, .tx-top, .tx-stats, .cp-bar, #term-tab { min-width: 0; max-width: 100%; box-sizing: border-box; }
+  .term-grid.tx-3 { width: 100%; } .cp-bar { flex-wrap: wrap; } .tx-stats { grid-template-columns: 1fr 1fr; }
+  .cp-info { overflow-x: auto; flex-wrap: nowrap; white-space: nowrap; }
+}
+@media (max-width: 760px) {
+  .term.tx { width: 100%; overflow: hidden; } .term.tx * { min-width: 0; }
+  .cp-svg { width: 100%; overflow: hidden; } svg.cp-chart { max-width: 100%; }
+  .tx-top { display: grid; grid-template-columns: 56px minmax(0, 1fr); } .tx-px, .tx-stats, .tx-more { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) { .cp-info span { flex: 0 0 auto; margin-right: 10px; } .term-side { display: flex; flex-direction: column; } .term-side .panel.cyber { order: -1; } }

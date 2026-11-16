@@ -225,7 +225,7 @@ function tradePanel(p) {
 let quoteT = 0;
 function bindTrade(p) {
   const el = $("#tamt"); if (!el || !p.mk) return;
-  el.oninput = () => { S.impOk = false; clearTimeout(quoteT); quoteT = setTimeout(() => quote(p), 250); };
+  el.oninput = () => { clearTimeout(quoteT); quoteT = setTimeout(() => quote(p), 250); };
   document.querySelectorAll("[data-pct]").forEach((b) => (b.onclick = () => { const side = S.side || "buy", bal = side === "buy" ? S.usdc : p.u.balance, d = side === "buy" ? 6 : 18;
     const v = (bal * BigInt(b.dataset.pct)) / 100n; el.value = formatUnits(v, d).replace(/(\.\d{0,6})\d*$/, "$1"); el.oninput(); }));
   document.querySelectorAll("[data-slip]").forEach((b) => (b.onclick = () => { S.slip = Number(b.dataset.slip); document.querySelectorAll("[data-slip]").forEach((x) => x.setAttribute("aria-pressed", x === b)); }));
@@ -251,7 +251,7 @@ async function swap(p) {
   const tokenIn = q.side === "buy" ? CONFIG.usdc : p.address, tokenOut = q.side === "buy" ? p.address : CONFIG.usdc;
   const bal = q.side === "buy" ? S.usdc : p.u.balance;
   if (bal < q.amt) return toast("Not enough balance.", true);
-  if (q.imp > 5 && !S.impOk) { S.impOk = true; const b = $('[data-testid="swap"]'); b.textContent = `Confirm: moves the price ${q.imp.toFixed(1)}%`; b.classList.add("tx-danger"); return toast(`High price impact (${q.imp.toFixed(1)}%). Tap again to confirm.`, true); }
+  const ik = `${q.side}:${q.amt}`; if (q.imp > 5 && S.impKey !== ik) { S.impKey = ik; const b = $('[data-testid="swap"]'); b.textContent = `Confirm: moves the price ${q.imp.toFixed(1)}%`; b.classList.add("tx-danger"); return toast(`High price impact (${q.imp.toFixed(1)}%). Tap again to confirm.`, true); }
   const allowance = await pub.readContract({ address: tokenIn, abi: erc20Abi, functionName: "allowance", args: [S.me, CONFIG.swapRouter] });
   const labels = [], fns = [];
   if (allowance < q.amt) { labels.push(q.side === "buy" ? "Allow your USDC" : `Allow your ${p.q.symbol}`); fns.push(() => S.wallet.writeContract({ address: tokenIn, abi: erc20Abi, functionName: "approve", args: [CONFIG.swapRouter, q.amt] })); }
@@ -259,7 +259,7 @@ async function swap(p) {
   fns.push(() => S.wallet.writeContract({ address: CONFIG.swapRouter, abi: ROUTER_ABI, functionName: "exactInputSingle",
     args: [{ tokenIn, tokenOut, fee: 3000, recipient: S.me, amountIn: q.amt, amountOutMinimum: (q.out * BigInt(Math.round(10000 - (S.slip || 1) * 100))) / 10000n, sqrtPriceLimitX96: 0n }] }));
   const ok = await flow(q.side === "buy" ? "Buy" : "Sell", labels, fns, "Trade done");
-  if (ok) { await refresh(); await loadTrades(p); const h = posBox(p), el = $("#tx-pos"); if (el) el.outerHTML = h; else if (h) $(".term-side")?.insertAdjacentHTML("afterbegin", h); S.impOk = false; }
+  if (ok) { await refresh(); await loadTrades(p); const h = posBox(p), el = $("#tx-pos"); if (el) el.outerHTML = h; else if (h) $(".term-side")?.insertAdjacentHTML("afterbegin", h); S.impKey = ""; }
 }
 
 // ================================================================= terminal de trading y Market
@@ -405,6 +405,7 @@ async function shareToken(p) {
   const a2 = document.createElement("a"); a2.href = URL.createObjectURL(blob); a2.download = file.name; a2.click(); toast("Image saved");
 }
 function stats24(p) {
+  if (!p.mk) return { chg: 0, hi: 0, lo: 0, vol: 0n, cap: 0 };
   const now = S.now || Date.now() / 1000, tr = (p.trades || []).filter((t) => t.ts), day = tr.filter((t) => t.ts > now - 86400), before = tr.filter((t) => t.ts <= now - 86400);
   const open = before.length ? before[before.length - 1].price : p.mk.round, ps = day.map((t) => t.price);
   return { chg: ((p.mk.price - open) / open) * 100, hi: Math.max(p.mk.price, ...ps), lo: Math.min(p.mk.price, ...ps), vol: vol24(p), cap: p.supply ? p.mk.price * (Number(p.supply) / 1e18) : 0 };
@@ -531,9 +532,9 @@ function startTerminal(p) {
   bindTrade(p);
   const es = (localStorage.getItem("hf-lang") || "en") === "es";
   chartOff = mountChart($("#chartpro"), { id: p.id, fsTarget: document.querySelector(".term"), periods: Object.keys(PERIODS), period: S.period || "5m", onPeriod: (k) => (S.period = k),
-    getData: (per) => ({ candles: buildCandles(p, per), round: p.mk.round }),
+    getData: (per) => (p.mk ? { candles: buildCandles(p, per), round: p.mk.round } : { candles: [], round: 0 }),
     labels: es ? { candles: "Velas", line: "Línea", ma: "Promedios", draw: "Dibujar", clear: "Borrar", full: "Pantalla completa", exit: "Salir", vol: "Vol" } : {} });
-  const stats = () => { const x = stats24(p), d = $("#tt-delta"); if (!d) return; d.className = x.chg >= 0 ? "u" : "d"; d.textContent = `${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(2)}% 24h`;
+  const stats = () => { if (!p.mk) return; const x = stats24(p), d = $("#tt-delta"); if (!d) return; d.className = x.chg >= 0 ? "u" : "d"; d.textContent = `${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(2)}% 24h`;
     $("#tx-hi").textContent = fmtP(x.hi); $("#tx-lo").textContent = fmtP(x.lo); $("#tt-vol").textContent = "$" + usd(x.vol); if (x.cap) $("#tx-cap").textContent = "$" + x.cap.toLocaleString("en-US", { maximumFractionDigits: 0 }); };
   const reTerm = () => { if (!$("#term-tab")) return; chartOff?.update(); $("#term-tab").innerHTML = termTab(p); stats(); };
   const hl = async () => { if (!p.order) await loadActivity(); await loadHolders(p); stats(); if ((S.ttab || "trades") === "holders") reTerm(); };
