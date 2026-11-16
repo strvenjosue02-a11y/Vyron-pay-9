@@ -920,7 +920,7 @@ document.addEventListener("click", async (e) => {
   const sd = e.target.closest("[data-side]");
   if (sd) { S.side = sd.dataset.side; const p = S.list.find((x) => location.hash === `#/p/${x.id}`); if (p) { const box = $(".cyber"); box.outerHTML = tradePanel(p); bindTrade(p); } return; }
   const tb = e.target.closest("[data-tab]");
-  if (tb) { S.tab = tb.dataset.tab; document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", x === tb)); const p = S.list.find((x) => location.hash === `#/p/${x.id}`); if (p) { $(".ptab-body").innerHTML = tabBody(p); bindTab(p); } return; }
+  if (tb) { S.tab = tb.dataset.tab; document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", x === tb)); const p = S.list.find((x) => location.hash === `#/p/${x.id}`); if (p) { $(".ptab-body").innerHTML = tabBody(p); bindTab(p); if (S.tab === "trade" && p.mk) loadTrades(p).then(() => { if (S.tab === "trade") $(".ptab-body").innerHTML = tabBody(p); }); } return; }
   if (e.target.closest("#bb-go")) { const v = $("#amt")?.value; if (v && Number(v) > 0) return $('[data-act="buy"]')?.click(); $("#amt")?.scrollIntoView({ block: "center", behavior: "smooth" }); setTimeout(() => $("#amt")?.focus(), 400); return; }
   const sc = e.target.closest("[data-scroll]");
   if (sc) return document.getElementById(sc.dataset.scroll)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
