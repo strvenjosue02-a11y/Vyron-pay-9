@@ -1,6 +1,6 @@
 // Código compartido entre la web y el servidor (sin dependencias).
 
-export const META_KEYS = ["category", "color", "tagline", "about", "logo", "team", "cover"];
+export const META_KEYS = ["category", "color", "tagline", "about", "logo", "team", "cover", "links", "plan", "use", "risks", "anon"];
 export const PARAM_KEYS = ["creator", "name", "symbol", "softcap", "hardcap", "saleTokens", "creatorTokens",
   "saleEnd", "initialBps", "milestones", "milestonePeriod", "liquidityBps"];
 
@@ -8,6 +8,8 @@ export const CATEGORIES = ["Local business", "Technology", "Environment", "Educa
 export const COLORS = ["#18191D", "#E2512C", "#2F5D50", "#3B4FA8", "#8A4B12", "#6B3A8C", "#0E6E7A", "#9B2F55"];
 
 /** Texto estable de un proyecto: es lo que se firma. Cambiar un solo carácter invalida las firmas. */
+export const USE_KEYS = ["Development", "Marketing", "Security & audit", "Operations", "Other"];
+export const USE_LINKS = ["web", "x", "telegram", "discord", "github"];
 export function canonical(p) {
   const o = { id: String(p.id), meta: {}, params: {} };
   META_KEYS.forEach((k) => (o.meta[k] = String(p.meta?.[k] ?? "")));
@@ -34,6 +36,20 @@ export function validate(p, nowSec) {
   if (!COLORS.includes(m.color)) return "Invalid colour.";
   if (!m.tagline || m.tagline.length < 10 || m.tagline.length > 120) return "The one-line summary must be 10 to 120 characters.";
   if (!m.about || m.about.length < 40 || m.about.length > 2000) return "The description must be 40 to 2,000 characters.";
+  if (!m.cover) return "Add a cover image: it's the first thing backers see.";
+  if (!m.logo) return "Add your token logo so people recognise it.";
+  if (m.links) {
+    let l; try { l = JSON.parse(m.links); } catch { return "Invalid links."; }
+    if (!l || typeof l !== "object" || Array.isArray(l)) return "Invalid links.";
+    for (const [k, v] of Object.entries(l)) if (!USE_LINKS.includes(k) || !/^https:\/\/[^\s]{4,120}$/.test(v)) return "Official links must start with https://.";
+    if (!Object.keys(l).length) return "Add at least one official link.";
+  } else return "Add at least one official link (website, X, Telegram or GitHub).";
+  if (!m.risks || m.risks.length < 20 || m.risks.length > 800) return "Describe the main risks (20 to 800 characters).";
+  { let u; try { u = JSON.parse(m.use || ""); } catch { return "Say how the money will be used."; }
+    if (!u || typeof u !== "object") return "Say how the money will be used.";
+    let sum = 0; for (const [k, v] of Object.entries(u)) { if (!USE_KEYS.includes(k) || !Number.isInteger(v) || v < 0 || v > 100) return "Invalid use of funds."; sum += v; }
+    if (sum !== 100) return "The use of funds must add up to 100%."; }
+  if (m.anon && m.anon !== "1") return "Invalid anonymous flag.";
   if (m.cover && !(/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(m.cover) && m.cover.length <= 300000)) return "The cover image must be a PNG, JPG or WebP under 220 KB.";
   if (m.logo && !(/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(m.logo) && m.logo.length <= 90000)) return "The token logo must be a PNG, JPG or WebP under 60 KB.";
   if (m.team) {
@@ -62,6 +78,10 @@ export function validate(p, nowSec) {
   if (ms < 1 || ms > 6) return "There must be 1 to 6 milestones.";
   const lb = Number(q.liquidityBps);
   if (lb < 500 || lb > 2500) return "Liquidity must be 5% to 25%.";
+  { let pl; try { pl = JSON.parse(m.plan || ""); } catch { return "Describe what you deliver in each release."; }
+    if (!Array.isArray(pl) || pl.length !== ms || pl.some((x) => typeof x !== "string" || x.length < 5 || x.length > 140)) return "Describe each release in 5 to 140 characters."; }
+  if (m.anon === "1") { if (bps !== 0) return "Anonymous teams use protected mode: 0% upfront."; if (ms < 5) return "Anonymous teams use protected mode: at least 5 releases."; if (hard > 10_000n * 10n ** 6n) return "Anonymous teams can raise up to 10,000 USDC on their first project."; }
+  else { let t = []; try { t = JSON.parse(m.team || "[]"); } catch {} if (!t.length || !t.some((x) => x.link)) return "Add at least one team member with a public link, or choose anonymous protected mode."; }
   if (period < 14 * DAY || period > 180 * DAY) return "Each milestone window must be 14 to 180 days.";
   if (nowSec && (end < nowSec + 3 * DAY || end > nowSec + 180 * DAY)) return "The raise must close 3 to 180 days from today.";
   return null;

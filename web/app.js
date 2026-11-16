@@ -6,7 +6,7 @@ import { CONFIG } from "./config.js";
 import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
 import { initI18n } from "./i18n.js";
 import { mountCoin } from "./coin3d.js";
-import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, validate, CATEGORIES, COLORS } from "./shared.js";
+import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
 const SALT = "0x" + "00".repeat(32);
@@ -849,67 +849,91 @@ function pVote(p) {
 }
 
 // ================================================================= creador
+const chip = (name, vals, def, fmt = (v) => v) => `<div class="chips">${vals.map((v) => `<label><input type="radio" name="${name}" value="${v}" ${v === def ? "checked" : ""}><span>${fmt(v)}</span></label>`).join("")}</div>`;
+const STEPS = ["Project", "Team", "Money", "Review"];
 function vLaunch() {
   if (!S.me) return `<div class="page-h"><h1>Launch a project</h1><p>Connect your wallet. It's the wallet that receives the funds and signs your project.</p></div>
     <button class="btn btn-dark" data-act="connect">Connect wallet</button>`;
-  return `<div class="page-h"><h1>Launch a project</h1><p>Fill in the details and sign them with your wallet. Holdfast reviews every project before it goes live. Signing is free.</p></div>
+  return `<div class="page-h"><h1>Launch a project</h1><p>Four short steps. Holdfast reviews every project before it goes live. Signing is free.</p></div>
+  <ol class="wz-steps" id="wz-steps">${STEPS.map((t, i) => `<li data-go="${i}"${i ? "" : ' aria-current="step"'}><b>${i + 1}</b><span>${t}</span></li>`).join("")}</ol>
   <div class="layout"><form id="form" novalidate>
-    <fieldset><legend>The project</legend>
-      <div class="f"><label for="f-name">Name</label><input id="f-name" name="name" maxlength="40" required placeholder="Rooftop Gardens"></div>
+    <section class="wz" data-step="0">
+      <h2 class="wz-h">Your project</h2>
+      <div class="f"><label>Cover image</label><label class="cover-pick" id="cover-pick"><input id="f-cover" type="file" accept="image/png,image/jpeg,image/webp"><span>Upload cover · 4:3 · it's the first thing backers see</span></label></div>
       <div class="two">
-        <div class="f"><label for="f-symbol">Ticker</label><input id="f-symbol" name="symbol" maxlength="8" required placeholder="ROOF" style="text-transform:uppercase"></div>
+        <div class="f"><label>Token logo</label><div class="logo-pick"><span class="logo-prev" id="logo-prev" aria-hidden="true"></span><input id="f-logo" type="file" accept="image/png,image/jpeg,image/webp"></div><small>Square. So people recognise your token.</small></div>
+        <div class="f"><label>Colour</label><div class="chips swatch">${COLORS.map((c, i) => `<label><input type="radio" name="color" value="${c}" ${i ? "" : "checked"}><span style="--c:${c}" aria-label="Colour ${i + 1}"></span></label>`).join("")}</div></div>
+      </div>
+      <div class="f"><label for="f-name">Name</label><input id="f-name" name="name" maxlength="40" placeholder="Rooftop Gardens"></div>
+      <div class="two">
+        <div class="f"><label for="f-symbol">Ticker</label><input id="f-symbol" name="symbol" maxlength="8" placeholder="ROOF" style="text-transform:uppercase"></div>
         <div class="f"><label for="f-cat">Category</label><select id="f-cat" name="category">${CATEGORIES.map((c) => `<option>${c}</option>`).join("")}</select></div>
       </div>
-      <div class="f"><label for="f-tag">One-line summary</label><input id="f-tag" name="tagline" maxlength="120" required placeholder="What you do and who it's for"></div>
-      <div class="f"><label for="f-about">Description</label><textarea id="f-about" name="about" maxlength="2000" required placeholder="What the money is for, the timeline, and how backers will see progress."></textarea><small>40 to 2,000 characters.</small></div>
-      <div class="f"><label for="f-logo">Token logo</label>
-        <div class="logo-pick"><span class="logo-prev" id="logo-prev" aria-hidden="true"></span><input id="f-logo" type="file" accept="image/png,image/jpeg,image/webp"></div>
-        <small>Optional. PNG, JPG or WebP. It's shown on your project card and is part of what you sign.</small></div>
-      <div class="f"><label>Colour</label><div class="chips swatch">${COLORS.map((c, i) => `<label><input type="radio" name="color" value="${c}" ${i ? "" : "checked"}><span style="--c:${c}" aria-label="Colour ${i + 1}"></span></label>`).join("")}</div></div>
-    </fieldset>
-    <fieldset><legend>Your team</legend>
-      <p class="fine" style="margin:0 0 16px">Backers trust teams they can see. Add up to 4 people with a public link (X, GitHub, LinkedIn or a website).</p>
+      <div class="f"><label for="f-tag">One-line summary</label><input id="f-tag" name="tagline" maxlength="120" placeholder="What you do and who it's for"></div>
+      <div class="f"><label for="f-about">Description</label><textarea id="f-about" name="about" maxlength="2000" placeholder="What the money is for, the timeline, and how backers will see progress."></textarea><small>40 to 2,000 characters.</small></div>
+      <div class="f"><label>Official links</label><div class="two">${[["web", "Website"], ["x", "X / Twitter"], ["telegram", "Telegram"], ["discord", "Discord"], ["github", "GitHub"]].map(([k, t]) => `<input name="ln-${k}" maxlength="120" placeholder="${t} · https://" aria-label="${t}">`).join("")}</div><small>At least one. Backers use them to check you exist.</small></div>
+      <div class="f"><label for="f-risks">Main risks</label><textarea id="f-risks" name="risks" maxlength="800" placeholder="Be honest: what could go wrong and how you'd handle it."></textarea></div>
+    </section>
+    <section class="wz" data-step="1" hidden>
+      <h2 class="wz-h">Your team</h2>
+      <div class="f"><label class="anon-t"><input type="checkbox" name="anon" id="f-anon"><span><b>We're anonymous</b><small>Allowed with protected mode: 0% upfront, at least 5 small releases voted by backers, and up to $10,000 on your first project. The most anyone could lose is one release.</small></span></label></div>
+      <div id="tm-box"><p class="fine" style="margin:0 0 16px">Add up to 4 people with a photo and a public link (X, GitHub, LinkedIn or a website).</p>
       ${[0, 1, 2, 3].map((i) => `<div class="tm-row${i > 0 ? " d-none" : ""}" data-tm="${i}">
         <label class="tm-photo" title="Photo"><input type="file" accept="image/png,image/jpeg,image/webp" data-tmphoto="${i}"><span id="tmp-${i}" aria-hidden="true"></span></label>
         <input name="tm-name-${i}" maxlength="40" placeholder="Name" aria-label="Team member name">
         <input name="tm-role-${i}" maxlength="40" placeholder="Role" aria-label="Team member role">
         <input name="tm-link-${i}" maxlength="120" placeholder="https://" aria-label="Team member link">
       </div>`).join("")}
-      <button type="button" class="btn btn-soft btn-sm" id="tm-add">Add team member</button>
-    </fieldset>
-    <fieldset><legend>The money</legend>
+      <button type="button" class="btn btn-soft btn-sm" id="tm-add">Add team member</button></div>
+    </section>
+    <section class="wz" data-step="2" hidden>
+      <h2 class="wz-h">The money</h2>
       <div class="two">
         <div class="f"><label for="f-soft">Minimum goal (USDC)</label><input id="f-soft" name="soft" type="number" inputmode="decimal" min="1" value="1000"><small>Below this, everyone is refunded.</small></div>
         <div class="f"><label for="f-hard">Maximum goal (USDC)</label><input id="f-hard" name="hard" type="number" inputmode="decimal" min="1" value="5000"></div>
       </div>
-      <div class="f"><label>Raise length</label><div class="chips">${[14, 30, 45, 60].map((d) => `<label><input type="radio" name="days" value="${d}" ${d === 30 ? "checked" : ""}><span>${d} days</span></label>`).join("")}</div></div>
-      <div class="two">
-        <div class="f"><label for="f-st">Tokens for backers</label><input id="f-st" name="saleTokens" type="number" inputmode="numeric" min="1" value="1000000"></div>
-        <div class="f"><label for="f-ct">Tokens for your team</label><input id="f-ct" name="creatorTokens" type="number" inputmode="numeric" min="0" value="300000"><small>Unlocked with each release.</small></div>
-      </div>
-    </fieldset>
-    <fieldset><legend>Releases</legend>
-      <div class="f"><label>Upfront when the raise closes</label><div class="chips">${[0, 5, 10, 20].map((v) => `<label><input type="radio" name="initial" value="${v}" ${v === 10 ? "checked" : ""}><span>${v}%</span></label>`).join("")}</div></div>
-      <div class="f"><label>Liquidity for the Uniswap market</label><div class="chips">${[5, 10, 15, 20, 25].map((v) => `<label><input type="radio" name="liq" value="${v}" ${v === 10 ? "checked" : ""}><span>${v}%</span></label>`).join("")}</div><small>When the raise succeeds, this share of the funds and matching tokens open a Uniswap pool at the round price, locked for 12 months.</small></div>
-      <div class="f"><label>Number of voted releases</label><div class="chips">${[2, 3, 4, 6].map((v) => `<label><input type="radio" name="ms" value="${v}" ${v === 3 ? "checked" : ""}><span>${v}</span></label>`).join("")}</div></div>
-      <div class="f"><label>Window to request each release</label><div class="chips">${[30, 60, 90].map((v) => `<label><input type="radio" name="period" value="${v}" ${v === 60 ? "checked" : ""}><span>${v} days</span></label>`).join("")}</div><small>Miss it and the remaining funds go back to backers.</small></div>
-    </fieldset>
+      <div class="f"><label>Raise length</label>${chip("days", [14, 30, 45, 60], 30, (d) => `${d} days`)}</div>
+      <div class="f"><label>How the money will be used</label><div class="use-grid">${USE_KEYS.map((k, i) => `<label class="use-i"><span>${k}</span><input type="number" name="use-${i}" min="0" max="100" value="${[60, 15, 15, 10, 0][i]}"><em>%</em></label>`).join("")}</div><small id="use-sum">Must add up to 100%.</small></div>
+      <details class="adv"><summary>Advanced: tokens, releases and market</summary>
+        <div class="two">
+          <div class="f"><label for="f-st">Tokens for backers</label><input id="f-st" name="saleTokens" type="number" inputmode="numeric" min="1" value="1000000"></div>
+          <div class="f"><label for="f-ct">Tokens for your team</label><input id="f-ct" name="creatorTokens" type="number" inputmode="numeric" min="0" value="300000"><small>Unlocked with each approved release.</small></div>
+        </div>
+        <div class="f"><label>Upfront when the raise closes</label>${chip("initial", [0, 5, 10, 20], 10, (v) => `${v}%`)}</div>
+        <div class="f"><label>Number of voted releases</label>${chip("ms", [2, 3, 4, 5, 6], 3)}</div>
+        <div class="f"><label>Window to request each release</label>${chip("period", [30, 60, 90], 60, (v) => `${v} days`)}<small>If you don't request it in time, the rest goes back to backers.</small></div>
+        <div class="f"><label>Liquidity for the Uniswap market</label>${chip("liq", [5, 10, 15, 20, 25], 10, (v) => `${v}%`)}<small>Opens a pool at the round price, locked 12 months.</small></div>
+      </details>
+      <div class="f"><label>What you deliver in each release</label><div id="plan-box"></div><small>Backers vote on each release against this promise.</small></div>
+    </section>
+    <section class="wz" data-step="3" hidden>
+      <h2 class="wz-h">Review and sign</h2>
+      <div id="review"></div>
+      <p class="fine">Signing is free and doesn't move money. Holdfast reviews your project; once approved it goes live and its contract is created by the first backer.</p>
+    </section>
     <p class="form-error" id="ferr" role="alert"></p>
-    <button class="btn btn-dark" type="submit" data-testid="submit-project">Sign and submit for review</button>
+    <div class="wz-nav"><button type="button" class="btn btn-line" id="wz-back" hidden>Back</button><button type="button" class="btn btn-ember" id="wz-next">Continue</button>
+      <button class="btn btn-ember" type="submit" id="wz-sign" data-testid="submit-project" hidden>Sign and submit for review</button></div>
   </form>
-  <aside class="aside"><div class="panel lift" id="preview"></div></aside></div>`;
+  <aside class="aside"><div class="wz-prev-h">Live preview</div><div id="preview"></div><div id="prev-facts"></div></aside></div>`;
 }
 function readForm() {
   const f = new FormData($("#form")), g = (k) => String(f.get(k) ?? "").trim();
-  const name = g("name"), id = (name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36) || "project") + "-" + Math.random().toString(16).slice(2, 6);
+  const name = g("name"), id = S.draftId ||= (name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36) || "project") + "-" + Math.random().toString(16).slice(2, 6);
   const usdc = (v) => { try { return parseUnits(v || "0", 6).toString(); } catch { return "0"; } };
   const toks = (v) => { try { return parseUnits(v || "0", 18).toString(); } catch { return "0"; } };
-  const tm = [0, 1, 2, 3].map((i) => ({ name: g(`tm-name-${i}`), role: g(`tm-role-${i}`), link: g(`tm-link-${i}`), photo: S.tmPhotos?.[i] || "" }))
+  const anon = !!f.get("anon");
+  const tm = anon ? [] : [0, 1, 2, 3].map((i) => ({ name: g(`tm-name-${i}`), role: g(`tm-role-${i}`), link: g(`tm-link-${i}`), photo: S.tmPhotos?.[i] || "" }))
     .filter((m) => m.name).map((m) => Object.fromEntries(Object.entries(m).filter(([, v]) => v)));
-  return { id, meta: { category: g("category"), color: g("color"), tagline: g("tagline"), about: g("about"), logo: S.logo || "", team: tm.length ? JSON.stringify(tm) : "" },
+  const links = Object.fromEntries(USE_LINKS.map((k) => [k, g(`ln-${k}`)]).filter(([, v]) => v));
+  const use = Object.fromEntries(USE_KEYS.map((k, i) => [k, Math.round(Number(g(`use-${i}`)) || 0)]).filter(([, v]) => v > 0));
+  const ms = anon ? String(Math.max(5, Number(g("ms")))) : g("ms");
+  const plan = [...Array(Number(ms))].map((_, i) => g(`plan-${i}`));
+  return { id, meta: { category: g("category"), color: g("color"), tagline: g("tagline"), about: g("about"), logo: S.logo || "", team: tm.length ? JSON.stringify(tm) : "",
+      cover: S.cover || "", links: Object.keys(links).length ? JSON.stringify(links) : "", plan: JSON.stringify(plan), use: JSON.stringify(use), risks: g("risks"), anon: anon ? "1" : "" },
     params: { creator: S.me, name, symbol: g("symbol").toUpperCase(), softcap: usdc(g("soft")), hardcap: usdc(g("hard")),
       saleTokens: toks(g("saleTokens")), creatorTokens: toks(g("creatorTokens")), saleEnd: String(Math.floor(Date.now() / 1000) + Number(g("days")) * 86400),
-      initialBps: String(Number(g("initial")) * 100), milestones: g("ms"), milestonePeriod: String(Number(g("period")) * 86400), liquidityBps: String(Number(g("liq") || 10) * 100) } };
+      initialBps: anon ? "0" : String(Number(g("initial")) * 100), milestones: ms, milestonePeriod: String(Number(g("period")) * 86400), liquidityBps: String(Number(g("liq") || 10) * 100) } };
 }
 async function pickImage(e, size, max, done) {
   const f = e.target.files?.[0]; if (!f) return;
@@ -920,6 +944,17 @@ async function pickImage(e, size, max, done) {
     let url = c.toDataURL("image/webp", 0.85); if (!url.startsWith("data:image/webp")) url = c.toDataURL("image/png");
     if (url.length > max) return toast("That image is too big. Try a simpler one.", true);
     done(url);
+  } catch { toast("That file isn't an image we can read.", true); }
+}
+async function pickCover(e) {
+  const f = e.target.files?.[0]; if (!f) return;
+  try {
+    const img = await createImageBitmap(f), c = document.createElement("canvas"); c.width = 800; c.height = 600;
+    const k = Math.max(800 / img.width, 600 / img.height), w = img.width * k, h = img.height * k;
+    c.getContext("2d").drawImage(img, (800 - w) / 2, (600 - h) / 2, w, h);
+    let url = ""; for (const qv of [0.82, 0.7, 0.55, 0.4]) { url = c.toDataURL("image/webp", qv); if (!url.startsWith("data:image/webp")) url = c.toDataURL("image/jpeg", qv); if (url.length <= 300000) break; }
+    if (url.length > 300000) return toast("That cover is too big. Try a simpler image.", true);
+    S.cover = url; $("#cover-pick").style.backgroundImage = `url("${url}")`; $("#cover-pick").classList.add("has"); preview();
   } catch { toast("That file isn't an image we can read.", true); }
 }
 async function pickLogo(e) {
@@ -938,20 +973,61 @@ async function pickLogo(e) {
     preview();
   } catch { toast("That file isn't an image we can read.", true); }
 }
+function planInputs() {
+  const box = $("#plan-box"); if (!box) return; const anon = $("#f-anon")?.checked, msEl = document.querySelector('[name="ms"]:checked');
+  const ms = anon ? Math.max(5, Number(msEl?.value || 5)) : Number(msEl?.value || 3), have = box.querySelectorAll("input").length;
+  if (have === ms) return; const old = [...box.querySelectorAll("input")].map((i) => i.value);
+  box.innerHTML = [...Array(ms)].map((_, i) => `<div class="plan-row"><b>${i + 1}</b><input name="plan-${i}" maxlength="140" placeholder="Release ${i + 1}: what backers will see delivered" value="${esc(old[i] || "")}"></div>`).join("");
+}
 function preview() {
-  const p = readForm(), q = p.params, ms = Number(q.milestones), init = Number(q.initialBps) / 100, step = (100 - init) / ms;
-  const hard = BigInt(q.hardcap || 0), soft = BigInt(q.softcap || 0);
-  $("#preview").innerHTML = `<h3>How backers will see it</h3>
-    <div class="p-head" style="margin:0 0 16px">${p.meta.logo ? `<img class="mark logo" src="${esc(p.meta.logo)}" alt="">` : `<div class="mark" style="background:${esc(p.meta.color)}">${esc(initials(q.name || "Your project"))}</div>`}<div><b>${esc(q.name || "Your project")}</b><p style="font-size:14px">${esc(p.meta.tagline || "Your summary shows here")}</p></div></div>
-    <div class="lines">
+  planInputs();
+  const anon = $("#f-anon")?.checked; $("#tm-box")?.toggleAttribute("hidden", !!anon);
+  document.querySelectorAll('[name="initial"]').forEach((x) => (x.disabled = !!anon && x.value !== "0"));
+  document.querySelectorAll('[name="ms"]').forEach((x) => (x.disabled = !!anon && Number(x.value) < 5));
+  const d = readForm(), q = d.params, ms = Number(q.milestones), init = Number(q.initialBps) / 100, step = (100 - init) / ms, hard = BigInt(q.hardcap || 0), soft = BigInt(q.softcap || 0);
+  const fake = { id: "preview", meta: { ...d.meta, tagline: d.meta.tagline || "Your one-line summary appears here" }, q: { ...q, name: q.name || "Your project", symbol: q.symbol || "TOKEN", hardcap: hard || 1n, softcap: soft, saleEnd: BigInt(q.saleEnd), saleTokens: BigInt(q.saleTokens || 0) }, s: blankS(), exists: false, backers: 0 };
+  let html = ""; try { html = card(fake).replace(/href="[^"]*"/, 'href="javascript:void 0"'); } catch { html = ""; }
+  if (!d.meta.cover) html = html.replace('<div class="pc-art', '<div class="pc-art pc-noc');
+  $("#preview").innerHTML = html;
+  const sum = Object.values(JSON.parse(d.meta.use || "{}")).reduce((x, y) => x + y, 0), us = $("#use-sum");
+  if (us) { us.textContent = sum === 100 ? "Adds up to 100% ✓" : `Adds up to ${sum}%. It must be 100%.`; us.classList.toggle("bad", sum !== 100); }
+  $("#prev-facts").innerHTML = `<div class="lines pf">
       <div><span>Goal</span><b>$${usd(soft)} to $${usd(hard)}</b></div>
-      <div><span>Price</span><b>${hard > 0n ? `1 USDC = ${tok((BigInt(q.saleTokens) * 1_000_000n) / hard)} ${esc(q.symbol || "TOKEN")}` : "-"}</b></div>
-      <div><span>You get at close</span><b>${init}%</b></div>
-      <div><span>Then</span><b>${ms} releases of ${step.toFixed(1)}%</b></div>
-      <div><span>Holdfast fee</span><b>1% + 1.5% of tokens</b></div>
-    </div>
-    <div class="split" aria-hidden="true">${[init, ...Array(ms).fill(step)].map((w, i) => `<i style="width:${w}%;background:${i ? (i % 2 ? "var(--ink)" : "var(--ink-3)") : "var(--ember)"}"></i>`).join("")}</div>
-    <p class="muted" style="font-size:13.5px;margin:8px 0 0">If you raise $${usd(hard)} and backers approve every release, you receive $${usd((hard * 99n) / 100n)}.</p>`;
+      <div><span>Price</span><b>${hard > 0n ? `1 USDC = ${tok((BigInt(q.saleTokens || 0) * 1_000_000n) / hard)} ${esc(q.symbol || "TOKEN")}` : "-"}</b></div>
+      <div><span>Paid to you</span><b>${init}% at close, then ${ms} × ${step.toFixed(1)}%</b></div>
+      <div><span>Holdfast fee</span><b>1% + 1.5% of tokens, only if funded</b></div>
+      ${anon ? `<div><span>Team</span><b class="pf-anon">Anonymous · protected mode</b></div>` : ""}
+    </div><div class="split" aria-hidden="true">${[init, ...Array(ms).fill(step)].map((w, i) => `<i style="width:${w}%;background:${i ? (i % 2 ? "#f4f1ef" : "#5a585d") : "#ff2e88"}"></i>`).join("")}</div>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">If you raise $${usd(hard)} and backers approve every release, you receive $${usd((hard * 99n) / 100n)}.</p>`;
+  if (S.wz === 3) review(d);
+}
+function review(d) {
+  const err = validate(d, Math.floor(Date.now() / 1000)), links = JSON.parse(d.meta.links || "{}"), plan = JSON.parse(d.meta.plan || "[]"), use = JSON.parse(d.meta.use || "{}");
+  $("#review").innerHTML = `${err ? `<div class="note warn">${esc(err)}</div>` : `<div class="note ok">Everything looks complete. Sign to send it for review.</div>`}
+    <div class="lines rv"><div><span>Project</span><b>${esc(d.params.name || "-")} · ${esc(d.params.symbol || "-")}</b></div>
+      <div><span>Links</span><b>${Object.keys(links).join(", ") || "-"}</b></div>
+      <div><span>Team</span><b>${d.meta.anon ? "Anonymous · protected mode" : `${JSON.parse(d.meta.team || "[]").length} people`}</b></div>
+      <div><span>Use of funds</span><b>${Object.entries(use).map(([k, v]) => `${k} ${v}%`).join(" · ")}</b></div>
+      ${plan.map((x, i) => `<div><span>Release ${i + 1}</span><b>${esc(x || "-")}</b></div>`).join("")}</div>`;
+}
+function wzGo(i) {
+  if (i > (S.wz || 0)) { const e = wzCheck(S.wz || 0); if (e) { $("#ferr").textContent = e; return; } }
+  $("#ferr").textContent = ""; S.wz = i;
+  document.querySelectorAll(".wz").forEach((x) => (x.hidden = Number(x.dataset.step) !== i));
+  document.querySelectorAll("#wz-steps li").forEach((x) => { const n = Number(x.dataset.go); x.toggleAttribute("aria-current", n === i); x.classList.toggle("done", n < i); });
+  $("#wz-back").hidden = i === 0; $("#wz-next").hidden = i === 3; $("#wz-sign").hidden = i !== 3;
+  preview(); window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function wzCheck(step) {
+  const d = readForm(), m = d.meta, q = d.params;
+  if (step === 0) {
+    if (!m.cover) return "Add a cover image."; if (!m.logo) return "Add your token logo."; if ((q.name || "").length < 3) return "Write the project name.";
+    if (!/^[A-Z0-9]{2,8}$/.test(q.symbol)) return "The ticker must be 2 to 8 capital letters or digits."; if ((m.tagline || "").length < 10) return "Write a one-line summary (10+ characters).";
+    if ((m.about || "").length < 40) return "Write a description (40+ characters)."; if (!m.links) return "Add at least one official link."; if ((m.risks || "").length < 20) return "Describe the main risks (20+ characters).";
+  }
+  if (step === 1 && !m.anon) { const t = JSON.parse(m.team || "[]"); if (!t.length || !t.some((x) => x.link)) return "Add at least one person with a public link, or choose anonymous."; }
+  if (step === 2) { const e = validate(d, Math.floor(Date.now() / 1000)); if (e && !/cover|logo|link|risk|summary|description|name|ticker|team/i.test(e)) return e; }
+  return "";
 }
 
 // ================================================================= portafolio y proyectos propios
@@ -1037,7 +1113,10 @@ function route() {
   if (p) { bindSwipe(p); clearInterval(S.cdT); S.cdT = setInterval(() => { const e = document.querySelector(".kv-count"); if (!e) return clearInterval(S.cdT); e.textContent = countdown(Number(e.dataset.end)).replace("Closes in ", ""); }, 1000); bindAmount(p); bindTab(p); bindTrade(p); celebrate(p); if (p.mk && !p.trades) loadTrades(p).then(() => { if (S.tab === "trade") { $(".ptab-body").innerHTML = tabBody(p); } }); }
   if (!p && key === "home") { bindCards(); bindCarousel(); bindCatalog(); S.list.filter((x) => x.mk).forEach((x) => loadTrades(x).then(() => { const el = document.querySelector(`[data-testid="row-${x.id}"] .pc-mkt .spark`); if (el) el.outerHTML = spark(x); })); }
   if (p && keep && $("#amt")) { $("#amt").value = keep; $("#amt").dispatchEvent(new Event("input")); }
-  if ($("#form")) { $("#form").addEventListener("input", preview); $("#form").addEventListener("submit", submitProject); $("#f-logo").addEventListener("change", pickLogo);
+  if ($("#form")) { S.wz = 0; S.draftId = ""; $("#form").addEventListener("input", preview); $("#form").addEventListener("change", preview); $("#form").addEventListener("submit", submitProject); $("#f-logo").addEventListener("change", pickLogo);
+    $("#f-cover").addEventListener("change", (e) => pickCover(e));
+    $("#wz-next").onclick = () => wzGo((S.wz || 0) + 1); $("#wz-back").onclick = () => wzGo((S.wz || 0) - 1);
+    document.querySelectorAll("#wz-steps li").forEach((li) => (li.onclick = () => { const n = Number(li.dataset.go); if (n < (S.wz || 0)) wzGo(n); else for (let k = S.wz || 0; k < n; k++) { if (wzCheck(k)) { $("#ferr").textContent = wzCheck(k); return; } wzGo(k + 1); } }));
     $("#tm-add").onclick = () => { const h = document.querySelector(".tm-row.d-none"); if (h) h.classList.remove("d-none"); if (!document.querySelector(".tm-row.d-none")) $("#tm-add").remove(); };
     document.querySelectorAll("[data-tmphoto]").forEach((inp) => inp.addEventListener("change", (e) => pickImage(e, 128, 40000, (url) => { (S.tmPhotos ||= [])[inp.dataset.tmphoto] = url; $(`#tmp-${inp.dataset.tmphoto}`).style.backgroundImage = `url("${url}")`; })));
     preview(); }
