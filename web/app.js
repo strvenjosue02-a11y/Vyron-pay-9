@@ -5,6 +5,7 @@ import {
 import { CONFIG } from "./config.js";
 import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
 import { initI18n } from "./i18n.js";
+import { mountCoin } from "./coin3d.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, validate, CATEGORIES, COLORS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
@@ -170,6 +171,10 @@ async function loadTrades(p) {
       return { buy: usdcAmt > 0n, usdc: usdcAmt < 0n ? -usdcAmt : usdcAmt, tok: tokAmt < 0n ? -tokAmt : tokAmt, price: usdcPerToken(e.args.sqrtPriceX96, p.mk.usdc0), who: e.args.recipient, block: e.blockNumber };
     });
     p.tHead = head;
+    const blocks = [...new Set(p.trades.map((t) => t.block))].slice(-300);
+    const times = await Promise.all(blocks.map((b) => pub.getBlock({ blockNumber: b }).then((x) => [b, Number(x.timestamp)]).catch(() => [b, 0])));
+    const tm = Object.fromEntries(times.map(([b, t]) => [String(b), t]));
+    p.trades.forEach((t) => (t.ts = tm[String(t.block)] || 0));
   } catch { p.trades = []; }
   return p.trades;
 }
@@ -231,6 +236,138 @@ async function swap(p) {
   fns.push(() => S.wallet.writeContract({ address: CONFIG.swapRouter, abi: ROUTER_ABI, functionName: "exactInputSingle",
     args: [{ tokenIn, tokenOut, fee: 3000, recipient: S.me, amountIn: q.amt, amountOutMinimum: (q.out * 99n) / 100n, sqrtPriceLimitX96: 0n }] }));
   await flow(q.side === "buy" ? "Buy" : "Sell", labels, fns, "Trade done");
+}
+
+// ================================================================= terminal de trading y Market
+const PERIODS = { "1H": [3600, 300], "1D": [86400, 3600], "1W": [604800, 21600], ALL: [0, 0] };
+function buildCandles(p, period) {
+  const tr = (p.trades || []).filter((t) => t.ts), now = S.now || Math.floor(Date.now() / 1000);
+  let [span, step] = PERIODS[period];
+  const first = tr.length ? tr[0].ts : now - 3600;
+  if (period === "ALL") { span = Math.max(3600, now - first + 60); step = Math.max(60, Math.ceil(span / 40)); }
+  const start = now - span, out = [];
+  let last = p.mk.round;
+  for (const t of tr) if (t.ts < start) last = t.price;
+  for (let b = start - (start % step); b <= now; b += step) {
+    const inB = tr.filter((t) => t.ts >= b && t.ts < b + step);
+    const o = last, prices = inB.map((t) => t.price), c = prices.length ? prices[prices.length - 1] : last;
+    out.push({ o, c, h: Math.max(o, c, ...prices), l: Math.min(o, c, ...prices), v: inB.reduce((a, t) => a + Number(t.usdc) / 1e6, 0) });
+    last = c;
+  }
+  return out;
+}
+function candlesSvg(p, period) {
+  const cs = buildCandles(p, period), W = 800, H = 300;
+  const hi = Math.max(...cs.map((c) => c.h), p.mk.round) * 1.04, lo = Math.min(...cs.map((c) => c.l), p.mk.round) * 0.96;
+  const y = (v) => H - ((v - lo) / (hi - lo || 1)) * H, bw = W / cs.length;
+  const body = cs.map((c, i) => {
+    const up = c.c >= c.o, x = i * bw + bw / 2, top = y(Math.max(c.o, c.c)), hgt = Math.max(1.5, Math.abs(y(c.o) - y(c.c)));
+    return `<line x1="${x}" x2="${x}" y1="${y(c.h)}" y2="${y(c.l)}" class="wick ${up ? "up" : "dn"}"/><rect x="${x - bw * 0.32}" y="${top}" width="${bw * 0.64}" height="${hgt}" class="body ${up ? "up" : "dn"}"/>`;
+  }).join("");
+  const ticks = [hi, (hi + lo) / 2, lo].map((v) => `<span style="top:${(y(v) / H) * 100}%">${fmtP(v)}</span>`).join("");
+  return `<div class="cd-wrap"><svg class="cd" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Candlestick chart">
+    <line x1="0" x2="${W}" y1="${y(p.mk.round)}" y2="${y(p.mk.round)}" class="cd-round"/>${body}</svg><div class="cd-y">${ticks}</div></div>`;
+}
+function spark(p) {
+  const pts = [p.mk.round, ...(p.trades || []).map((t) => t.price)]; if (pts.length < 2) pts.push(p.mk.price);
+  const lo = Math.min(...pts), hi = Math.max(...pts), W = 120, H = 36;
+  const d = pts.map((v, i) => `${i ? "L" : "M"}${((i / (pts.length - 1)) * W).toFixed(1)} ${(H - ((v - lo) / (hi - lo || 1)) * H).toFixed(1)}`).join(" ");
+  return `<svg class="spark ${p.mk.price >= p.mk.round ? "up" : "dn"}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="${d}"/></svg>`;
+}
+const vol24 = (p) => (p.trades || []).filter((t) => t.ts > (S.now || 0) - 86400).reduce((a, t) => a + t.usdc, 0n);
+async function loadHolders(p) {
+  // Sin recorrer todo el historial: saldos de las direcciones conocidas (inversores, operadores del pool y cuentas del proyecto).
+  try {
+    const set = new Set([p.s.pool, p.address, CONFIG.platform, p.q.creator, ...Object.keys(p.order || {}), ...(p.trades || []).map((t) => t.who)].filter(Boolean).map((a) => a.toLowerCase()));
+    const addrs = [...set];
+    const [bals, sup] = await Promise.all([
+      pub.multicall({ contracts: addrs.map((a) => ({ address: p.address, abi: erc20Abi, functionName: "balanceOf", args: [a] })) }),
+      pub.readContract({ address: p.address, abi: erc20Abi, functionName: "totalSupply" })]);
+    p.holders = addrs.map((a, i) => ({ a, b: bals[i].result || 0n })).filter((x) => x.b > 0n).sort((x, y) => (y.b > x.b ? 1 : -1)).slice(0, 12);
+    p.supply = sup;
+  } catch (e) { console.error("holders", e?.shortMessage || e?.message); p.holders = []; }
+}
+function holderLabel(p, a) {
+  const l = a.toLowerCase();
+  if (l === p.s.pool.toLowerCase()) return "Uniswap pool";
+  if (l === p.address.toLowerCase()) return "Project contract";
+  if (l === CONFIG.platform.toLowerCase()) return "Holdfast fee";
+  if (l === p.q.creator.toLowerCase()) return "Team";
+  return "";
+}
+function depthRows(p) {
+  const Ru = Number(p.mk.poolUsdc) / 1e6, Rt = Number(p.mk.poolTok) / 1e18, price = p.mk.price;
+  return [1, 5, 10].map((f) => {
+    const k = f / 100, buy = Ru * (Math.sqrt(1 + k) - 1), sellTok = Rt * (1 / Math.sqrt(1 - k) - 1), sell = sellTok * price * Math.sqrt(1 - k);
+    return `<li><span>${f}%</span><b class="up">$${buy.toLocaleString("en-US", { maximumFractionDigits: 2 })}</b><b class="dn">$${sell.toLocaleString("en-US", { maximumFractionDigits: 2 })}</b></li>`;
+  }).join("");
+}
+function termTab(p) {
+  const t = S.ttab || "trades";
+  if (t === "holders") return p.holders ? (p.holders.length ? `<ul class="hold">${p.holders.map((h, i) => `<li><span class="rk">${i + 1}</span>${avatar(h.a, 26)}<span class="addr">${short(h.a)}</span><span class="hl">${holderLabel(p, h.a)}</span><b>${p.supply ? ((Number(h.b) / Number(p.supply)) * 100).toFixed(2) : "–"}%</b></li>`).join("")}</ul>` : `<p class="prose">No holders yet.</p>`) : `<p class="prose">Loading holders…</p>`;
+  if (t === "depth") return `<p class="fine" style="margin:0 0 12px">How much it takes to move the price. Small pools move fast: check before large trades.</p>
+    <ul class="depth"><li class="dh"><span>Move</span><b>Buy to push up</b><b>Sell to push down</b></li>${depthRows(p)}</ul>`;
+  const tr = (p.trades || []).slice(-20).reverse();
+  return tr.length ? `<ul class="cy-trades">${tr.map((x) => `<li><span class="${x.buy ? "b" : "s"}">${x.buy ? "Buy" : "Sell"}</span><span>${tok(x.tok)} ${esc(p.q.symbol)}</span><span>$${usd(x.usdc)}</span><span>${fmtP(x.price)}</span><span class="faint">${ago((p.tHead || 0n) - x.block)}</span></li>`).join("")}</ul>` : `<p class="prose">No trades yet. Be the first.</p>`;
+}
+function vTerminal(p) {
+  if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
+  const m = p.mk, per = S.period || "1D", up = m.price >= m.round;
+  return `<section class="term">
+    <a class="back" href="#/market">All markets</a>
+    <header class="term-top">
+      <div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
+      <div class="tt-id"><h1>${esc(p.q.name)} <span>${esc(p.q.symbol)} / USDC</span></h1>
+        <div class="tt-price" id="tt-price">${fmtP(m.price)}</div>
+        <div class="tt-delta ${up ? "up" : "dn"}">${up ? "+" : ""}${(((m.price - m.round) / m.round) * 100).toFixed(1)}% vs round price</div></div>
+      <dl class="tt-stats">
+        <div><dt>Round price</dt><dd>${fmtP(m.round)}</dd></div>
+        <div><dt>Pool liquidity</dt><dd>$${usd(m.poolUsdc)}</dd></div>
+        <div><dt>24h volume</dt><dd>$${usd(vol24(p))}</dd></div>
+        <div><dt>Liquidity unlocks</dt><dd>${day(p.s.lpUnlock)}</dd></div>
+      </dl>
+    </header>
+    <div class="term-grid">
+      <div class="term-main">
+        <div class="chart-card"><div class="neon-floor" aria-hidden="true"></div>
+          <div class="chart-head"><div class="periods" role="tablist">${Object.keys(PERIODS).map((k) => `<button type="button" data-period="${k}" aria-selected="${k === per}">${k === "ALL" ? "All" : k}</button>`).join("")}</div>
+            <div class="cy-legend"><span class="l1">Price</span><span class="l2">Round price</span></div></div>
+          <div id="candles">${candlesSvg(p, per)}</div></div>
+        <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${t}</button>`).join("")}</div>
+        <div id="term-tab">${termTab(p)}</div>
+      </div>
+      <aside class="term-side">${S.me ? tradePanel(p) : `<div class="panel cyber"><p class="muted" style="margin:0 0 16px">Connect your wallet to buy or sell ${esc(p.q.symbol)}. Anyone can buy with USDC.</p><button class="btn btn-cyber btn-block" data-act="connect">Connect wallet</button></div>`}</aside>
+    </div>
+  </section>`;
+}
+function vMarket() {
+  const live = S.list.filter((p) => p.mk);
+  return `<div class="page-h mk-h"><h1>Market</h1><p>Every Holdfast token with an open Uniswap pool. Anyone can buy with USDC; liquidity is locked for 12 months.</p></div>
+  ${live.length ? `<div class="mk-list"><div class="mk-row mk-head"><span>Token</span><span>Price</span><span>vs round</span><span>Liquidity</span><span>24h volume</span><span></span></div>
+    ${live.map((p) => { const up = p.mk.price >= p.mk.round; return `<a class="mk-row" href="#/trade/${p.id}" data-testid="mk-${p.id}">
+      <span class="mk-tok">${mark(p)}<span><b>${esc(p.q.name)}</b><small>${esc(p.q.symbol)}</small></span></span>
+      <span class="mk-p">${fmtP(p.mk.price)}</span><span class="${up ? "up" : "dn"}">${up ? "+" : ""}${(((p.mk.price - p.mk.round) / p.mk.round) * 100).toFixed(1)}%</span>
+      <span>$${usd(p.mk.poolUsdc)}</span><span>$${usd(vol24(p))}</span><span>${spark(p)}</span></a>`; }).join("")}</div>`
+    : `<div class="list"><div class="empty">No token has a market yet. Markets open when a raise closes successfully.</div></div>`}`;
+}
+let coinOff = null;
+function startTerminal(p) {
+  if (coinOff) { coinOff(); coinOff = null; }
+  mountCoin($("#coin3d"), { logo: logoSrc(p), color: p.meta.color, symbol: p.q.symbol }).then((off) => (coinOff = off)).catch(() => {});
+  bindTrade(p);
+  const reTerm = () => { if (!$("#term-tab")) return; $("#candles").innerHTML = candlesSvg(p, S.period || "1D"); $("#term-tab").innerHTML = termTab(p); };
+  const hl = async () => { if (!p.order) await loadActivity(); await loadHolders(p); if ((S.ttab || "trades") === "holders") reTerm(); };
+  if (!p.trades) loadTrades(p).then(() => { reTerm(); hl(); }); else if (!p.holders) hl();
+  clearInterval(S.poll);
+  S.poll = setInterval(async () => {
+    if (!location.hash.startsWith(`#/trade/${p.id}`)) return clearInterval(S.poll);
+    const before = p.mk.price; await loadChain(p); if (!p.mk) return;
+    if (Math.abs(p.mk.price - before) / before > 1e-6) {
+      const el = $("#tt-price"); el.textContent = fmtP(p.mk.price);
+      el.classList.remove("flash-up", "flash-dn"); void el.offsetWidth; el.classList.add(p.mk.price > before ? "flash-up" : "flash-dn");
+      await loadTrades(p); reTerm();
+    }
+  }, 12000);
 }
 
 // ================================================================= estados
@@ -389,6 +526,7 @@ function tabBody(p) {
   if (S.tab === "trade" && p.mk) {
     const m = p.mk, tr = (p.trades || []).slice(-10).reverse();
     return `<div class="cy-wrap">
+      <a class="btn btn-cyber" href="#/trade/${p.id}" style="margin-bottom:24px">Open trading terminal</a>
       <div class="cy-stats"><div><span>Price</span><b>${fmtP(m.price)}</b></div><div><span>Round price</span><b>${fmtP(m.round)}</b></div>
         <div><span>Pool liquidity</span><b>$${usd(m.poolUsdc)}</b></div><div><span>Liquidity unlocks</span><b>${day(p.s.lpUnlock)}</b></div></div>
       <div class="cy-chart-box"><div class="cy-legend"><span class="l1">Price</span><span class="l2">Round price</span></div>${chartSvg(p)}</div>
@@ -772,11 +910,14 @@ function route() {
   const h = location.hash || "#/";
   const m = h.match(/^#\/p\/([\w-]+)/);
   const p = m && S.list.find((x) => x.id === m[1]);
-  const key = p ? "home" : h.startsWith("#/launch") ? "launch" : h.startsWith("#/portfolio") ? "portfolio" : h.startsWith("#/owner") ? "owner" : "home";
+  const tm = h.match(/^#\/trade\/([\w-]+)/), tp = tm && S.list.find((x) => x.id === tm[1]);
+  const key = tp || h.startsWith("#/market") ? "market" : p ? "home" : h.startsWith("#/launch") ? "launch" : h.startsWith("#/portfolio") ? "portfolio" : h.startsWith("#/owner") ? "owner" : "home";
   document.querySelectorAll("[data-nav]").forEach((a) => (a.dataset.nav === key ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
   $("#nav-owner").classList.toggle("d-none", !isOwner()); $("#tab-owner").classList.toggle("d-none", !isOwner());
   if (key === "launch" && $("#form")) return; // no borrar lo que el creador está escribiendo
   const keep = $("#amt")?.value;
+  if (tp) { const kv = $("#tamt")?.value; $("#app").innerHTML = vTerminal(tp); if (kv && $("#tamt")) $("#tamt").value = kv; startTerminal(tp); return; }
+  if (key === "market") { $("#app").innerHTML = vMarket(); S.list.filter((x) => x.mk && !x.trades).forEach((x) => loadTrades(x).then(() => { if (location.hash.startsWith("#/market")) $("#app").innerHTML = vMarket(); })); return; }
   $("#app").innerHTML = p ? vProject(p) : key === "launch" ? vLaunch() : key === "portfolio" ? vPortfolio() : key === "owner" ? vOwner() : vHome();
   if (p) { bindAmount(p); bindTab(p); bindTrade(p); celebrate(p); if (p.mk && !p.trades) loadTrades(p).then(() => { if (S.tab === "trade") { $(".ptab-body").innerHTML = tabBody(p); } }); }
   if (!p && key === "home") bindCards();
@@ -917,8 +1058,12 @@ async function postUpdate(id) {
 }
 
 document.addEventListener("click", async (e) => {
+  const pr = e.target.closest("[data-period]");
+  if (pr) { S.period = pr.dataset.period; document.querySelectorAll("[data-period]").forEach((x) => x.setAttribute("aria-selected", x === pr)); const tp = S.list.find((x) => location.hash === `#/trade/${x.id}`); if (tp) $("#candles").innerHTML = candlesSvg(tp, S.period); return; }
+  const tt = e.target.closest("[data-ttab]");
+  if (tt) { S.ttab = tt.dataset.ttab; document.querySelectorAll("[data-ttab]").forEach((x) => x.setAttribute("aria-selected", x === tt)); const tp = S.list.find((x) => location.hash === `#/trade/${x.id}`); if (tp) $("#term-tab").innerHTML = termTab(tp); return; }
   const sd = e.target.closest("[data-side]");
-  if (sd) { S.side = sd.dataset.side; const p = S.list.find((x) => location.hash === `#/p/${x.id}`); if (p) { const box = $(".cyber"); box.outerHTML = tradePanel(p); bindTrade(p); } return; }
+  if (sd) { S.side = sd.dataset.side; const p = S.list.find((x) => location.hash === `#/p/${x.id}` || location.hash === `#/trade/${x.id}`); if (p) { const box = $(".cyber"); box.outerHTML = tradePanel(p); bindTrade(p); } return; }
   const tb = e.target.closest("[data-tab]");
   if (tb) { S.tab = tb.dataset.tab; document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", x === tb)); const p = S.list.find((x) => location.hash === `#/p/${x.id}`); if (p) { $(".ptab-body").innerHTML = tabBody(p); bindTab(p); if (S.tab === "trade" && p.mk) loadTrades(p).then(() => { if (S.tab === "trade") $(".ptab-body").innerHTML = tabBody(p); }); } return; }
   if (e.target.closest("#bb-go")) { const v = $("#amt")?.value; if (v && Number(v) > 0) return $('[data-act="buy"]')?.click(); $("#amt")?.scrollIntoView({ block: "center", behavior: "smooth" }); setTimeout(() => $("#amt")?.focus(), 400); return; }
@@ -930,7 +1075,7 @@ document.addEventListener("click", async (e) => {
   if (!S.wallet) return toast("Connect your wallet first.", true);
   document.querySelectorAll("button").forEach((x) => (x.disabled = true));
   try {
-    const p = S.list.find((x) => location.hash === `#/p/${x.id}`);
+    const p = S.list.find((x) => location.hash === `#/p/${x.id}` || location.hash === `#/trade/${x.id}`);
     if (act === "buy") await buy(p);
     else if (ACTS[act]) { const [label, fn, args] = ACTS[act]; await flow(label, [label], [() => S.wallet.writeContract({ address: p.address, abi: ABI, functionName: fn, args })], `${label}: done`); }
     else if (act === "approve" || act === "reject") return await decide(b.dataset.id, act === "approve");
@@ -948,7 +1093,7 @@ async function main() {
   initI18n();
   $("#net span").textContent = CONFIG.chainName;
   $("#connect").onclick = () => connect().catch((x) => toast(x.shortMessage || x.message, true));
-  window.addEventListener("hashchange", () => { S.tab = "overview"; if (!location.hash.startsWith("#/launch")) $("#app").innerHTML = ""; route(); scrollTo(0, 0); });
+  window.addEventListener("hashchange", () => { S.tab = "overview"; clearInterval(S.poll); if (!location.hash.startsWith("#/launch")) $("#app").innerHTML = ""; route(); scrollTo(0, 0); });
   await loadCatalog();
   route();
   await refresh();
