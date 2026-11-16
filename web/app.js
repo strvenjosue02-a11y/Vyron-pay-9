@@ -340,11 +340,15 @@ function termTab(p) {
   if (t === "depth") return `<p class="fine" style="margin:0 0 12px">How much it takes to move the price. Small pools move fast: check before large trades.</p>
     <ul class="depth"><li class="dh"><span>Move</span><b>Buy to push up</b><b>Sell to push down</b></li>${depthRows(p)}</ul>`;
   if (t === "mine" && !S.me) return `<p class="prose">Connect your wallet to see your trades.</p>`;
+  if (t === "whales") { const wl = (p.trades || []).filter((x) => isWhale(p, x)).slice(-15).reverse();
+    return `<p class="fine" style="margin:0 0 12px">Trades of $${whaleMin(p).toFixed(0)} or more (5% of the pool). Big buys can push the price up; big sells can push it down.</p>` + (wl.length ? `<ul class="cy-trades whales">${wl.map((x) => `<li><span class="${x.buy ? "b" : "s"}">🐋 ${x.buy ? "Buy" : "Sell"}</span><span class="addr">${short(x.who || "0x0000000000")}</span><span>$${usd(x.usdc)}</span><span>${fmtP(x.price)}</span><span class="faint">${ago((p.tHead || 0n) - x.block)}</span></li>`).join("")}</ul>` : `<p class="prose">No big trades yet.</p>`); }
   const tr = (p.trades || []).filter((x) => t !== "mine" || x.who?.toLowerCase() === S.me.toLowerCase()).slice(-(S.trN || 10)).reverse();
   const more = (p.trades || []).length > (S.trN || 10) && t === "trades";
   if (t === "mine" && !tr.length) return `<p class="prose">You haven't traded ${esc(p.q.symbol)} yet.</p>`;
-  return tr.length ? `<ul class="cy-trades">${tr.map((x) => `<li><span class="${x.buy ? "b" : "s"}">${x.buy ? "Buy" : "Sell"}</span><span>${tok(x.tok)} ${esc(p.q.symbol)}</span><span>$${usd(x.usdc)}</span><span>${fmtP(x.price)}</span><span class="faint">${ago((p.tHead || 0n) - x.block)}</span></li>`).join("")}</ul>${more ? `<button type="button" class="btn btn-line btn-sm tx-trmore" data-trmore>Show more</button>` : ""}` : `<p class="prose">No trades yet. Be the first.</p>`;
+  return tr.length ? `<ul class="cy-trades">${tr.map((x) => `<li class="${isWhale(p, x) ? "wh" : ""}"><span class="${x.buy ? "b" : "s"}">${isWhale(p, x) ? "🐋 " : ""}${x.buy ? "Buy" : "Sell"}</span><span>${tok(x.tok)} ${esc(p.q.symbol)}</span><span>$${usd(x.usdc)}</span><span>${fmtP(x.price)}</span><span class="faint">${ago((p.tHead || 0n) - x.block)}</span></li>`).join("")}</ul>${more ? `<button type="button" class="btn btn-line btn-sm tx-trmore" data-trmore>Show more</button>` : ""}` : `<p class="prose">No trades yet. Be the first.</p>`;
 }
+const whaleMin = (p) => Math.max(25, (Number(p.mk?.poolUsdc || 0n) / 1e6) * 0.05); // compra/venta >= 5% del pool
+const isWhale = (p, t) => Number(t.usdc) / 1e6 >= whaleMin(p);
 function stats24(p) {
   const now = S.now || Date.now() / 1000, tr = (p.trades || []).filter((t) => t.ts), day = tr.filter((t) => t.ts > now - 86400), before = tr.filter((t) => t.ts <= now - 86400);
   const open = before.length ? before[before.length - 1].price : p.mk.round, ps = day.map((t) => t.price);
@@ -381,7 +385,7 @@ function vTerminal(p) {
     <div class="term-grid">
       <div class="term-main">
         <div class="tx-chart" id="chartpro"></div>
-        <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${t}</button>`).join("")}</div>
+        <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["whales", "🐋 Whales"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${t}</button>`).join("")}</div>
         <div id="term-tab">${termTab(p)}</div>
       </div>
       <aside class="term-side">${posBox(p)}${S.me ? tradePanel(p) : `<div class="panel cyber"><p class="muted" style="margin:0 0 16px">Connect your wallet to buy or sell ${esc(p.q.symbol)}. Anyone can buy with USDC.</p><button class="btn btn-cyber btn-block" data-act="connect">Connect wallet</button></div>`}
@@ -445,7 +449,8 @@ function startTerminal(p) {
     if (Math.abs(p.mk.price - before) / before > 1e-6) {
       const el = $("#tt-price"); el.textContent = fmtP(p.mk.price);
       el.classList.remove("flash-up", "flash-dn"); void el.offsetWidth; el.classList.add(p.mk.price > before ? "flash-up" : "flash-dn");
-      await loadTrades(p); reTerm();
+      const n0 = (p.trades || []).length; await loadTrades(p); reTerm();
+      (p.trades || []).slice(n0).filter((t) => isWhale(p, t)).slice(-1).forEach((t) => toast(`🐋 Whale ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`));
       const pb = $("#tx-pos"); if (pb) pb.outerHTML = posBox(p);
       const av = Number(localStorage.getItem(`hf-alert-${p.id}`) || 0);
       if (av && p.alertSide && ((p.alertSide === "up" && p.mk.price >= av) || (p.alertSide === "dn" && p.mk.price <= av))) { toast(`🔔 ${p.q.symbol} reached $${av}`); p.alertSide = null; }

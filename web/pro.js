@@ -1,6 +1,6 @@
 // Gráfico de trading "pro" (SVG puro, sin librerías): velas rosa (sube) / violeta (baja), volumen, promedios MA7/MA25,
 // cruz con precio exacto, dibujar líneas de tendencia, vista línea/velas y pantalla completa.
-const UP = "#ff2e88", DN = "#a855f7";
+const UP = "#e8508f", DN = "#8f6be8";
 const fmt = (x) => (x >= 0.01 ? x.toLocaleString("en-US", { maximumFractionDigits: 4 }) : x.toPrecision(3));
 const ma = (cs, n) => cs.map((_, i) => (i + 1 < n ? null : cs.slice(i + 1 - n, i + 1).reduce((a, c) => a + c.c, 0) / n));
 
@@ -39,15 +39,16 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     const every = Math.max(1, Math.round(cs.length / 6));
     s += cs.map((c, i) => (i % every === 0 ? `<line x1="${xc(i)}" x2="${xc(i)}" y1="0" y2="${PH}" class="cp-grid v"/><text x="${xc(i)}" y="${H - 6}" class="cp-ax t">${tlabel(c.t, st.period)}</text>` : "")).join("");
     // volumen
-    s += cs.map((c, i) => c.v ? `<rect x="${i * cw + cw * 0.18}" y="${H - BX - (c.v / vmax) * VH}" width="${cw * 0.64}" height="${(c.v / vmax) * VH}" fill="${c.c >= c.o ? UP : DN}" opacity=".35"/>` : "").join("");
+    s += cs.map((c, i) => c.v ? `<rect x="${xc(i) - Math.max(2, Math.min(cw * 0.5, 12)) / 2}" y="${H - BX - (c.v / vmax) * VH}" width="${Math.max(2, Math.min(cw * 0.5, 12))}" height="${(c.v / vmax) * VH}" fill="${c.c >= c.o ? UP : DN}" opacity=".22"/>` : "").join("");
     // precio de la ronda
     s += `<line x1="0" x2="${W - AX}" y1="${y(d.round)}" y2="${y(d.round)}" class="cp-round"/>`;
     if (st.mode === "line") {
       const pts = cs.map((c, i) => `${i ? "L" : "M"}${xc(i).toFixed(1)} ${y(c.c).toFixed(1)}`).join(" ");
-      s += `<path d="${pts} L${xc(cs.length - 1)} ${PH} L${xc(0)} ${PH}Z" fill="url(#cpA)"/><path d="${pts}" class="cp-line" filter="url(#cpG)"/>`;
+      s += `<path d="${pts} L${xc(cs.length - 1)} ${PH} L${xc(0)} ${PH}Z" fill="url(#cpA)"/><path d="${pts}" class="cp-line"/>`;
     } else {
-      s += cs.map((c, i) => { const up = c.c >= c.o, col = up ? UP : DN, top = y(Math.max(c.o, c.c)), bh = Math.max(1.5, Math.abs(y(c.o) - y(c.c)));
-        return `<line x1="${xc(i)}" x2="${xc(i)}" y1="${y(c.h)}" y2="${y(c.l)}" stroke="${col}" stroke-width="1.2"/><rect x="${xc(i) - cw * 0.33}" y="${top}" width="${cw * 0.66}" height="${bh}" fill="${col}" rx="1" ${up ? 'filter="url(#cpG)"' : ""}/>`; }).join("");
+      const bw = Math.max(2, Math.min(cw * 0.5, 12));
+      s += cs.map((c, i) => { const up = c.c >= c.o, col = up ? UP : DN, top = y(Math.max(c.o, c.c)), bh = Math.max(1, Math.abs(y(c.o) - y(c.c)));
+        return `<line x1="${xc(i)}" x2="${xc(i)}" y1="${y(c.h)}" y2="${y(c.l)}" stroke="${col}" stroke-width="1" opacity=".85"/><rect x="${xc(i) - bw / 2}" y="${top}" width="${bw}" height="${bh}" fill="${col}" rx="1.5"/>`; }).join("");
     }
     if (st.ma) for (const [n, cls] of [[7, "m7"], [25, "m25"]]) { const m = ma(cs, n), pts = m.map((v, i) => (v == null ? "" : `${m[i - 1] == null ? "M" : "L"}${xc(i).toFixed(1)} ${y(v).toFixed(1)}`)).join(" "); if (pts.trim()) s += `<path d="${pts}" class="cp-ma ${cls}"/>`; }
     // líneas dibujadas (en coordenadas de vela y precio)

@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "🐋 Whales": "🐋 Ballenas", "No big trades yet.": "Todavía no hay operaciones grandes.",
   "Minimum you'll get": "Mínimo que recibes", "Pool fee": "Comisión del pool", "Your position": "Tu posición", "You hold": "Tienes", "Worth today": "Vale hoy", "vs what you paid": "frente a lo que pagaste", "More data": "Ver más datos", "Less": "Ver menos", "Show more": "Ver más",
   "The price changed while you were trading. You didn't lose anything: try again or raise the slippage.": "El precio cambió mientras operabas. No perdiste nada: intenta otra vez o sube la tolerancia.", "You cancelled it in your wallet. Nothing happened.": "Lo cancelaste en tu wallet. No pasó nada.",
   "Your wallet needs a little ETH to pay the network fee.": "Tu wallet necesita un poco de ETH para pagar la comisión de la red.", "Something failed and nothing was charged. Try again.": "Algo falló y no se cobró nada. Intenta otra vez.",
@@ -136,6 +137,9 @@ const ES = {
 
 // Textos con números u otras partes variables.
 const RULES = [
+  [/^🐋 (Buy|Sell)$/, (m) => `🐋 ${m[1] === "Buy" ? "Compra" : "Venta"}`],
+  [/^🐋 Whale (bought|sold) \$(.+) of (.+)$/, (m) => `🐋 Una ballena ${m[1] === "bought" ? "compró" : "vendió"} $${m[2]} de ${m[3]}`],
+  [/^Trades of \$(\d+) or more \(5% of the pool\)\. Big buys can push the price up; big sells can push it down\.$/, (m) => `Operaciones de $${m[1]} o más (5% del pool). Las compras grandes pueden subir el precio; las ventas grandes, bajarlo.`],
   [/^([+-]?[\d.]+)% 24h$/, (m) => `${m[1]}% 24h`], [/^Unlock only with approved releases \((\d+)\/(\d+)\)$/, (m) => `Se liberan solo con entregas aprobadas (${m[1]}/${m[2]})`],
   [/^You haven't traded (.+) yet\.$/, (m) => `Todavía no operaste ${m[1]}.`], [/^Alert set at \$(.+)$/, (m) => `Alerta activada en $${m[1]}`], [/^🔔 (.+) reached \$(.+)$/, (m) => `🔔 ${m[1]} llegó a $${m[2]}`],
   [/^Confirm: moves the price (.+)%$/, (m) => `Confirmar: mueve el precio ${m[1]}%`], [/^High price impact \((.+)%\)\. Tap again to confirm\.$/, (m) => `Impacto alto en el precio (${m[1]}%). Toca otra vez para confirmar.`],

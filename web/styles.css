@@ -1067,3 +1067,14 @@ body:has(.term.t-fs) { overflow: hidden; }
   .term.t-fs .term-grid { grid-template-columns: 1fr; } .term.t-fs .cp-svg { height: 55vh; }
 }
 .term.tx .panel.cyber::before { display: none !important; } .term.tx .panel.cyber { border-left: 0 !important; } .term.tx .cy-field .u, .term.tx .field-amt .u { color: #a3a1a6 !important; } .term.tx .cy-field { border-color: rgba(255,255,255,.1) !important; box-shadow: none !important; }
+/* velas suaves + pantalla completa más grande + ballenas */
+.cp-svg { height: 460px; }
+.term.t-fs { padding: 8px 14px 16px; }
+.term.t-fs .tx-top { padding: 0 0 6px; margin-bottom: 6px; gap: 8px 16px; }
+.term.t-fs .term-grid { grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; }
+.term.t-fs .tx-chart { padding: 8px 8px 4px; }
+.term.t-fs .cp-svg { height: calc(100vh - 175px); }
+.term.t-fs .tx-pos { display: none; }
+.cy-trades li.wh { background: rgba(255,209,102,.05); box-shadow: inset 2px 0 0 #ffd166; }
+.cy-trades.whales .addr { font-family: ui-monospace, monospace; font-size: 12.5px; color: #a3a1a6; }
+@media (max-width: 1000px) { .term.t-fs .cp-svg { height: 62vh; } .term.t-fs .term-grid { grid-template-columns: 1fr; } }
