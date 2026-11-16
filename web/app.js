@@ -136,6 +136,8 @@ async function loadActivity() {
       ]);
       p.backers = new Set(bought.map((e) => e.args.buyer.toLowerCase())).size; p.backersPartial = fromBlock > 0n;
       p.order = {}; bought.forEach((e) => { const a = e.args.buyer.toLowerCase(); if (!(a in p.order)) p.order[a] = Object.keys(p.order).length + 1; });
+      { const since = head > 7200n ? head - 7200n : 0n, day = bought.filter((e) => e.blockNumber >= since); // ~24 h de bloques
+        p.hot = day.reduce((s, e) => s + Number(e.args.usdcAmount) / 1e6, 0) + 25 * new Set(day.map((e) => e.args.buyer.toLowerCase())).size; }
       p.recent = bought.slice(-12).reverse().map((e) => ({ who: e.args.buyer, amt: e.args.usdcAmount, block: e.blockNumber })); p.head = head;
       return [...bought.map((e) => ({ kind: "buy", p, who: e.args.buyer, amt: e.args.usdcAmount, block: e.blockNumber })),
         ...fin.map((e) => ({ kind: e.args.success ? "goal" : "miss", p, block: e.blockNumber }))];
@@ -446,7 +448,9 @@ function vHome() {
   </ol>
   ${carousel()}
   <div class="sec-h" id="projects"><h2 class="h2">Featured projects</h2><span class="faint">${S.list.length} live</span></div>
-  <div class="deck">${S.list.length ? S.list.map(card).join("") : `<div class="empty">No projects are live yet. <a href="#/launch">Launch the first one</a>.</div>`}</div>`;
+  <div class="cat-bar"><div class="cat-tabs" role="tablist">${[["trending", "🔥 Trending"], ["new", "New"], ["ending", "Ending soon"], ["funded", "Funded"]].map(([k, t]) => `<button type="button" role="tab" data-cat="${k}" aria-selected="${(S.cat || "trending") === k}">${t}</button>`).join("")}</div>
+    <label class="cat-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="cat-q" type="search" placeholder="Search name or token" value="${esc(S.catQ || "")}" aria-label="Search projects"></label></div>
+  <div class="deck" id="deck">${deckHtml()}</div>`;
 }
 const STAR = `<svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l2.6 7.2 7.4.3-5.8 4.7 2 7.3L12 16.8 5.8 21l2-7.3L2 9l7.4-.3z"/></svg>`;
 function rarity(p) {
@@ -461,12 +465,37 @@ const countdown = (end) => { const s = Math.max(0, end - Math.floor(Date.now() /
 const faces = (p) => { const list = Object.keys(p.order || {}).slice(-4).reverse(), n = p.backers || 0;
   if (!n) return `<span class="pc-first">Be the first backer</span>`;
   return `<span class="pc-faces">${list.map((a) => `<i style="--h:${parseInt(a.slice(2, 6), 16) % 360}"></i>`).join("")}</span><span>${n} backer${n === 1 ? "" : "s"}</span>`; };
+const hot = (p) => p.hot || 0;
+function catalog() {
+  const q = (S.catQ || "").trim().toLowerCase(), now = S.now || Date.now() / 1000;
+  let l = S.list.filter((p) => !q || p.q.name.toLowerCase().includes(q) || p.q.symbol.toLowerCase().includes(q));
+  const open = (p) => phase(p).c === "open";
+  switch (S.cat || "trending") {
+    case "new": l = l.slice().reverse(); break;
+    case "ending": l = l.filter(open).sort((a, b) => Number(a.q.saleEnd) - Number(b.q.saleEnd)); break;
+    case "funded": l = l.filter((p) => p.s.succeeded); break;
+    default: l = l.slice().sort((a, b) => hot(b) - hot(a) || Number(b.s.totalRaised - a.s.totalRaised));
+  }
+  return l;
+}
+function deckHtml() {
+  const l = catalog(), n = S.catN || 12;
+  if (!S.list.length) return `<div class="empty">No projects are live yet. <a href="#/launch">Launch the first one</a>.</div>`;
+  if (!l.length) return `<div class="empty">Nothing matches. Try another name or tab.</div>`;
+  return l.slice(0, n).map(card).join("") + (l.length > n ? `<button type="button" class="btn btn-line cat-more" data-more>Load more</button>` : "");
+}
+function bindCatalog() {
+  const re = () => { $("#deck").innerHTML = deckHtml(); bindCards(); };
+  document.querySelectorAll("[data-cat]").forEach((b) => (b.onclick = () => { S.cat = b.dataset.cat; S.catN = 12; document.querySelectorAll("[data-cat]").forEach((x) => x.setAttribute("aria-selected", x === b)); re(); }));
+  const i = $("#cat-q"); if (i) i.oninput = () => { S.catQ = i.value; S.catN = 12; re(); };
+  $("#deck").onclick = (e) => { if (e.target.closest("[data-more]")) { S.catN = (S.catN || 12) + 12; re(); } };
+}
 function carousel() {
-  const list = S.list.filter((p) => coverSrc(p)); if (list.length < 2) return "";
+  const list = S.list.filter((p) => coverSrc(p)).sort((a, b) => hot(b) - hot(a)).slice(0, 5); if (list.length < 2) return "";
   return `<section class="car" aria-roledescription="carousel" aria-label="Featured">
     <div class="car-track" id="car">${list.map((p) => `<a class="car-slide" href="#/p/${p.id}" style="--pc:${esc(p.meta.color)}">
       <img src="${esc(coverSrc(p))}" alt="" loading="lazy">
-      <div class="car-txt">${p.exists ? `<span class="kv-ver">✓ Verified</span>` : ""}<h3>${esc(p.q.name)}</h3><p>${esc(p.meta.tagline)}</p>
+      <div class="car-txt">${hot(p) > 0 ? `<span class="car-hot">🔥 Trending</span>` : ""}${p.exists ? `<span class="kv-ver">✓ Verified</span>` : ""}<h3>${esc(p.q.name)}</h3><p>${esc(p.meta.tagline)}</p>
         <div class="car-num">${p.mk ? `<b>${fmtP(p.mk.price)}</b><span>Market price</span>` : `<b>$${usd(p.s.totalRaised)} <small>of $${usd(p.q.hardcap)}</small></b><span>Raised</span>`}</div></div></a>`).join("")}</div>
     <div class="car-dots">${list.map((_, i) => `<button type="button" data-car="${i}" aria-label="Slide ${i + 1}"${i ? "" : ' aria-current="true"'}></button>`).join("")}</div>
   </section>`;
@@ -625,24 +654,19 @@ function tabBody(p) {
       <div class="sim-h"><h3>Simulate your backing</h3><b id="sim-v">$100</b></div>
       <input id="sim" type="range" min="10" max="1000" step="10" value="100" aria-label="Amount to simulate">
       <div class="sim-rows">
-        <div class="sim-tokrow"><span>You receive</span><b id="sim-tok"></b></div>
         <div class="sim-case"><span>Goal of $${usd(q.softcap)} missed</span><b id="sim-miss"></b><i class="sim-bar"><s id="bar-miss"></s></i></div>
         <div class="sim-case"><span>Team stops after release 1</span><b id="sim-stop"></b><i class="sim-bar"><s id="bar-stop"></s></i></div>
         <div class="sim-case"><span>Every release approved</span><b>You keep all your tokens</b><i class="sim-bar"><s style="width:100%"></s></i></div>
       </div>
     </section>
-    <div class="rules">
-      <div>${IC.back}<div><b>Goal missed, full refund</b><p>If less than $${usd(q.softcap)} is raised by the close, every backer withdraws 100% of what they put in. No fee.</p></div></div>
-      <div>${IC.steps}<div><b>The team is paid in stages</b><p>${q.initialBps / 100}% when the raise closes, then ${q.milestones} releases of ${step}%. Backers vote on each one.</p></div></div>
-      <div>${IC.lock}<div><b>No one can touch it</b><p>The contract has no admin. If the team vanishes or loses a vote, the rest goes back to backers.</p></div></div>
-    </div>`;
+`;
 }
 function bindTab(p) {
   const r = $("#sim"); if (!r) return;
   const upd = () => {
     const v = BigInt(r.value) * 1_000_000n, q = p.q, first = BigInt(q.initialBps) + BigInt(Math.floor((10000 - q.initialBps) / q.milestones));
     $("#sim-v").textContent = `$${usd(v)}`;
-    $("#sim-tok").textContent = `${tok((v * q.saleTokens) / q.hardcap)} ${q.symbol}`;
+    if ($("#sim-tok")) $("#sim-tok").textContent = `${tok((v * q.saleTokens) / q.hardcap)} ${q.symbol}`;
     $("#sim-miss").textContent = `$${usd(v)} back`;
     const stop = (v * 99n * (10000n - first)) / 1000000n;
     $("#sim-stop").textContent = `about $${usd(stop)} back`;
@@ -982,7 +1006,7 @@ function route() {
   if (key === "market") { $("#app").innerHTML = vMarket(); S.list.filter((x) => x.mk && !x.trades).forEach((x) => loadTrades(x).then(() => { if (location.hash.startsWith("#/market")) $("#app").innerHTML = vMarket(); })); return; }
   $("#app").innerHTML = p ? vProject(p) : key === "launch" ? vLaunch() : key === "portfolio" ? vPortfolio() : key === "owner" ? vOwner() : vHome();
   if (p) { bindSwipe(p); clearInterval(S.cdT); S.cdT = setInterval(() => { const e = document.querySelector(".kv-count"); if (!e) return clearInterval(S.cdT); e.textContent = countdown(Number(e.dataset.end)).replace("Closes in ", ""); }, 1000); bindAmount(p); bindTab(p); bindTrade(p); celebrate(p); if (p.mk && !p.trades) loadTrades(p).then(() => { if (S.tab === "trade") { $(".ptab-body").innerHTML = tabBody(p); } }); }
-  if (!p && key === "home") { bindCards(); bindCarousel(); S.list.filter((x) => x.mk).forEach((x) => loadTrades(x).then(() => { const el = document.querySelector(`[data-testid="row-${x.id}"] .pc-mkt .spark`); if (el) el.outerHTML = spark(x); })); }
+  if (!p && key === "home") { bindCards(); bindCarousel(); bindCatalog(); S.list.filter((x) => x.mk).forEach((x) => loadTrades(x).then(() => { const el = document.querySelector(`[data-testid="row-${x.id}"] .pc-mkt .spark`); if (el) el.outerHTML = spark(x); })); }
   if (p && keep && $("#amt")) { $("#amt").value = keep; $("#amt").dispatchEvent(new Event("input")); }
   if ($("#form")) { $("#form").addEventListener("input", preview); $("#form").addEventListener("submit", submitProject); $("#f-logo").addEventListener("change", pickLogo);
     $("#tm-add").onclick = () => { const h = document.querySelector(".tm-row.d-none"); if (h) h.classList.remove("d-none"); if (!document.querySelector(".tm-row.d-none")) $("#tm-add").remove(); };
