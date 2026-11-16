@@ -444,6 +444,7 @@ function vHome() {
     <li><h3>Vote on every release</h3><p>The team gets a small part when the raise closes and the rest in stages. Each stage is paid only if backers approve it.</p></li>
     <li><h3>Get it back if it fails</h3><p>If the goal isn't met, you get 100% back. If the team disappears or loses a vote, what's left returns to backers.</p></li>
   </ol>
+  ${carousel()}
   <div class="sec-h" id="projects"><h2 class="h2">Featured projects</h2><span class="faint">${S.list.length} live</span></div>
   <div class="deck">${S.list.length ? S.list.map(card).join("") : `<div class="empty">No projects are live yet. <a href="#/launch">Launch the first one</a>.</div>`}</div>`;
 }
@@ -460,6 +461,26 @@ const countdown = (end) => { const s = Math.max(0, end - Math.floor(Date.now() /
 const faces = (p) => { const list = Object.keys(p.order || {}).slice(-4).reverse(), n = p.backers || 0;
   if (!n) return `<span class="pc-first">Be the first backer</span>`;
   return `<span class="pc-faces">${list.map((a) => `<i style="--h:${parseInt(a.slice(2, 6), 16) % 360}"></i>`).join("")}</span><span>${n} backer${n === 1 ? "" : "s"}</span>`; };
+function carousel() {
+  const list = S.list.filter((p) => coverSrc(p)); if (list.length < 2) return "";
+  return `<section class="car" aria-roledescription="carousel" aria-label="Featured">
+    <div class="car-track" id="car">${list.map((p) => `<a class="car-slide" href="#/p/${p.id}" style="--pc:${esc(p.meta.color)}">
+      <img src="${esc(coverSrc(p))}" alt="" loading="lazy">
+      <div class="car-txt">${p.exists ? `<span class="kv-ver">✓ Verified</span>` : ""}<h3>${esc(p.q.name)}</h3><p>${esc(p.meta.tagline)}</p>
+        <div class="car-num">${p.mk ? `<b>${fmtP(p.mk.price)}</b><span>Market price</span>` : `<b>$${usd(p.s.totalRaised)} <small>of $${usd(p.q.hardcap)}</small></b><span>Raised</span>`}</div></div></a>`).join("")}</div>
+    <div class="car-dots">${list.map((_, i) => `<button type="button" data-car="${i}" aria-label="Slide ${i + 1}"${i ? "" : ' aria-current="true"'}></button>`).join("")}</div>
+  </section>`;
+}
+function bindCarousel() {
+  const t = $("#car"); if (!t) return; const dots = [...document.querySelectorAll("[data-car]")];
+  const idx = () => Math.round(t.scrollLeft / t.clientWidth);
+  const go = (i) => t.scrollTo({ left: i * t.clientWidth, behavior: "smooth" });
+  t.onscroll = () => dots.forEach((d, i) => d.toggleAttribute("aria-current", i === idx()));
+  dots.forEach((d, i) => (d.onclick = () => go(i)));
+  let hold = 0; t.onpointerdown = () => (hold = Date.now() + 8000);
+  clearInterval(S.carT); if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  S.carT = setInterval(() => { if (!document.body.contains(t)) return clearInterval(S.carT); if (Date.now() > hold) go((idx() + 1) % dots.length); }, 5000);
+}
 function card(p) {
   const r = rarity(p), ph = phase(p), f = pct(p.s.totalRaised, p.q.hardcap);
   const d = Math.max(0, Math.ceil((Number(p.q.saleEnd) - S.now) / 86400));
@@ -512,10 +533,18 @@ const IC = {
   lock: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`,
   ok: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>`,
 };
+const sib = (p, d) => S.list[(S.list.indexOf(p) + d + S.list.length) % S.list.length];
+function bindSwipe(p) {
+  const h = $(".kv-hero"); if (!h || S.list.length < 2) return; let x0 = null, y0 = 0;
+  h.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  h.addEventListener("touchend", (e) => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) { document.body.classList.add(dx < 0 ? "sw-l" : "sw-r"); setTimeout(() => document.body.classList.remove("sw-l", "sw-r"), 400); location.hash = `#/p/${sib(p, dx < 0 ? 1 : -1).id}`; } }, { passive: true });
+}
 function vProject(p) {
   const { q } = p, ph = phase(p), step = (10000 - q.initialBps) / q.milestones / 100;
   return `
   <a class="back" href="#/">All projects</a>
+  ${S.list.length > 1 ? `<nav class="kv-nav" aria-label="Other projects"><a href="#/p/${sib(p, -1).id}" aria-label="Previous project">‹</a><span>${S.list.indexOf(p) + 1} / ${S.list.length}</span><a href="#/p/${sib(p, 1).id}" aria-label="Next project">›</a></nav>` : ""}
   <header class="kv-hero${coverSrc(p) ? " has-cover" : ""}" style="--pc:${esc(p.meta.color)}">
     ${coverSrc(p) ? `<img class="kv-cover" src="${esc(coverSrc(p))}" alt="">` : `<div class="kv-art" aria-hidden="true"><i class="pc-sun"></i></div>`}
     <div class="kv-id">
@@ -695,12 +724,7 @@ function pInvest(p) {
         <div class="field-amt"><input id="amt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" data-testid="amount"><span class="u">USDC</span></div>
         <div class="quick">${[25, 50, 100].map((v) => `<button type="button" data-quick="${v}">$${v}</button>`).join("")}<button type="button" data-max>Max</button></div>
       </div>
-      <div class="lines inv-sum">
-        <div><span>You receive</span><b id="receive">0 ${esc(q.symbol)}</b></div>
-        <div><span>If the goal is missed</span><b id="refundline">100% back</b></div>
-        <div><span>Network fee</span><b>${p.exists ? "Less than $0.01" : "A few cents, once"}</b></div>
-        <div><span>Your balance</span><b>${usd(S.usdc)} USDC</b></div>
-      </div>
+      <div class="inv-get"><span>You receive</span><b id="receive">0 ${esc(q.symbol)}</b></div>
       <button class="btn btn-ember btn-block" data-act="buy" data-testid="buy">Back ${esc(q.name)}</button>
       ${p.exists ? "" : `<p class="inv-note">You're early: your backing also creates this project's contract.</p>`}`
       : `<button class="btn btn-ember btn-block" data-act="connect">Connect wallet to back</button>`;
@@ -715,15 +739,16 @@ function pInvest(p) {
     <div class="big">$${usd(s.totalRaised)} <small>of $${usd(q.hardcap)}</small></div>
     <div style="margin-top:16px">${meter(p)}</div>
     <div class="meter-t"><span>Minimum $${usd(q.softcap)}</span><span>${room > 0n && s.state === 0 ? `$${usd(room)} left` : left(p)}</span></div>
-    <dl class="facts">
-      <div><dt>Price</dt><dd>1 USDC = ${tok((q.saleTokens * 1_000_000n) / q.hardcap)} ${esc(q.symbol)}</dd></div>
-      <div><dt>Closes</dt><dd>${day(q.saleEnd)}</dd></div>
-    </dl>${act}
-    <ul class="guarantees">
-      <li>${IC.back}<span>Refund if goal missed</span></li>
-      <li>${IC.lock}<span>No admin keys</span></li>
-      <li>${IC.steps}<span>Paid in voted stages</span></li>
-    </ul></div>`;
+    ${act}
+    <details class="inv-more"><summary>Details</summary>
+      <div class="lines">
+        <div><span>Price</span><b>1 USDC = ${tok((q.saleTokens * 1_000_000n) / q.hardcap)} ${esc(q.symbol)}</b></div>
+        <div><span>Closes</span><b>${day(q.saleEnd)}</b></div>
+        <div><span>If the goal is missed</span><b id="refundline">100% back</b></div>
+        <div><span>Network fee</span><b>${p.exists ? "Less than $0.01" : "A few cents, once"}</b></div>
+        ${S.me ? `<div><span>Your balance</span><b>${usd(S.usdc)} USDC</b></div>` : ""}
+        <div><span>Safety</span><b>No admin keys · paid in voted stages</b></div>
+      </div></details></div>`;
 }
 function pPosition(p) {
   const { s, u, q } = p;
@@ -956,8 +981,8 @@ function route() {
   if (tp) { const kv = $("#tamt")?.value; $("#app").innerHTML = vTerminal(tp); if (kv && $("#tamt")) $("#tamt").value = kv; startTerminal(tp); return; }
   if (key === "market") { $("#app").innerHTML = vMarket(); S.list.filter((x) => x.mk && !x.trades).forEach((x) => loadTrades(x).then(() => { if (location.hash.startsWith("#/market")) $("#app").innerHTML = vMarket(); })); return; }
   $("#app").innerHTML = p ? vProject(p) : key === "launch" ? vLaunch() : key === "portfolio" ? vPortfolio() : key === "owner" ? vOwner() : vHome();
-  if (p) { clearInterval(S.cdT); S.cdT = setInterval(() => { const e = document.querySelector(".kv-count"); if (!e) return clearInterval(S.cdT); e.textContent = countdown(Number(e.dataset.end)).replace("Closes in ", ""); }, 1000); bindAmount(p); bindTab(p); bindTrade(p); celebrate(p); if (p.mk && !p.trades) loadTrades(p).then(() => { if (S.tab === "trade") { $(".ptab-body").innerHTML = tabBody(p); } }); }
-  if (!p && key === "home") { bindCards(); S.list.filter((x) => x.mk).forEach((x) => loadTrades(x).then(() => { const el = document.querySelector(`[data-testid="row-${x.id}"] .pc-mkt .spark`); if (el) el.outerHTML = spark(x); })); }
+  if (p) { bindSwipe(p); clearInterval(S.cdT); S.cdT = setInterval(() => { const e = document.querySelector(".kv-count"); if (!e) return clearInterval(S.cdT); e.textContent = countdown(Number(e.dataset.end)).replace("Closes in ", ""); }, 1000); bindAmount(p); bindTab(p); bindTrade(p); celebrate(p); if (p.mk && !p.trades) loadTrades(p).then(() => { if (S.tab === "trade") { $(".ptab-body").innerHTML = tabBody(p); } }); }
+  if (!p && key === "home") { bindCards(); bindCarousel(); S.list.filter((x) => x.mk).forEach((x) => loadTrades(x).then(() => { const el = document.querySelector(`[data-testid="row-${x.id}"] .pc-mkt .spark`); if (el) el.outerHTML = spark(x); })); }
   if (p && keep && $("#amt")) { $("#amt").value = keep; $("#amt").dispatchEvent(new Event("input")); }
   if ($("#form")) { $("#form").addEventListener("input", preview); $("#form").addEventListener("submit", submitProject); $("#f-logo").addEventListener("change", pickLogo);
     $("#tm-add").onclick = () => { const h = document.querySelector(".tm-row.d-none"); if (h) h.classList.remove("d-none"); if (!document.querySelector(".tm-row.d-none")) $("#tm-add").remove(); };

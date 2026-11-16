@@ -798,3 +798,42 @@ body { -webkit-font-smoothing: antialiased; }
 /* un solo acento: rosa neón */
 .kv-rar, .pc-rar svg, .kv-tags .status { color: #ff7ab8 !important; }
 a.pcard .pc-rar { color: #a9a4a3 !important; }
+
+/* panel mínimo */
+.inv-get { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 14px; font-size: 14px; color: #8d8f95; }
+.inv-get b { color: #fff; font-size: 17px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.inv-more { margin-top: 14px; border-top: 1px solid rgba(255,255,255,.07); padding-top: 12px; }
+.inv-more summary { cursor: pointer; list-style: none; font-size: 13.5px; color: #a3a1a6; display: flex; justify-content: space-between; }
+.inv-more summary::after { content: "+"; color: #ff2e88; font-size: 18px; line-height: 1; }
+.inv-more[open] summary::after { content: "–"; }
+.inv-more summary::-webkit-details-marker { display: none; }
+.inv-more .lines { margin-top: 10px; } .inv-more .lines div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; font-size: 13.5px; color: #8d8f95; border-bottom: 1px solid rgba(255,255,255,.05); }
+.inv-more .lines b { color: #e9e6e4; font-weight: 500; text-align: right; }
+
+/* carrusel del inicio */
+.car { margin: 56px 0 8px; position: relative; }
+.car-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; border-radius: 28px; box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 40px 80px -30px rgba(0,0,0,.9); }
+.car-track::-webkit-scrollbar { display: none; }
+.car-slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; min-height: 440px; display: flex; align-items: flex-end; color: inherit; text-decoration: none; background: #0a0a0b; overflow: hidden; }
+.car-slide img { position: absolute; inset: 0 0 0 auto; width: 62%; height: 100%; object-fit: cover; -webkit-mask: linear-gradient(90deg, transparent, rgba(0,0,0,.4) 25%, #000 60%); mask: linear-gradient(90deg, transparent, rgba(0,0,0,.4) 25%, #000 60%); transition: transform 6s ease; }
+.car-slide:hover img { transform: scale(1.03); }
+.car-slide::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(10,10,11,.9), transparent 55%); pointer-events: none; }
+.car-txt { position: relative; z-index: 1; padding: 40px 44px; max-width: 560px; }
+.car-txt h3 { font-size: clamp(40px, 5.4vw, 72px); line-height: .95; margin: 10px 0 8px; }
+.car-txt p { color: #c8c4c2; font-size: 17px; margin: 0 0 20px; }
+.car-txt .kv-ver { font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 999px; background: rgba(0,0,0,.4); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+.car-num b { display: block; font-size: 26px; font-weight: 600; letter-spacing: -0.03em; } .car-num small { font-size: 15px; color: #8d8f95; font-weight: 400; } .car-num span { font-size: 13px; color: #8d8f95; }
+.car-dots { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+.car-dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 99px; background: rgba(255,255,255,.2); transition: width .3s, background .3s; cursor: pointer; }
+.car-dots button[aria-current] { width: 28px; background: #ff2e88; box-shadow: 0 0 10px rgba(255,46,136,.6); }
+
+/* navegación entre proyectos */
+.kv-nav { display: flex; align-items: center; gap: 12px; justify-content: flex-end; margin: -32px 0 12px; font-size: 13px; color: #8d8f95; font-variant-numeric: tabular-nums; }
+.kv-nav a { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: #fff; text-decoration: none; font-size: 20px; line-height: 1; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); transition: background .2s; }
+.kv-nav a:hover { background: rgba(255,46,136,.15); }
+body.sw-l #app { animation: swl .35s ease; } body.sw-r #app { animation: swr .35s ease; }
+@keyframes swl { from { opacity: .3; transform: translateX(40px) } } @keyframes swr { from { opacity: .3; transform: translateX(-40px) } }
+@media (max-width: 760px) {
+  .car-slide { min-height: 480px; } .car-slide img { width: 100%; height: 66%; inset: 0 0 auto 0; -webkit-mask: linear-gradient(#000 50%, transparent); mask: linear-gradient(#000 50%, transparent); }
+  .car-txt { padding: 24px 22px; } .kv-nav { margin: -20px 0 10px; }
+}
