@@ -290,7 +290,8 @@ function spark(p) {
   const pts = [p.mk.round, ...(p.trades || []).map((t) => t.price)]; if (pts.length < 2) pts.push(p.mk.price);
   const lo = Math.min(...pts), hi = Math.max(...pts), W = 120, H = 36;
   const d = pts.map((v, i) => `${i ? "L" : "M"}${((i / (pts.length - 1)) * W).toFixed(1)} ${(H - ((v - lo) / (hi - lo || 1)) * H).toFixed(1)}`).join(" ");
-  return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="${d}"/></svg>`;
+  const ly = (H - ((pts[pts.length - 1] - lo) / (hi - lo || 1)) * H).toFixed(1), id = "sg" + Math.random().toString(36).slice(2, 7);
+  return `<svg class="spark" viewBox="-2 -4 ${W + 6} ${H + 8}" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff2e88" stop-opacity=".35"/><stop offset="1" stop-color="#ff2e88" stop-opacity="0"/></linearGradient></defs><path class="sa" d="${d} L${W} ${H} L0 ${H}Z" style="fill:url(#${id});stroke:none;filter:none"/><path d="${d}"/><circle cx="${W}" cy="${ly}" r="2.6" class="spark-dot"/></svg>`;
 }
 const vol24 = (p) => (p.trades || []).filter((t) => t.ts > (S.now || 0) - 86400).reduce((a, t) => a + t.usdc, 0n);
 async function loadHolders(p) {

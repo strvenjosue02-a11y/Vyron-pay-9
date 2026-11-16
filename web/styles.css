@@ -557,7 +557,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .cd .cd-now { stroke: rgba(255,46,136,.7); stroke-dasharray: 2 4; vector-effect: non-scaling-stroke; }
 .cd-tag { position: absolute; right: 0; transform: translateY(-50%); font-style: normal; font-size: 11.5px; font-weight: 700; color: #0b0a10; background: #ff2e88; padding: 3px 7px;
   box-shadow: 0 0 14px rgba(255,46,136,.8); clip-path: polygon(8px 0, 100% 0, 100% 100%, 8px 100%, 0 50%); }
-.spark path { stroke: #ff2e88 !important; filter: drop-shadow(0 0 4px rgba(255,46,136,.85)) !important; }
+.spark path:not(.sa) { stroke: #ff2e88 !important; filter: drop-shadow(0 0 4px rgba(255,46,136,.85)) !important; }
 .chart-card { background: radial-gradient(80% 60% at 50% 0%, rgba(255,46,136,.10), transparent 70%), #0b0a10; }
 .cy-legend .l1::before { background: #ff2e88; }
 
@@ -681,3 +681,7 @@ a.pcard .pc-faces { display: inline-flex; }
 a.pcard .pc-faces i { width: 22px; height: 22px; border-radius: 50%; margin-left: -7px; box-shadow: 0 0 0 2px #0f0e10; background: radial-gradient(circle at 35% 30%, hsl(calc(var(--h) * 1deg) 90% 75%), hsl(calc(var(--h) * 1deg + 40deg) 80% 45%)); }
 a.pcard .pc-faces i:first-child { margin-left: 0; }
 a.pcard .pc-first { color: #ff9f6b; }
+.spark path:not([fill]) { fill: none; stroke: #ff2e88; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(255,46,136,.6)); }
+.spark .spark-dot { fill: #fff; filter: drop-shadow(0 0 5px #ff2e88); animation: sdot 1.6s ease-in-out infinite; }
+@keyframes sdot { 50% { opacity: .45 } }
+a.pcard .pc-mkt .spark { width: 110px; height: 34px; }
