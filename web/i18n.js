@@ -2,6 +2,10 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "24h high": "Máximo 24h", "24h low": "Mínimo 24h", "Market cap": "Valor total", "Liquidity": "Liquidez", "My trades": "Mis operaciones", "Price alert": "Alerta de precio", "Set": "Activar", "Update": "Actualizar",
+  "We'll show a notice here when the price crosses it.": "Te avisamos aquí cuando el precio llegue a ese valor.", "Safety": "Seguridad", "🔒 Liquidity locked until": "🔒 Liquidez bloqueada hasta", "Pool health": "Salud del pool", "Healthy": "Sana", "Medium": "Media", "Thin: prices move fast": "Baja: el precio se mueve rápido",
+  "Team tokens": "Tokens del equipo", "See the project, its releases and votes →": "Ver el proyecto, sus entregas y votos →", "Prices can go up or down. Holdfast doesn't control the market.": "El precio puede subir o bajar. Holdfast no controla el mercado.",
+  "Top volume": "Más volumen", "Gainers": "Más suben", "Losers": "Más bajan", "★ Favorites": "★ Favoritos", "Tap ★ on a token to follow it.": "Toca ★ en un token para seguirlo.", "Connect your wallet to see your trades.": "Conecta tu wallet para ver tus operaciones.", "Alert removed": "Alerta quitada",
   "Payments go to your wallet": "Los pagos llegan a tu wallet", "The same wallet that signs. Every approved release lands here automatically, in USDC.": "La misma wallet que firma. Cada entrega aprobada llega aquí sola, en USDC.",
   "Your investment": "Tu inversión", "Your tokens": "Tus tokens", "100% protected until the raise closes": "100% protegido hasta que cierre la ronda", "Get my backer card →": "Mi carta de inversor →", "Claim my tokens": "Reclamar mis tokens", "Get my money back": "Recuperar mi dinero", "Back more": "Invertir más",
   "They promised": "Prometieron", "Check the Updates tab, then vote. Your vote weighs as much as you put in.": "Revisa la pestaña Avances y luego vota. Tu voto pesa lo que invertiste.", "Approve release": "Aprobar entrega", "Reject": "Rechazar", "You voted on this release. Results update live.": "Ya votaste en esta entrega. Los resultados se actualizan en vivo.", "Only backers can vote.": "Solo los inversores pueden votar.", "Voting ended": "Votación terminada", "Release vote": "Votación de entrega",
@@ -129,6 +133,10 @@ const ES = {
 
 // Textos con números u otras partes variables.
 const RULES = [
+  [/^([+-]?[\d.]+)% 24h$/, (m) => `${m[1]}% 24h`], [/^Unlock only with approved releases \((\d+)\/(\d+)\)$/, (m) => `Se liberan solo con entregas aprobadas (${m[1]}/${m[2]})`],
+  [/^You haven't traded (.+) yet\.$/, (m) => `Todavía no operaste ${m[1]}.`], [/^Alert set at \$(.+)$/, (m) => `Alerta activada en $${m[1]}`], [/^🔔 (.+) reached \$(.+)$/, (m) => `🔔 ${m[1]} llegó a $${m[2]}`],
+  [/^Confirm: moves the price (.+)%$/, (m) => `Confirmar: mueve el precio ${m[1]}%`], [/^High price impact \((.+)%\)\. Tap again to confirm\.$/, (m) => `Impacto alto en el precio (${m[1]}%). Toca otra vez para confirmar.`],
+  [/^One wallet holds (.+)% of the supply\. If it sells, the price can drop fast\.$/, (m) => `Una wallet tiene el ${m[1]}% de los tokens. Si vende, el precio puede caer rápido.`],
   [/^USDC in your wallet (.+)$/, (m) => `USDC en tu wallet ${m[1]}`],
   [/^🛡 (\d+)% of your money is still protected$/, (m) => `🛡 El ${m[1]}% de tu dinero sigue protegido`], [/^Buy or sell (.+)$/, (m) => `Comprar o vender ${m[1]}`], [/^Refund ready: (.+)$/, (m) => `Reembolso listo: ${m[1]}`],
   [/^Release (\d+) of (\d+)( · second chance)?$/, (m) => `Entrega ${m[1]} de ${m[2]}${m[3] ? " · segunda oportunidad" : ""}`],
