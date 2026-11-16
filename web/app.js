@@ -481,7 +481,7 @@ function vTerminal(p) {
     <header class="tx-top">
       <div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
       <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
-      <div class="tx-px"><img class="tx-mood" id="tx-mood" src="./assets/mood-${x.chg > 1 ? "up" : x.chg < -1 ? "down" : "calm"}.webp" alt="" width="72" height="72"><b id="tt-price">${fmtP(m.price)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span></div>
+      <div class="tx-px"><img class="tx-mood" id="tx-mood" src="./assets/mood-${x.chg > 1 ? "up" : x.chg < -1 ? "down" : "calm"}.webp" alt="" width="120" height="72"><b id="tt-price">${fmtP(m.price)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span></div>
       <dl class="tx-stats">
         <div><dt>24h volume</dt><dd id="tt-vol">$${usd(x.vol)}</dd></div><div><dt>Market cap</dt><dd id="tx-cap">${x.cap ? "$" + x.cap.toLocaleString("en-US", { maximumFractionDigits: 0 }) : "–"}</dd></div>
         <div><dt>24h high</dt><dd id="tx-hi">${fmtP(x.hi)}</dd></div><div><dt>24h low</dt><dd id="tx-lo">${fmtP(x.lo)}</dd></div><div><dt>Liquidity</dt><dd>$${usd(m.poolUsdc)}</dd></div><div><dt>Round price</dt><dd>${fmtP(m.round)}</dd></div>

@@ -1259,6 +1259,7 @@ a.pcard .pc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8
 }
 
 /* mascota que reacciona al precio */
-.tx-px { position: relative; } .tx-mood { position: absolute; right: 0; top: -6px; width: 72px; height: 72px; object-fit: contain; filter: drop-shadow(0 6px 18px rgba(255,46,136,.4)); }
+.tx-px { position: relative; } .tx-mood { position: absolute; right: 0; top: -6px; width: 120px; height: 72px; object-fit: contain; filter: drop-shadow(0 6px 18px rgba(255,46,136,.4)); }
 .tx-mood.pop { animation: moodpop .5s ease-out; } @keyframes moodpop { 30% { transform: scale(1.25) rotate(-6deg); } }
 @media (max-width: 760px) { .tx-mood { width: 64px; height: 64px; top: -10px; } }
+@media (max-width: 760px) { .hx-m img { width: min(100%, 380px) !important; } }
