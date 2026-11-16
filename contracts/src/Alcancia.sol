@@ -5,6 +5,21 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+
+/// @dev Interfaz mínima del NonfungiblePositionManager de Uniswap v3 (auditado).
+interface IPositionManager {
+    struct MintParams {
+        address token0; address token1; uint24 fee; int24 tickLower; int24 tickUpper;
+        uint256 amount0Desired; uint256 amount1Desired; uint256 amount0Min; uint256 amount1Min;
+        address recipient; uint256 deadline;
+    }
+    function factory() external view returns (address);
+    function createAndInitializePoolIfNecessary(address token0, address token1, uint24 fee, uint160 sqrtPriceX96) external payable returns (address pool);
+    function mint(MintParams calldata params) external payable returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
+    function transferFrom(address from, address to, uint256 tokenId) external;
+}
+interface IUniswapV3PoolState { function slot0() external view returns (uint160 sqrtPriceX96, int24, uint16, uint16, uint16, uint8, bool); }
 
 /// @title Alcancia - venta de un proyecto con dinero bloqueado y entregas por etapas.
 /// @notice Este contrato es a la vez el token del proyecto y la alcancía que guarda el USDC.
@@ -21,6 +36,10 @@ contract Alcancia is ERC20, ReentrancyGuard {
     uint256 public constant FEE_TOKEN_BPS = 150; // 1,5% del supply final -> plataforma
     uint256 public constant BPS = 10_000;
     uint64 public constant VOTE_DURATION = 7 days;
+    uint64 public constant LP_LOCK = 365 days; // bloqueo de la liquidez
+    uint24 public constant POOL_FEE = 3000; // pool de 0,3% (tickSpacing 60)
+    int24 internal constant MIN_TICK = -887220;
+    int24 internal constant MAX_TICK = 887220;
 
     struct Params {
         IERC20 usdc; // stablecoin aceptada
@@ -36,6 +55,8 @@ contract Alcancia is ERC20, ReentrancyGuard {
         uint16 initialBps; // % entregado al creador al cerrar con éxito
         uint8 milestones; // cantidad de etapas que requieren voto
         uint64 milestonePeriod; // tiempo máximo para pedir cada etapa
+        uint16 liquidityBps; // % de lo recaudado (tras comisión) que va al pool de Uniswap (0 o 500..2500)
+        address positionManager; // NonfungiblePositionManager de Uniswap v3 (0 = sin pool)
     }
 
     enum State {
@@ -56,6 +77,8 @@ contract Alcancia is ERC20, ReentrancyGuard {
     uint16 public immutable initialBps;
     uint8 public immutable milestones;
     uint64 public immutable milestonePeriod;
+    uint16 public immutable liquidityBps;
+    IPositionManager public immutable positionManager;
 
     // ----------------------------------------------------------------- estado
     State public state;
@@ -73,6 +96,12 @@ contract Alcancia is ERC20, ReentrancyGuard {
 
     uint256 public refundPool; // USDC a repartir al pasar a Refunding
 
+    // liquidez en Uniswap (el NFT de la posición queda en este contrato hasta lpUnlock)
+    address public pool;
+    uint256 public lpTokenId;
+    uint64 public lpUnlock;
+    uint256 public liquidityUsdc;
+
     // votación actual (peso = USDC aportado, no tokens: inmune a préstamos flash)
     uint64 public voteEnd;
     uint256 public votesYes;
@@ -89,6 +118,9 @@ contract Alcancia is ERC20, ReentrancyGuard {
     event Voted(address indexed voter, uint256 indexed round, bool yes, uint256 weight);
     event Released(uint256 usdcAmount, uint256 tokenAmount, uint8 milestonesDone);
     event Cancelled(uint256 refundPool);
+    event LiquidityAdded(address pool, uint256 tokenId, uint256 usdcAmount, uint256 tokenAmount, uint64 unlock);
+    event LiquiditySkipped(address pool);
+    event LiquidityWithdrawn(uint256 tokenId, address to);
 
     error BadParams();
     error WrongState();
@@ -107,6 +139,7 @@ contract Alcancia is ERC20, ReentrancyGuard {
             address(p.usdc) == address(0) || p.platform == address(0) || p.creator == address(0)
                 || p.softcap == 0 || p.softcap > p.hardcap || p.saleTokens == 0 || p.initialBps > BPS
                 || p.saleEnd <= block.timestamp || p.milestonePeriod == 0 || (p.milestones == 0 && p.initialBps != BPS)
+                || p.liquidityBps > 2500 || (p.liquidityBps > 0 && (p.liquidityBps < 500 || p.positionManager == address(0)))
         ) revert BadParams();
 
         usdc = p.usdc;
@@ -120,6 +153,8 @@ contract Alcancia is ERC20, ReentrancyGuard {
         initialBps = p.initialBps;
         milestones = p.milestones;
         milestonePeriod = p.milestonePeriod;
+        liquidityBps = p.liquidityBps;
+        positionManager = IPositionManager(p.positionManager);
     }
 
     // ================================================================= 1. VENTA
@@ -154,10 +189,13 @@ contract Alcancia is ERC20, ReentrancyGuard {
         state = State.Active;
         succeeded = true;
         uint256 fee = totalRaised * FEE_USDC_BPS / BPS;
-        poolAfterFees = totalRaised - fee;
+        uint256 afterFee = totalRaised - fee;
+        uint256 liqUsdc = afterFee * liquidityBps / BPS;
+        uint256 liqTokens = liqUsdc * saleTokens / hardcap; // mismo precio que la ronda
+        poolAfterFees = afterFee - liqUsdc;
 
         // 1,5% del supply final para la plataforma.
-        uint256 base = soldTokens() + creatorTokens;
+        uint256 base = soldTokens() + creatorTokens + liqTokens;
         uint256 platformTokens = base * FEE_TOKEN_BPS / (BPS - FEE_TOKEN_BPS);
         _mint(platform, platformTokens);
 
@@ -165,6 +203,7 @@ contract Alcancia is ERC20, ReentrancyGuard {
         emit Finalized(true, totalRaised);
 
         usdc.safeTransfer(platform, fee);
+        if (liqUsdc > 0) _addLiquidity(liqUsdc, liqTokens);
         _release(initialBps, milestones == 0);
     }
 
@@ -245,7 +284,51 @@ contract Alcancia is ERC20, ReentrancyGuard {
         _cancel();
     }
 
+    /// @notice Pasado el bloqueo de 12 meses, la posición de liquidez pasa al creador.
+    function withdrawLiquidity() external nonReentrant {
+        if (lpTokenId == 0 || block.timestamp < lpUnlock) revert TooEarly();
+        uint256 id = lpTokenId;
+        lpTokenId = 0;
+        emit LiquidityWithdrawn(id, creator);
+        positionManager.transferFrom(address(this), creator, id);
+    }
+
     // ================================================================= internos
+
+    /// @dev Crea el pool USDC/token al precio de la ronda y agrega liquidez de rango completo.
+    ///      Si alguien inicializó antes el pool a otro precio, no se agrega nada (anti-manipulación)
+    ///      y ese USDC vuelve a las entregas del equipo.
+    function _addLiquidity(uint256 liqUsdc, uint256 liqTokens) internal {
+        (address t0, address t1) = address(usdc) < address(this) ? (address(usdc), address(this)) : (address(this), address(usdc));
+        (uint256 a0, uint256 a1) = t0 == address(usdc) ? (liqUsdc, liqTokens) : (liqTokens, liqUsdc);
+        uint160 target = uint160(Math.sqrt(Math.mulDiv(a1, 1 << 96, a0)) << 48);
+        address p = positionManager.createAndInitializePoolIfNecessary(t0, t1, POOL_FEE, target);
+        pool = p;
+        (uint160 current,,,,,,) = IUniswapV3PoolState(p).slot0();
+        uint256 diff = current > target ? current - target : target - current;
+        if (diff * 1000 > uint256(target)) { // más de 0,1% de diferencia en sqrtPrice: pool manipulado
+            poolAfterFees += liqUsdc;
+            emit LiquiditySkipped(p);
+            return;
+        }
+        _mint(address(this), liqTokens);
+        usdc.forceApprove(address(positionManager), liqUsdc);
+        _approve(address(this), address(positionManager), liqTokens);
+        (uint256 id,, uint256 u0, uint256 u1) = positionManager.mint(IPositionManager.MintParams({
+            token0: t0, token1: t1, fee: POOL_FEE, tickLower: MIN_TICK, tickUpper: MAX_TICK,
+            amount0Desired: a0, amount1Desired: a1, amount0Min: a0 * 99 / 100, amount1Min: a1 * 99 / 100,
+            recipient: address(this), deadline: block.timestamp
+        }));
+        (uint256 usedUsdc, uint256 usedTok) = t0 == address(usdc) ? (u0, u1) : (u1, u0);
+        lpTokenId = id;
+        lpUnlock = uint64(block.timestamp) + LP_LOCK;
+        liquidityUsdc = usedUsdc;
+        usdc.forceApprove(address(positionManager), 0);
+        _approve(address(this), address(positionManager), 0);
+        if (liqUsdc > usedUsdc) poolAfterFees += liqUsdc - usedUsdc; // sobrante vuelve al equipo
+        if (liqTokens > usedTok) _burn(address(this), liqTokens - usedTok); // sobrante se quema
+        emit LiquidityAdded(p, id, usedUsdc, usedTok, lpUnlock);
+    }
 
     function _release(uint256 bps, bool last) internal {
         uint256 u = last ? poolAfterFees - usdcReleased : poolAfterFees * bps / BPS;

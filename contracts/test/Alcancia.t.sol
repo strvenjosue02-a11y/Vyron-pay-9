@@ -56,7 +56,9 @@ contract AlcanciaTest is Test {
             saleEnd: uint64(block.timestamp + 14 days),
             initialBps: 1_000, // 10% al cerrar
             milestones: 3, // luego 3 etapas de 30%
-            milestonePeriod: 60 days
+            milestonePeriod: 60 days,
+            liquidityBps: 0,
+            positionManager: address(0)
         });
     }
 
@@ -120,7 +122,7 @@ contract AlcanciaTest is Test {
         Alcancia a = _lazyDeploy(_params(), alice);
         _buy(a, alice, 1_000 * U);
         _buy(a, bob, 2_000 * U);
-        vm.warp(block.timestamp + 15 days);
+        vm.warp(vm.getBlockTimestamp() + 15 days);
         a.finalize();
 
         uint256 before = usdc.balanceOf(alice);
@@ -174,7 +176,7 @@ contract AlcanciaTest is Test {
             a.requestRelease();
             vm.prank(alice);
             a.vote(true);
-            vm.warp(block.timestamp + 7 days);
+            vm.warp(vm.getBlockTimestamp() + 7 days);
             a.closeVote();
         }
     }
@@ -192,7 +194,7 @@ contract AlcanciaTest is Test {
         a.requestRelease();
         vm.prank(bob);
         a.vote(true);
-        vm.warp(block.timestamp + 7 days);
+        vm.warp(vm.getBlockTimestamp() + 7 days);
         a.closeVote();
         assertEq(usdc.balanceOf(creator), 990 * U + 2_970 * U); // 10% + 30%
 
@@ -203,7 +205,7 @@ contract AlcanciaTest is Test {
         a.vote(false);
         vm.prank(alice);
         a.vote(true);
-        vm.warp(block.timestamp + 7 days);
+        vm.warp(vm.getBlockTimestamp() + 7 days);
         a.closeVote();
         assertEq(uint256(a.state()), uint256(Alcancia.State.Refunding));
 
@@ -228,7 +230,7 @@ contract AlcanciaTest is Test {
         a.finalize();
         vm.expectRevert(Alcancia.TooEarly.selector);
         a.abandon();
-        vm.warp(block.timestamp + 61 days);
+        vm.warp(vm.getBlockTimestamp() + 61 days);
         vm.prank(carol); // cualquiera, aunque no haya comprado
         a.abandon();
         vm.prank(alice);
@@ -265,7 +267,7 @@ contract AlcanciaTest is Test {
         _buy(a, alice, 100 * U);
         vm.expectRevert(Alcancia.SaleOpen.selector);
         a.finalize();
-        vm.warp(block.timestamp + 14 days);
+        vm.warp(vm.getBlockTimestamp() + 14 days);
         vm.startPrank(bob);
         usdc.approve(address(a), 100 * U);
         vm.expectRevert(Alcancia.SaleClosed.selector);
@@ -285,14 +287,14 @@ contract AlcanciaTest is Test {
         if (a.totalRaised() < a.hardcap()) _buy(a, carol, a3);
         uint256 raised = a.totalRaised();
 
-        vm.warp(block.timestamp + 15 days);
+        vm.warp(vm.getBlockTimestamp() + 15 days);
         a.finalize();
 
         if (a.state() == Alcancia.State.Active) {
             noAt = uint8(bound(noAt, 0, 3));
             for (uint8 i; i < 3; i++) {
                 if (late && i == noAt) {
-                    vm.warp(block.timestamp + 61 days);
+                    vm.warp(vm.getBlockTimestamp() + 61 days);
                     a.abandon();
                     break;
                 }
@@ -302,7 +304,7 @@ contract AlcanciaTest is Test {
                 a.vote(i != noAt);
                 vm.prank(bob);
                 a.vote(i != noAt);
-                vm.warp(block.timestamp + 7 days);
+                vm.warp(vm.getBlockTimestamp() + 7 days);
                 a.closeVote();
                 if (a.state() == Alcancia.State.Refunding) break;
             }

@@ -39,7 +39,9 @@ contract BaseForkTest is Test {
             saleEnd: uint64(block.timestamp + 14 days),
             initialBps: 1_000,
             milestones: 3,
-            milestonePeriod: 60 days
+            milestonePeriod: 60 days,
+            liquidityBps: 0,
+            positionManager: address(0)
         });
         bytes memory initCode = abi.encodePacked(type(Alcancia).creationCode, abi.encode(p));
         bytes memory txData = abi.encodePacked(bytes32(0), initCode);

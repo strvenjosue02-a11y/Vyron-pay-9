@@ -5,6 +5,7 @@ libs = ["lib"]
 solc = "0.8.26"
 optimizer = true
 optimizer_runs = 200
+via_ir = true
 bytecode_hash = "none"
 # OJO: cambiar estas opciones cambia el bytecode y por lo tanto la direccion de cada alcancia.
 
