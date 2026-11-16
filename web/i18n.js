@@ -2,6 +2,9 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Minimum you'll get": "Mínimo que recibes", "Pool fee": "Comisión del pool", "Your position": "Tu posición", "You hold": "Tienes", "Worth today": "Vale hoy", "vs what you paid": "frente a lo que pagaste", "More data": "Ver más datos", "Less": "Ver menos", "Show more": "Ver más",
+  "The price changed while you were trading. You didn't lose anything: try again or raise the slippage.": "El precio cambió mientras operabas. No perdiste nada: intenta otra vez o sube la tolerancia.", "You cancelled it in your wallet. Nothing happened.": "Lo cancelaste en tu wallet. No pasó nada.",
+  "Your wallet needs a little ETH to pay the network fee.": "Tu wallet necesita un poco de ETH para pagar la comisión de la red.", "Something failed and nothing was charged. Try again.": "Algo falló y no se cobró nada. Intenta otra vez.",
   "24h high": "Máximo 24h", "24h low": "Mínimo 24h", "Market cap": "Valor total", "Liquidity": "Liquidez", "My trades": "Mis operaciones", "Price alert": "Alerta de precio", "Set": "Activar", "Update": "Actualizar",
   "We'll show a notice here when the price crosses it.": "Te avisamos aquí cuando el precio llegue a ese valor.", "Safety": "Seguridad", "🔒 Liquidity locked until": "🔒 Liquidez bloqueada hasta", "Pool health": "Salud del pool", "Healthy": "Sana", "Medium": "Media", "Thin: prices move fast": "Baja: el precio se mueve rápido",
   "Team tokens": "Tokens del equipo", "See the project, its releases and votes →": "Ver el proyecto, sus entregas y votos →", "Prices can go up or down. Holdfast doesn't control the market.": "El precio puede subir o bajar. Holdfast no controla el mercado.",
