@@ -1231,3 +1231,19 @@ a.pcard .pc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8
 @media (max-width: 760px) { .hx { grid-template-columns: 1fr; padding-top: 12px; } .hx-m { order: -1; } .hx-m img { width: min(70%, 260px); } .hx-t { text-align: center; justify-items: center; } .hx-t h1 { justify-items: center; font-size: 56px; } .hx-b { justify-content: center; } }
 @media (prefers-reduced-motion: reduce) { .hx-m img { animation: none; } }
 .hx::before { -webkit-mask-image: radial-gradient(ellipse at 60% 45%, #000 40%, transparent 78%); mask-image: radial-gradient(ellipse at 60% 45%, #000 40%, transparent 78%); }
+
+/* ===== Celular: nada se sale ni se corta ===== */
+@media (max-width: 760px) {
+  html, body { overflow-x: clip; } main#app, #app { max-width: 100vw; overflow-x: clip; }
+  .deck { grid-template-columns: 1fr !important; } .deck > * { min-width: 0; max-width: 100%; }
+  .lc-pg { display: block; } .lc-pg > * { max-width: 100%; box-sizing: border-box; min-width: 0; margin-bottom: 14px; }
+  .lc-side, .lc-main { width: 100%; } .lc-side input, .lc-form input, .lc-cin input { min-width: 0; max-width: 100%; box-sizing: border-box; }
+  .lc-side .field-amt { width: 100%; box-sizing: border-box; } .lc-side .field-amt input { width: 100%; min-width: 0; }
+  .lc-side .tx-q, .lc-side .tx-amts { grid-template-columns: repeat(3, 1fr); } .lc-mine { flex-wrap: wrap; } .lc-2 { grid-template-columns: 1fr 1fr; }
+  .lc-big b { font-size: 32px; } .lc-hero-t h1 { font-size: 34px; } .lc-note, .lc-lock { max-width: 100%; box-sizing: border-box; }
+  .cat-bar { gap: 10px; } .cat-tabs { max-width: 100%; } .page-h h1 { font-size: 40px; }
+  .lc-form { max-width: 100%; } .lc-form .two { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .hx { padding-bottom: 0; } #lc-home { margin-top: 18px; }
+  .demo-bar { max-width: 94vw; overflow-x: auto; }
+}
+@media (max-width: 760px) { .deck { display: grid !important; grid-template-columns: 1fr !important; overflow: visible !important; scroll-snap-type: none !important; gap: 14px; } .deck > .pcard { flex: none !important; width: 100% !important; max-width: 100% !important; scroll-snap-align: none; } }

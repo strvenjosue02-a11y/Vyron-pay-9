@@ -43,7 +43,7 @@ PINK = toon("pink", (1.0, 0.55, 0.70)); BLACK = toon("black", (0.02, 0.02, 0.05)
 R = (0, 0, 28)
 prim("cyl", (0.2, 0, -1.1), (0.62, 0.62, 1.35), WHITE, rot=(0, 0, 0))
 prim("cone", (0.2, 0, 0.9), (0.62, 0.62, 1.0), RED, rot=(0, 0, 0))
-for a in (0, 120, 240):
+for a in (90, 210, 330):
     x, y = 0.2 + 0.78 * math.cos(math.radians(a)), 0.78 * math.sin(math.radians(a))
     prim("cube", (x, y, -2.1), (0.06, 0.55, 0.7), RED, rot=(0, 0, a), th=0.03)
 prim("cyl", (0.2, 0, -1.0), (0.66, 0.66, 0.12), NAVY); prim("sphere", (0.2, -0.64, -0.6), (0.27, 0.12, 0.27), CYAN)
