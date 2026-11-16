@@ -7,7 +7,7 @@ import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
 import { initI18n } from "./i18n.js";
 import { mountCoin } from "./coin3d.js";
 import { mountChart } from "./pro.js";
-import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
+import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, msgProfile, validProfile, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
 const SALT = "0x" + "00".repeat(32);
@@ -80,6 +80,8 @@ async function loadCatalog() {
     p.updates = ok;
   }));
   S.list = S.all.filter((p) => p.status === "approved");
+  try { const r = await fetch("./api/profile", { cache: "no-store" }); S.prof = {};
+    if (r.ok) for (const x of (await r.json()).profiles || []) if (await verifyMessage({ address: x.address, message: msgProfile(x.address, x.name, keccak256(toBytes(x.photo || ""))), signature: x.signature }).catch(() => false)) S.prof[x.address] = x; } catch { S.prof = S.prof || {}; }
   await Promise.all(S.all.map(async (p) => {
     const items = qaRaw[p.id] || [], qs = [], ans = {};
     for (const x of items) {
@@ -340,6 +342,7 @@ function termTab(p) {
   if (t === "depth") return `<p class="fine" style="margin:0 0 12px">How much it takes to move the price. Small pools move fast: check before large trades.</p>
     <ul class="depth"><li class="dh"><span>Move</span><b>Buy to push up</b><b>Sell to push down</b></li>${depthRows(p)}</ul>`;
   if (t === "mine" && !S.me) return `<p class="prose">Connect your wallet to see your trades.</p>`;
+  if (t === "top") return boardHtml(p);
   if (t === "whales") { const wl = (p.trades || []).filter((x) => isWhale(p, x)).slice(-15).reverse();
     return `<p class="fine" style="margin:0 0 12px">Trades of $${whaleMin(p).toFixed(0)} or more (5% of the pool). Big buys can push the price up; big sells can push it down.</p>` + (wl.length ? `<ul class="cy-trades whales">${wl.map((x) => `<li><span class="${x.buy ? "b" : "s"}">${ICO.whale} ${x.buy ? "Buy" : "Sell"}</span><span class="addr">${short(x.who || "0x0000000000")}</span><span>$${usd(x.usdc)}</span><span>${fmtP(x.price)}</span><span class="faint">${ago((p.tHead || 0n) - x.block)}</span></li>`).join("")}</ul>` : `<p class="prose">No big trades yet.</p>`); }
   const tr = (p.trades || []).filter((x) => t !== "mine" || x.who?.toLowerCase() === S.me.toLowerCase()).slice(-(S.trN || 10)).reverse();
@@ -407,6 +410,46 @@ function stats24(p) {
 }
 const favs = () => { try { return JSON.parse(localStorage.getItem("hf-fav") || "[]"); } catch { return []; } };
 const health = (p) => { const u = Number(p.mk.poolUsdc) / 1e6; return u >= 10000 ? ["Healthy", "ok"] : u >= 1000 ? ["Medium", "mid"] : ["Thin: prices move fast", "low"]; };
+function traderBoard(p, per) {
+  const now = S.now || Date.now() / 1000, since = per === "day" ? now - 86400 : per === "week" ? now - 7 * 86400 : 0, m = {};
+  for (const t of (p.trades || []).filter((x) => x.who && x.ts >= since)) { const k = t.who.toLowerCase(), r = (m[k] ||= { a: k, spent: 0, got: 0, buys: 0, sells: 0, tok: 0, best: 0, cost: 0 }), u = Number(t.usdc) / 1e6, q = Number(t.tok) / 1e18;
+    if (t.buy) { r.spent += u; r.buys++; r.tok += q; r.cost += u; } else { r.got += u; r.sells++; r.tok -= q; const avg = r.cost && r.tok + q > 0 ? r.cost / (r.tok + q) : 0; if (avg) r.best = Math.max(r.best, u - avg * q); } }
+  const ex = new Set([p.s.pool, p.address, CONFIG.platform].filter(Boolean).map((x) => x.toLowerCase()));
+  return Object.values(m).filter((r) => !ex.has(r.a) && r.spent > 0).map((r) => { const val = Math.max(0, r.tok) * p.mk.price, pnl = val + r.got - r.spent; return { ...r, val, pnl, pct: (pnl / r.spent) * 100 }; }).sort((x, y) => y.pnl - x.pnl).slice(0, 10);
+}
+function boardHtml(p) {
+  const per = S.bper || "all", l = traderBoard(p, per);
+  return `<div class="lb-tabs">${[["day", "Today"], ["week", "Week"], ["all", "All time"]].map(([k, t]) => `<button type="button" data-bper="${k}" aria-selected="${per === k}">${t}</button>`).join("")}${S.me ? `<button type="button" class="lb-me" data-prof>Edit my profile</button>` : ""}</div>
+    ${l.length ? `<ol class="lb">${l.map((r, i) => `<li><button type="button" data-trader="${r.a}"><span class="rk">${i + 1}</span>${avatar(r.a, 34)}<span class="nm">${esc(uname(r.a))}<small>${short(r.a)}</small></span><b class="${r.pnl >= 0 ? "u" : "d"}">${r.pnl >= 0 ? "+" : "-"}$${Math.abs(r.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}</b><em class="${r.pct >= 0 ? "u" : "d"}">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(0)}%</em></button></li>`).join("")}</ol>` : `<p class="prose">No trades in this period yet.</p>`}`;
+}
+function traderCard(p, addr) {
+  const r = traderBoard(p, "all").find((x) => x.a === addr), rank = traderBoard(p, "all").findIndex((x) => x.a === addr) + 1; if (!r) return;
+  const ov = document.createElement("div"); ov.className = "pnl-ov";
+  ov.innerHTML = `<div class="tc"><button type="button" class="tc-x" data-px aria-label="Close">✕</button>
+    <div class="tc-h">${avatar(r.a, 72)}<div><b>${esc(uname(r.a))}</b><small>${short(r.a)} · #${rank} on ${esc(p.q.symbol)}</small></div></div>
+    <div class="tc-pnl ${r.pnl >= 0 ? "u" : "d"}">${r.pnl >= 0 ? "+" : "-"}$${Math.abs(r.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}<span>${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</span></div>
+    <div class="tc-g"><div><span>Bought</span><b>$${r.spent.toFixed(2)}</b></div><div><span>Sold</span><b>$${r.got.toFixed(2)}</b></div><div><span>Trades</span><b>${r.buys + r.sells} (${r.buys} buy · ${r.sells} sell)</b></div>
+      <div><span>Best sale</span><b>${r.best > 0 ? "+$" + r.best.toFixed(2) : "–"}</b></div><div><span>Holding now</span><b>${Math.max(0, r.tok).toLocaleString("en-US", { maximumFractionDigits: 0 })} ${esc(p.q.symbol)}</b></div><div><span>Worth today</span><b>$${r.val.toFixed(2)}</b></div></div>
+    ${logoSrc(p) ? `<img class="tc-tok" src="${esc(logoSrc(p))}" alt="">` : ""}</div>`;
+  document.body.appendChild(ov); requestAnimationFrame(() => ov.classList.add("on"));
+  ov.onclick = (e) => { if (e.target === ov || e.target.closest("[data-px]")) { ov.classList.remove("on"); setTimeout(() => ov.remove(), 250); } };
+}
+async function editProfile() {
+  const cur = S.prof?.[S.me.toLowerCase()], ov = document.createElement("div"); ov.className = "pnl-ov";
+  ov.innerHTML = `<div class="tc"><button type="button" class="tc-x" data-px aria-label="Close">✕</button><h3 style="margin:0 0 12px">My trader profile</h3>
+    <label class="tc-ph"><span id="pf-prev">${avatar(S.me, 72)}</span><input id="pf-photo" type="file" accept="image/png,image/jpeg,image/webp"><small>Tap to choose a photo</small></label>
+    <div class="f"><label for="pf-name">Username</label><input id="pf-name" maxlength="20" value="${esc(cur?.name || uname(S.me))}"></div>
+    <p class="fine">Optional and public. Signing is free and moves no money.</p><button type="button" class="btn btn-ember btn-block" id="pf-save">Sign and save</button></div>`;
+  document.body.appendChild(ov); requestAnimationFrame(() => ov.classList.add("on")); let photo = cur?.photo || "";
+  ov.querySelector("#pf-photo").onchange = (e) => pickImage(e, 96, 24000, (u) => { photo = u; ov.querySelector("#pf-prev").innerHTML = `<img class="ava" src="${u}" style="width:72px;height:72px;object-fit:cover" alt="">`; });
+  ov.onclick = async (e) => { if (e.target === ov || e.target.closest("[data-px]")) { ov.classList.remove("on"); setTimeout(() => ov.remove(), 250); return; }
+    if (!e.target.closest("#pf-save")) return; const name = ov.querySelector("#pf-name").value.trim(), err = validProfile(name, photo); if (err) return toast(err, true); let sig;
+    const ok = await flow("Save profile", ["Sign with your wallet", "Save"], [async () => { sig = await sign(msgProfile(S.me, name, keccak256(toBytes(photo)))); }, async () => api("./api/profile", { address: S.me, name, photo, signature: sig })], "Profile saved");
+    if (ok) { ov.remove(); const old = S.list.find((x) => location.hash.endsWith(x.id)), tr = old?.trades, hd = old?.tHead, hl = old?.holders;
+      const r = await fetch("./api/profile", { cache: "no-store" }).then((x) => x.json()).catch(() => ({})); S.prof = {};
+      for (const x of r.profiles || []) if (await verifyMessage({ address: x.address, message: msgProfile(x.address, x.name, keccak256(toBytes(x.photo || ""))), signature: x.signature }).catch(() => false)) S.prof[x.address] = x;
+      if (old && $("#term-tab")) $("#term-tab").innerHTML = termTab(old); } };
+}
 function myPos(p) {
   if (!S.me || !p.mk) return null; const me = S.me.toLowerCase(), mine = (p.trades || []).filter((t) => t.who?.toLowerCase() === me);
   const bal = Number(p.u.balance || 0n) / 1e18 + (p.s.succeeded && !p.u.claimed ? Number((p.u.contributed * p.q.saleTokens) / p.q.hardcap) / 1e18 : 0); if (bal <= 0) return null;
@@ -439,7 +482,7 @@ function vTerminal(p) {
       <div class="term-main">
         <button type="button" class="tx-side-open" data-sideopen>${ICO.flame} All tokens</button>
         <div class="tx-chart" id="chartpro"></div>
-        <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["whales", "Whales"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${k === "whales" ? ICO.whale + " " : ""}${t}</button>`).join("")}</div>
+        <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["top", "Top traders"], ["whales", "Whales"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${k === "whales" ? ICO.whale + " " : ""}${t}</button>`).join("")}</div>
         <div id="term-tab">${termTab(p)}</div>
       </div>
       <aside class="term-side">${posBox(p)}${S.me ? tradePanel(p) : `<div class="panel cyber"><p class="muted" style="margin:0 0 16px">Connect your wallet to buy or sell ${esc(p.q.symbol)}. Anyone can buy with USDC.</p><button class="btn btn-cyber btn-block" data-act="connect">Connect wallet</button></div>`}
@@ -493,7 +536,8 @@ function startTerminal(p) {
   const hl = async () => { if (!p.order) await loadActivity(); await loadHolders(p); stats(); if ((S.ttab || "trades") === "holders") reTerm(); };
   if (!p.trades) loadTrades(p).then(() => { reTerm(); hl(); }); else { reTerm(); if (!p.holders) hl(); }
   document.querySelector(".term-side").addEventListener("click", (e) => { if (e.target.closest("[data-pnl]")) pnlCard(p); });
-  $("#term-tab").onclick = (e) => { if (e.target.closest("[data-trmore]")) { S.trN = (S.trN || 10) + 20; $("#term-tab").innerHTML = termTab(p); } };
+  $("#term-tab").onclick = (e) => { const bp = e.target.closest("[data-bper]"), tr = e.target.closest("[data-trader]");
+    if (bp) { S.bper = bp.dataset.bper; $("#term-tab").innerHTML = termTab(p); return; } if (tr) return traderCard(p, tr.dataset.trader); if (e.target.closest("[data-prof]")) return editProfile(); if (e.target.closest("[data-trmore]")) { S.trN = (S.trN || 10) + 20; $("#term-tab").innerHTML = termTab(p); } };
   $("#share").onclick = () => shareToken(p);
   document.querySelector("[data-sideopen]").onclick = () => $("#tx-side").classList.add("open");
   document.querySelector("[data-sidex]").onclick = () => $("#tx-side").classList.remove("open");
@@ -749,7 +793,10 @@ function vProject(p) {
 const TORII = `<svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><path class="g-top" d="M6 18 Q50 27 94 18 L92 30 Q50 38 8 30Z"/><rect class="g-top" x="16" y="38" width="68" height="8" rx="2"/><path class="g-leg" d="M26 34 H35 L34 96 H25Z M65 34 H74 L75 96 H66Z"/></svg>`;
 const TABS_ALL = (p) => [["overview", "Overview"], ...(p.mk ? [["trade", "Trade"]] : []), ["team", "Team"], ["releases", "Releases"], ["updates", "Updates"], ["backers", "Backers"], ["qa", "Q&A"], ["contract", "Contract"]];
 const TABS = TABS_ALL({});
+const NAMES = ["Lobo", "Zorro", "Halcon", "Tigre", "Cobra", "Puma", "Oso", "Buho", "Lince", "Jaguar"];
+const uname = (a) => S.prof?.[a.toLowerCase()]?.name || `${NAMES[parseInt(keccak256(toBytes(a.toLowerCase())).slice(2, 4), 16) % NAMES.length]}-${parseInt(a.slice(-4), 16) % 9000 + 1000}`;
 function avatar(addr, size = 36) {
+  const pr = S.prof?.[addr.toLowerCase()]; if (pr?.photo) return `<img class="ava" src="${esc(pr.photo)}" alt="" style="width:${size}px;height:${size}px;object-fit:cover" aria-hidden="true">`;
   const h = keccak256(toBytes(addr.toLowerCase())), a = parseInt(h.slice(2, 6), 16) % 360, b = (a + 140) % 360;
   return `<span class="ava" style="width:${size}px;height:${size}px;background:conic-gradient(from ${parseInt(h.slice(6, 8), 16)}deg, hsl(${a} 70% 55%), hsl(${b} 65% 45%), hsl(${a} 70% 55%))" aria-hidden="true"></span>`;
 }

@@ -2,6 +2,8 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Top traders": "Mejores traders", "Today": "Hoy", "Week": "Semana", "All time": "Siempre", "Edit my profile": "Editar mi perfil", "No trades in this period yet.": "Aún no hay operaciones en este período.", "Bought": "Compró", "Sold": "Vendió", "Trades": "Operaciones", "Best sale": "Mejor venta", "Holding now": "Tiene ahora", "Worth today": "Vale hoy",
+  "My trader profile": "Mi perfil de trader", "Tap to choose a photo": "Toca para elegir una foto", "Username": "Nombre de usuario", "Optional and public. Signing is free and moves no money.": "Opcional y público. Firmar es gratis y no mueve dinero.", "Sign and save": "Firmar y guardar", "Profile saved": "Perfil guardado",
   "Markets": "Mercados", "All tokens": "Todos los tokens", "My PnL card": "Mi tarjeta de ganancia", "Download": "Descargar",
   "Whales": "Ballenas", "Share": "Compartir", "Image saved": "Imagen guardada", "No big trades yet.": "Todavía no hay operaciones grandes.",
   "Minimum you'll get": "Mínimo que recibes", "Pool fee": "Comisión del pool", "Your position": "Tu posición", "You hold": "Tienes", "Worth today": "Vale hoy", "vs what you paid": "frente a lo que pagaste", "More data": "Ver más datos", "Less": "Ver menos", "Show more": "Ver más",
@@ -138,6 +140,7 @@ const ES = {
 
 // Textos con números u otras partes variables.
 const RULES = [
+  [/^(.+) · #(\d+) on (.+)$/, (m) => `${m[1]} · #${m[2]} en ${m[3]}`], [/^\((\d+) buy · (\d+) sell\)$/, (m) => `(${m[1]} compras · ${m[2]} ventas)`],
   [/^Whale (bought|sold) \$(.+) of (.+)$/, (m) => `Una ballena ${m[1] === "bought" ? "compró" : "vendió"} $${m[2]} de ${m[3]}`],
   [/^Trades of \$(\d+) or more \(5% of the pool\)\. Big buys can push the price up; big sells can push it down\.$/, (m) => `Operaciones de $${m[1]} o más (5% del pool). Las compras grandes pueden subir el precio; las ventas grandes, bajarlo.`],
   [/^([+-]?[\d.]+)% 24h$/, (m) => `${m[1]}% 24h`], [/^Unlock only with approved releases \((\d+)\/(\d+)\)$/, (m) => `Se liberan solo con entregas aprobadas (${m[1]}/${m[2]})`],
