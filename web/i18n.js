@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Make a winning trade to unlock your PnL card.": "Haz una operación ganadora para desbloquear tu tarjeta de ganancia.", "Make a winning trade first.": "Primero haz una operación ganadora.", "Search token": "Buscar token", "No token found.": "No se encontró ningún token.",
   "Top traders": "Mejores traders", "Today": "Hoy", "Week": "Semana", "All time": "Siempre", "Edit my profile": "Editar mi perfil", "No trades in this period yet.": "Aún no hay operaciones en este período.", "Bought": "Compró", "Sold": "Vendió", "Trades": "Operaciones", "Best sale": "Mejor venta", "Holding now": "Tiene ahora", "Worth today": "Vale hoy",
   "My trader profile": "Mi perfil de trader", "Tap to choose a photo": "Toca para elegir una foto", "Username": "Nombre de usuario", "Optional and public. Signing is free and moves no money.": "Opcional y público. Firmar es gratis y no mueve dinero.", "Sign and save": "Firmar y guardar", "Profile saved": "Perfil guardado",
   "Markets": "Mercados", "All tokens": "Todos los tokens", "My PnL card": "Mi tarjeta de ganancia", "Download": "Descargar",

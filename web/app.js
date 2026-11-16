@@ -258,7 +258,8 @@ async function swap(p) {
   labels.push(q.side === "buy" ? `Buy ${p.q.symbol}` : `Sell ${p.q.symbol}`);
   fns.push(() => S.wallet.writeContract({ address: CONFIG.swapRouter, abi: ROUTER_ABI, functionName: "exactInputSingle",
     args: [{ tokenIn, tokenOut, fee: 3000, recipient: S.me, amountIn: q.amt, amountOutMinimum: (q.out * BigInt(Math.round(10000 - (S.slip || 1) * 100))) / 10000n, sqrtPriceLimitX96: 0n }] }));
-  await flow(q.side === "buy" ? "Buy" : "Sell", labels, fns, "Trade done");
+  const ok = await flow(q.side === "buy" ? "Buy" : "Sell", labels, fns, "Trade done");
+  if (ok) { await refresh(); await loadTrades(p); const h = posBox(p), el = $("#tx-pos"); if (el) el.outerHTML = h; else if (h) $(".term-side")?.insertAdjacentHTML("afterbegin", h); S.impOk = false; }
 }
 
 // ================================================================= terminal de trading y Market
@@ -361,7 +362,7 @@ const ICO = {
 const whaleMin = (p) => Math.max(25, (Number(p.mk?.poolUsdc || 0n) / 1e6) * 0.05); // compra/venta >= 5% del pool
 const isWhale = (p, t) => Number(t.usdc) / 1e6 >= whaleMin(p);
 async function pnlCard(p) {
-  const x = myPos(p); if (!x) return; const up = x.pnl >= 0, col = up ? "#e8508f" : "#8f6be8", W = 1200, H = 675;
+  const x = myPos(p); if (!pnlReady(p, x)) return toast("Make a winning trade first.", true); const up = x.pnl >= 0, col = up ? "#e8508f" : "#8f6be8", W = 1200, H = 675;
   const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
   g.fillStyle = "#09090b"; g.fillRect(0, 0, W, H);
   const img = logoSrc(p) && await new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = logoSrc(p); });
@@ -457,10 +458,11 @@ function myPos(p) {
   const value = bal * p.mk.price, pnl = value + got - spent;
   return { bal, value, pnl, pct: spent ? (pnl / spent) * 100 : 0 };
 }
+const pnlReady = (p, x) => x && x.pnl > 0 && (p.trades || []).some((t) => t.who?.toLowerCase() === S.me.toLowerCase());
 function posBox(p) {
   const x = myPos(p); if (!x) return "";
   return `<div class="panel tx-pos" id="tx-pos"><h3>Your position</h3><div class="tx-pos-n"><div><span>You hold</span><b>${x.bal.toLocaleString("en-US", { maximumFractionDigits: 0 })} ${esc(p.q.symbol)}</b></div><div><span>Worth today</span><b>$${x.value.toLocaleString("en-US", { maximumFractionDigits: 2 })}</b></div></div>
-    <div class="tx-pnl ${x.pnl >= 0 ? "u" : "d"}">${x.pnl >= 0 ? "▲ +" : "▼ "}$${Math.abs(x.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })} (${x.pct >= 0 ? "+" : ""}${x.pct.toFixed(1)}%)<small>vs what you paid</small></div><button type="button" class="btn btn-line btn-sm tx-pnlbtn" data-pnl>My PnL card</button></div>`;
+    <div class="tx-pnl ${x.pnl >= 0 ? "u" : "d"}">${x.pnl >= 0 ? "▲ +" : "▼ "}$${Math.abs(x.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })} (${x.pct >= 0 ? "+" : ""}${x.pct.toFixed(1)}%)<small>vs what you paid</small></div>${pnlReady(p, x) ? `<button type="button" class="btn btn-line btn-sm tx-pnlbtn" data-pnl>My PnL card</button>` : `<p class="tx-pnlhint">Make a winning trade to unlock your PnL card.</p>`}</div>`;
 }
 function vTerminal(p) {
   if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
@@ -478,7 +480,8 @@ function vTerminal(p) {
     </header>
     <div class="term-grid tx-3">
       <nav class="tx-side" id="tx-side" aria-label="Markets"><div class="tx-side-h"><b>Markets</b><button type="button" class="tx-side-x" data-sidex aria-label="Close">✕</button></div>
-        ${S.list.filter((x) => x.mk).map((x) => { const c = x.trades ? stats24(x).chg : ((x.mk.price - x.mk.round) / x.mk.round) * 100; return `<a href="#/trade/${x.id}" class="tx-si${x.id === p.id ? " on" : ""}">${logoSrc(x) ? `<img src="${esc(logoSrc(x))}" alt="">` : `<i></i>`}<span><b>${esc(x.q.symbol)}</b><small>${fmtP(x.mk.price)}</small></span><em class="${Math.abs(c) < 0.05 ? "" : c >= 0 ? "u" : "d"}">${c >= 0 ? "+" : ""}${c.toFixed(1)}%</em></a>`; }).join("")}</nav>
+        <input class="tx-sq" id="tx-sq" type="search" placeholder="Search token" aria-label="Search token">
+        ${S.list.filter((x) => x.mk).map((x) => { const c = x.trades ? stats24(x).chg : ((x.mk.price - x.mk.round) / x.mk.round) * 100; return `<a href="#/trade/${x.id}" class="tx-si${x.id === p.id ? " on" : ""}">${logoSrc(x) ? `<img src="${esc(logoSrc(x))}" alt="">` : `<i></i>`}<span><b>${esc(x.q.symbol)}</b><small>${fmtP(x.mk.price)}</small></span><em class="${Math.abs(c) < 0.05 ? "" : c >= 0 ? "u" : "d"}">${c >= 0 ? "+" : ""}${c.toFixed(1)}%</em></a>`; }).join("")}<p class="tx-none" id="tx-none" style="display:none">No token found.</p></nav>
       <div class="term-main">
         <button type="button" class="tx-side-open" data-sideopen>${ICO.flame} All tokens</button>
         <div class="tx-chart" id="chartpro"></div>
@@ -539,6 +542,7 @@ function startTerminal(p) {
   $("#term-tab").onclick = (e) => { const bp = e.target.closest("[data-bper]"), tr = e.target.closest("[data-trader]");
     if (bp) { S.bper = bp.dataset.bper; $("#term-tab").innerHTML = termTab(p); return; } if (tr) return traderCard(p, tr.dataset.trader); if (e.target.closest("[data-prof]")) return editProfile(); if (e.target.closest("[data-trmore]")) { S.trN = (S.trN || 10) + 20; $("#term-tab").innerHTML = termTab(p); } };
   $("#share").onclick = () => shareToken(p);
+  $("#tx-sq").oninput = (e) => { const q = e.target.value.trim().toLowerCase(); let n = 0; document.querySelectorAll(".tx-si").forEach((li) => { const ok = !q || li.textContent.toLowerCase().includes(q); li.style.display = ok ? "" : "none"; if (ok) n++; }); $("#tx-none").style.display = n ? "none" : "block"; };
   document.querySelector("[data-sideopen]").onclick = () => $("#tx-side").classList.add("open");
   document.querySelector("[data-sidex]").onclick = () => $("#tx-side").classList.remove("open");
   $("#fav").onclick = () => { let f = favs(); f = f.includes(p.id) ? f.filter((x) => x !== p.id) : [...f, p.id]; try { localStorage.setItem("hf-fav", JSON.stringify(f)); } catch {} $("#fav").classList.toggle("on", f.includes(p.id)); };
