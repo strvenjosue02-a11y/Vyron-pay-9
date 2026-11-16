@@ -8,6 +8,7 @@ import { initI18n } from "./i18n.js";
 import { mountCoin } from "./coin3d.js";
 import { mountChart } from "./pro.js";
 import { createDemo } from "./demo.js";
+import { showLaunches, stopLaunches } from "./launch.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, msgProfile, validProfile, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
@@ -1317,6 +1318,8 @@ function reviewCard(p) {
 // ================================================================= router
 function route() {
   const h = location.hash || "#/";
+  if (h.startsWith("#/lc")) { document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current"))); showLaunches($("#app")); return; }
+  stopLaunches();
   const m = h.match(/^#\/p\/([\w-]+)/);
   const p = m && S.list.find((x) => x.id === m[1]);
   const tm = h.match(/^#\/trade\/([\w-]+)/), tp = tm && S.list.find((x) => x.id === tm[1]);
