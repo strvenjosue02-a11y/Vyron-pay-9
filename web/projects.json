@@ -20,7 +20,8 @@
       "saleEnd": 1798675200,
       "initialBps": 1000,
       "milestones": 3,
-      "milestonePeriod": 2592000
+      "milestonePeriod": 2592000,
+      "liquidityBps": 1000
     }
   },
   {
@@ -44,7 +45,8 @@
       "saleEnd": 1801353600,
       "initialBps": 1000,
       "milestones": 3,
-      "milestonePeriod": 5184000
+      "milestonePeriod": 5184000,
+      "liquidityBps": 1500
     }
   },
   {
@@ -68,7 +70,8 @@
       "saleEnd": 1802563200,
       "initialBps": 1000,
       "milestones": 4,
-      "milestonePeriod": 5184000
+      "milestonePeriod": 5184000,
+      "liquidityBps": 2000
     }
   }
 ]

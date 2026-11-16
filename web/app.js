@@ -1,6 +1,6 @@
 import {
   createPublicClient, createWalletClient, custom, http, encodeDeployData, getContractAddress, concat, parseUnits,
-  formatUnits, erc20Abi, defineChain, keccak256, toBytes, verifyMessage,
+  formatUnits, erc20Abi, defineChain, keccak256, toBytes, verifyMessage, parseAbi,
 } from "https://cdn.jsdelivr.net/npm/viem@2.21.54/+esm";
 import { CONFIG } from "./config.js";
 import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
@@ -40,12 +40,13 @@ function prepare(raw) {
   const p = raw.params;
   const q = { usdc: CONFIG.usdc, platform: CONFIG.platform, creator: p.creator, name: p.name, symbol: p.symbol,
     softcap: BigInt(p.softcap), hardcap: BigInt(p.hardcap), saleTokens: BigInt(p.saleTokens), creatorTokens: BigInt(p.creatorTokens),
-    saleEnd: BigInt(p.saleEnd), initialBps: Number(p.initialBps), milestones: Number(p.milestones), milestonePeriod: BigInt(p.milestonePeriod) };
+    saleEnd: BigInt(p.saleEnd), initialBps: Number(p.initialBps), milestones: Number(p.milestones), milestonePeriod: BigInt(p.milestonePeriod),
+    liquidityBps: Number(p.liquidityBps || 0), positionManager: Number(p.liquidityBps || 0) > 0 ? CONFIG.positionManager : "0x0000000000000000000000000000000000000000" };
   const initCode = encodeDeployData({ abi: ABI, bytecode: ALCANCIA_BYTECODE, args: [q] });
   return { ...raw, q, initCode, address: getContractAddress({ opcode: "CREATE2", from: CONFIG.deployer, salt: SALT, bytecode: initCode }),
     exists: false, s: blankS(), u: blankU(), updates: raw.updates || [] };
 }
-const blankS = () => ({ state: 0, totalRaised: 0n, poolAfterFees: 0n, usdcReleased: 0n, milestonesDone: 0, voteEnd: 0n, votesYes: 0n,
+const blankS = () => ({ pool: "0x0000000000000000000000000000000000000000", lpUnlock: 0n, liquidityUsdc: 0n, state: 0, totalRaised: 0n, poolAfterFees: 0n, usdcReleased: 0n, milestonesDone: 0, voteEnd: 0n, votesYes: 0n,
   votesNo: 0n, deadline: 0n, succeeded: false, refundPool: 0n, voteRound: 0n, platformTokens: 0n });
 const blankU = () => ({ contributed: 0n, claimed: false, settled: false, voted: false, balance: 0n });
 
@@ -83,7 +84,7 @@ async function loadCatalog() {
   }));
 }
 
-const READS = ["state", "totalRaised", "poolAfterFees", "usdcReleased", "milestonesDone", "voteEnd", "votesYes", "votesNo", "deadline", "succeeded", "refundPool", "voteRound"];
+const READS = ["pool", "lpUnlock", "liquidityUsdc", "state", "totalRaised", "poolAfterFees", "usdcReleased", "milestonesDone", "voteEnd", "votesYes", "votesNo", "deadline", "succeeded", "refundPool", "voteRound"];
 async function loadChain(p) {
   const code = await pub.getCode({ address: p.address });
   p.exists = !!code && code !== "0x"; p.s = blankS(); p.u = blankU();
@@ -92,6 +93,17 @@ async function loadChain(p) {
   const r = await pub.multicall({ contracts: [...READS.map((f) => c(f)), c("balanceOf", [CONFIG.platform])] });
   READS.forEach((f, i) => (p.s[f] = r[i].result));
   p.s.platformTokens = r[READS.length].result;
+  p.mk = null;
+  if (p.s.pool && p.s.pool !== "0x0000000000000000000000000000000000000000") {
+    const [slot, bu, bt] = await Promise.all([
+      pub.readContract({ address: p.s.pool, abi: POOL_ABI, functionName: "slot0" }),
+      pub.readContract({ address: CONFIG.usdc, abi: erc20Abi, functionName: "balanceOf", args: [p.s.pool] }),
+      pub.readContract({ address: p.address, abi: erc20Abi, functionName: "balanceOf", args: [p.s.pool] }),
+    ]);
+    p.mk = { sqrt: slot[0], poolUsdc: bu, poolTok: bt, usdc0: CONFIG.usdc.toLowerCase() < p.address.toLowerCase() };
+    p.mk.price = usdcPerToken(p.mk.sqrt, p.mk.usdc0);
+    p.mk.round = Number(p.q.hardcap) / 1e6 / (Number(p.q.saleTokens) / 1e18);
+  }
   if (!S.me) return;
   const u = await pub.multicall({ contracts: [c("contributed", [S.me]), c("claimedTokens", [S.me]), c("settled", [S.me]), c("voted", [p.s.voteRound, S.me]), c("balanceOf", [S.me])] });
   [p.u.contributed, p.u.claimed, p.u.settled, p.u.voted, p.u.balance] = u.map((x) => x.result);
@@ -135,6 +147,90 @@ function tickerHtml() {
     : x.kind === "goal" ? `<b>${esc(x.p.q.name)}</b> reached its goal` : `<b>${esc(x.p.q.name)}</b> missed its goal, refunds open`}<span class="tk-ago">${ago(a.head - x.block)}</span></span>`;
   const row = a.items.map(one).join("");
   return `<section class="ticker" aria-label="Live activity"><div class="tk-label"><i></i>Live now</div><div class="tk-track"><div class="tk-run">${row}${a.items.length > 2 ? row : ""}</div></div></section>`;
+}
+
+// ================================================================= mercado (Uniswap v3)
+const POOL_ABI = parseAbi(["function slot0() view returns (uint160 sqrtPriceX96, int24 tick, uint16, uint16, uint16, uint8, bool)",
+  "event Swap(address indexed sender, address indexed recipient, int256 amount0, int256 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick)"]);
+const QUOTER_ABI = parseAbi(["function quoteExactInputSingle((address tokenIn, address tokenOut, uint256 amountIn, uint24 fee, uint160 sqrtPriceLimitX96) params) returns (uint256 amountOut, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed, uint256 gasEstimate)"]);
+const ROUTER_ABI = parseAbi(["function exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96) params) payable returns (uint256 amountOut)"]);
+function usdcPerToken(sqrt, usdc0) {
+  const r = Number(sqrt) / 2 ** 96, raw1per0 = r * r; // token1 por token0 en unidades mínimas
+  const tokPerUsdc = usdc0 ? raw1per0 * 1e6 / 1e18 : (1 / raw1per0) * 1e6 / 1e18;
+  return 1 / tokPerUsdc;
+}
+const fmtP = (x) => x >= 0.01 ? `$${x.toLocaleString("en-US", { maximumFractionDigits: 4 })}` : `$${x.toPrecision(3)}`;
+async function loadTrades(p) {
+  if (!p.mk) return [];
+  try {
+    const head = await pub.getBlockNumber(), fromBlock = head > 45000n ? head - 45000n : 0n;
+    const ev = await pub.getContractEvents({ address: p.s.pool, abi: POOL_ABI, eventName: "Swap", fromBlock });
+    p.trades = ev.map((e) => {
+      const usdcAmt = p.mk.usdc0 ? e.args.amount0 : e.args.amount1, tokAmt = p.mk.usdc0 ? e.args.amount1 : e.args.amount0;
+      return { buy: usdcAmt > 0n, usdc: usdcAmt < 0n ? -usdcAmt : usdcAmt, tok: tokAmt < 0n ? -tokAmt : tokAmt, price: usdcPerToken(e.args.sqrtPriceX96, p.mk.usdc0), who: e.args.recipient, block: e.blockNumber };
+    });
+    p.tHead = head;
+  } catch { p.trades = []; }
+  return p.trades;
+}
+function chartSvg(p) {
+  const pts = [p.mk.round, ...(p.trades || []).map((t) => t.price)];
+  if (pts.length < 2) pts.push(p.mk.price);
+  const W = 640, H = 200, min = Math.min(...pts, p.mk.round) * 0.97, max = Math.max(...pts, p.mk.round) * 1.03;
+  const x = (i) => (i / (pts.length - 1)) * W, y = (v) => H - ((v - min) / (max - min || 1)) * H;
+  const line = pts.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
+  return `<svg class="cy-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Price since the pool opened">
+    <defs><linearGradient id="cyf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff3d8b" stop-opacity=".35"/><stop offset="1" stop-color="#ff3d8b" stop-opacity="0"/></linearGradient></defs>
+    <line x1="0" x2="${W}" y1="${y(p.mk.round).toFixed(1)}" y2="${y(p.mk.round).toFixed(1)}" class="cy-round"/>
+    <path d="${line} L${W} ${H} L0 ${H}Z" fill="url(#cyf)"/><path d="${line}" class="cy-line"/></svg>`;
+}
+function tradePanel(p) {
+  const side = S.side || "buy", m = p.mk;
+  return `<div class="panel cyber" data-testid="trade-panel">
+    <div class="cy-top"><span class="cy-live"><i></i>Market open</span><span>Uniswap v3</span></div>
+    <div class="cy-price">${fmtP(m.price)}<small>per ${esc(p.q.symbol)}</small></div>
+    <div class="cy-delta ${m.price >= m.round ? "up" : "down"}">${m.price >= m.round ? "+" : ""}${(((m.price - m.round) / m.round) * 100).toFixed(1)}% vs round price</div>
+    <div class="cy-toggle" role="tablist"><button type="button" data-side="buy" aria-selected="${side === "buy"}">Buy</button><button type="button" data-side="sell" aria-selected="${side === "sell"}">Sell</button></div>
+    <label class="cy-lab" for="tamt">${side === "buy" ? "You pay" : "You sell"}</label>
+    <div class="field-amt cy-field"><input id="tamt" type="number" inputmode="decimal" min="0" step="any" placeholder="0" data-testid="trade-amount"><span class="u">${side === "buy" ? "USDC" : esc(p.q.symbol)}</span></div>
+    <div class="under"><span>Balance ${side === "buy" ? `${usd(S.usdc)} USDC` : `${tok(p.u.balance)} ${esc(p.q.symbol)}`}</span><span>Slippage 1%</span></div>
+    <div class="lines cy-sum"><div><span>You receive</span><b id="tout">–</b></div><div><span>Price impact</span><b id="timp">–</b></div></div>
+    <button class="btn btn-cyber btn-block" data-act="swap" data-testid="swap">${side === "buy" ? `Buy ${esc(p.q.symbol)}` : `Sell ${esc(p.q.symbol)}`}</button>
+    <p class="cy-fine">Trades go straight to the Uniswap pool. Holdfast never holds your funds.</p>
+  </div>`;
+}
+let quoteT = 0;
+function bindTrade(p) {
+  const el = $("#tamt"); if (!el || !p.mk) return;
+  el.oninput = () => { clearTimeout(quoteT); quoteT = setTimeout(() => quote(p), 250); };
+}
+async function quote(p) {
+  const side = S.side || "buy", raw = $("#tamt")?.value;
+  let amt = 0n; try { amt = parseUnits(raw || "0", side === "buy" ? 6 : 18); } catch {}
+  if (amt <= 0n) { $("#tout").textContent = "–"; $("#timp").textContent = "–"; S.quote = null; return; }
+  try {
+    const { result } = await pub.simulateContract({ address: CONFIG.quoter, abi: QUOTER_ABI, functionName: "quoteExactInputSingle",
+      args: [{ tokenIn: side === "buy" ? CONFIG.usdc : p.address, tokenOut: side === "buy" ? p.address : CONFIG.usdc, amountIn: amt, fee: 3000, sqrtPriceLimitX96: 0n }] });
+    const out = result[0]; S.quote = { amt, out, side };
+    $("#tout").textContent = side === "buy" ? `${tok(out)} ${p.q.symbol}` : `${usd(out)} USDC`;
+    const exec = side === "buy" ? (Number(amt) / 1e6) / (Number(out) / 1e18) : (Number(out) / 1e6) / (Number(amt) / 1e18);
+    const imp = Math.abs(exec - p.mk.price) / p.mk.price * 100;
+    $("#timp").textContent = `${imp.toFixed(2)}%`; $("#timp").classList.toggle("warn", imp > 3);
+  } catch { $("#tout").textContent = "Not enough liquidity"; S.quote = null; }
+}
+async function swap(p) {
+  await quote(p);
+  const q = S.quote; if (!q) return toast("Enter an amount to trade.", true);
+  const tokenIn = q.side === "buy" ? CONFIG.usdc : p.address, tokenOut = q.side === "buy" ? p.address : CONFIG.usdc;
+  const bal = q.side === "buy" ? S.usdc : p.u.balance;
+  if (bal < q.amt) return toast("Not enough balance.", true);
+  const allowance = await pub.readContract({ address: tokenIn, abi: erc20Abi, functionName: "allowance", args: [S.me, CONFIG.swapRouter] });
+  const labels = [], fns = [];
+  if (allowance < q.amt) { labels.push(q.side === "buy" ? "Allow your USDC" : `Allow your ${p.q.symbol}`); fns.push(() => S.wallet.writeContract({ address: tokenIn, abi: erc20Abi, functionName: "approve", args: [CONFIG.swapRouter, q.amt] })); }
+  labels.push(q.side === "buy" ? `Buy ${p.q.symbol}` : `Sell ${p.q.symbol}`);
+  fns.push(() => S.wallet.writeContract({ address: CONFIG.swapRouter, abi: ROUTER_ABI, functionName: "exactInputSingle",
+    args: [{ tokenIn, tokenOut, fee: 3000, recipient: S.me, amountIn: q.amt, amountOutMinimum: (q.out * 99n) / 100n, sqrtPriceLimitX96: 0n }] }));
+  await flow(q.side === "buy" ? "Buy" : "Sell", labels, fns, "Trade done");
 }
 
 // ================================================================= estados
@@ -267,15 +363,16 @@ function vProject(p) {
   </section>
   <div class="layout">
     <div>
-      <div class="ptabs" role="tablist" aria-label="Project sections">${TABS.map(([k, t]) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${S.tab === k}">${t}</button>`).join("")}</div>
+      <div class="ptabs" role="tablist" aria-label="Project sections">${TABS_ALL(p).slice(0).filter(([k]) => k !== "team" || true).map(([k, t]) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${S.tab === k}">${t}</button>`).join("")}</div>
       <div class="ptab-body">${tabBody(p)}</div>
     </div>
-    <aside class="aside">${pInvest(p)}${S.me && p.u.contributed > 0n ? pPosition(p) : ""}${pVote(p)}</aside>
+    <aside class="aside">${p.mk && S.me ? tradePanel(p) : pInvest(p)}${S.me && p.u.contributed > 0n ? pPosition(p) : ""}${pVote(p)}</aside>
   </div>
   ${buyBar(p)}`;
 }
 const TORII = `<svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><path class="g-top" d="M6 18 Q50 27 94 18 L92 30 Q50 38 8 30Z"/><rect class="g-top" x="16" y="38" width="68" height="8" rx="2"/><path class="g-leg" d="M26 34 H35 L34 96 H25Z M65 34 H74 L75 96 H66Z"/></svg>`;
-const TABS = [["overview", "Overview"], ["team", "Team"], ["releases", "Releases"], ["backers", "Backers"], ["qa", "Q&A"], ["contract", "Contract"]];
+const TABS_ALL = (p) => [["overview", "Overview"], ...(p.mk ? [["trade", "Trade"]] : []), ["team", "Team"], ["releases", "Releases"], ["backers", "Backers"], ["qa", "Q&A"], ["contract", "Contract"]];
+const TABS = TABS_ALL({});
 function avatar(addr, size = 36) {
   const h = keccak256(toBytes(addr.toLowerCase())), a = parseInt(h.slice(2, 6), 16) % 360, b = (a + 140) % 360;
   return `<span class="ava" style="width:${size}px;height:${size}px;background:conic-gradient(from ${parseInt(h.slice(6, 8), 16)}deg, hsl(${a} 70% 55%), hsl(${b} 65% 45%), hsl(${a} 70% 55%))" aria-hidden="true"></span>`;
@@ -288,6 +385,17 @@ function tabBody(p) {
     return t.length ? `<div class="team">${t.map((m) => `<div class="member">${m.photo ? `<img src="${esc(m.photo)}" alt="" width="56" height="56">` : `<span class="m-ini" style="--pc:${esc(p.meta.color)}">${esc(initials(m.name))}</span>`}
       <div><b>${esc(m.name)}</b><span>${esc(m.role || "")}</span>${m.link ? `<a href="${esc(m.link)}" target="_blank" rel="noopener nofollow">${esc(m.link.replace(/^https:\/\//, "").replace(/\/$/, ""))}</a>` : ""}</div></div>`).join("")}</div>
       <p class="fine">Team details are provided and signed by the creator. Holdfast reviews them before approval.</p>` : `<p class="prose">The team hasn't added profiles yet.</p>`;
+  }
+  if (S.tab === "trade" && p.mk) {
+    const m = p.mk, tr = (p.trades || []).slice(-10).reverse();
+    return `<div class="cy-wrap">
+      <div class="cy-stats"><div><span>Price</span><b>${fmtP(m.price)}</b></div><div><span>Round price</span><b>${fmtP(m.round)}</b></div>
+        <div><span>Pool liquidity</span><b>$${usd(m.poolUsdc)}</b></div><div><span>Liquidity unlocks</span><b>${day(p.s.lpUnlock)}</b></div></div>
+      <div class="cy-chart-box"><div class="cy-legend"><span class="l1">Price</span><span class="l2">Round price</span></div>${chartSvg(p)}</div>
+      <h3 class="cy-h">Recent trades</h3>
+      ${tr.length ? `<ul class="cy-trades">${tr.map((t) => `<li><span class="${t.buy ? "b" : "s"}">${t.buy ? "Buy" : "Sell"}</span><span>${tok(t.tok)} ${esc(p.q.symbol)}</span><span>$${usd(t.usdc)}</span><span>${fmtP(t.price)}</span><span class="faint">${ago((p.tHead || 0n) - t.block)}</span></li>`).join("")}</ul>` : `<p class="prose">No trades yet. Be the first.</p>`}
+      <p class="fine">The pool was created by the project's contract at the round price. Its liquidity is locked in the contract until ${day(p.s.lpUnlock)}. <a href="https://app.uniswap.org/explore/pools/ethereum_sepolia/${p.s.pool}" target="_blank" rel="noopener">View on Uniswap</a></p>
+    </div>`;
   }
   if (S.tab === "releases") return stages(p);
   if (S.tab === "backers") {
@@ -446,10 +554,10 @@ function pPosition(p) {
   const { s, u, q } = p;
   let top = "";
   if (s.state === 1) {
-    const kept = s.poolAfterFees - s.usdcReleased, fee = s.totalRaised - s.poolAfterFees;
+    const kept = s.poolAfterFees - s.usdcReleased, inPool = s.liquidityUsdc || 0n, fee = (s.totalRaised * 100n) / 10000n;
     top = `<div class="muted" style="font-size:14px">Most you could lose today</div><div class="big" data-testid="risk">${maxLoss(p).toFixed(1)}%</div>
-      <div class="split"><i style="width:${pct(kept, s.totalRaised)}%;background:var(--ink)"></i><i style="width:${pct(s.usdcReleased, s.totalRaised)}%;background:var(--ember)"></i><i style="width:${pct(fee, s.totalRaised)}%;background:var(--rule-2)"></i></div>
-      <div class="keys"><span style="--c:var(--ink)">Locked $${usd(kept)}</span><span style="--c:var(--ember)">Released $${usd(s.usdcReleased)}</span><span style="--c:var(--rule-2)">Fee $${usd(fee)}</span></div>`;
+      <div class="split"><i style="width:${pct(kept, s.totalRaised)}%;background:var(--ink)"></i><i style="width:${pct(s.usdcReleased, s.totalRaised)}%;background:var(--ember)"></i><i style="width:${pct(inPool, s.totalRaised)}%;background:#3de0ff"></i><i style="width:${pct(fee, s.totalRaised)}%;background:var(--rule-2)"></i></div>
+      <div class="keys"><span style="--c:var(--ink)">Locked $${usd(kept)}</span><span style="--c:var(--ember)">Released $${usd(s.usdcReleased)}</span>${inPool > 0n ? `<span style="--c:#3de0ff">In pool $${usd(inPool)}</span>` : ""}<span style="--c:var(--rule-2)">Fee $${usd(fee)}</span></div>`;
   }
   if (s.state === 0) top = `<div class="note ok" style="margin:0 0 8px">Fully protected until the raise closes.</div>`;
   const back = s.state === 2 && s.totalRaised > 0n ? (s.refundPool * u.contributed) / s.totalRaised : 0n;
@@ -529,6 +637,7 @@ function vLaunch() {
     </fieldset>
     <fieldset><legend>Releases</legend>
       <div class="f"><label>Upfront when the raise closes</label><div class="chips">${[0, 5, 10, 20].map((v) => `<label><input type="radio" name="initial" value="${v}" ${v === 10 ? "checked" : ""}><span>${v}%</span></label>`).join("")}</div></div>
+      <div class="f"><label>Liquidity for the Uniswap market</label><div class="chips">${[5, 10, 15, 20, 25].map((v) => `<label><input type="radio" name="liq" value="${v}" ${v === 10 ? "checked" : ""}><span>${v}%</span></label>`).join("")}</div><small>When the raise succeeds, this share of the funds and matching tokens open a Uniswap pool at the round price, locked for 12 months.</small></div>
       <div class="f"><label>Number of voted releases</label><div class="chips">${[2, 3, 4, 6].map((v) => `<label><input type="radio" name="ms" value="${v}" ${v === 3 ? "checked" : ""}><span>${v}</span></label>`).join("")}</div></div>
       <div class="f"><label>Window to request each release</label><div class="chips">${[30, 60, 90].map((v) => `<label><input type="radio" name="period" value="${v}" ${v === 60 ? "checked" : ""}><span>${v} days</span></label>`).join("")}</div><small>Miss it and the remaining funds go back to backers.</small></div>
     </fieldset>
@@ -547,7 +656,7 @@ function readForm() {
   return { id, meta: { category: g("category"), color: g("color"), tagline: g("tagline"), about: g("about"), logo: S.logo || "", team: tm.length ? JSON.stringify(tm) : "" },
     params: { creator: S.me, name, symbol: g("symbol").toUpperCase(), softcap: usdc(g("soft")), hardcap: usdc(g("hard")),
       saleTokens: toks(g("saleTokens")), creatorTokens: toks(g("creatorTokens")), saleEnd: String(Math.floor(Date.now() / 1000) + Number(g("days")) * 86400),
-      initialBps: String(Number(g("initial")) * 100), milestones: g("ms"), milestonePeriod: String(Number(g("period")) * 86400) } };
+      initialBps: String(Number(g("initial")) * 100), milestones: g("ms"), milestonePeriod: String(Number(g("period")) * 86400), liquidityBps: String(Number(g("liq") || 10) * 100) } };
 }
 async function pickImage(e, size, max, done) {
   const f = e.target.files?.[0]; if (!f) return;
@@ -625,7 +734,7 @@ function vPortfolio() {
 function vOwner() {
   if (!isOwner()) return `<div class="page-h"><h1>Owner</h1><p>Only the platform wallet can open this panel.</p></div>`;
   const live = S.list.filter((p) => p.exists), funded = live.filter((p) => p.s.succeeded);
-  const fees = funded.reduce((a, p) => a + (p.s.totalRaised - p.s.poolAfterFees), 0n);
+  const fees = funded.reduce((a, p) => a + (p.s.totalRaised * 100n) / 10000n, 0n);
   const raised = live.reduce((a, p) => a + p.s.totalRaised, 0n);
   const pending = S.all.filter((p) => p.status === "review");
   return `<div class="page-h"><h1>Owner</h1><p>Your fees, platform activity and the projects waiting for your approval.</p></div>
@@ -633,7 +742,7 @@ function vOwner() {
     <div><b>${funded.length}</b><span>Projects funded</span></div><div><b>${pending.length}</b><span>Awaiting review</span></div></section>
   <section class="block"><h2>Fees by project</h2>
     ${funded.length ? `<table class="tbl"><thead><tr><th>Project</th><th>USDC</th><th>Tokens</th></tr></thead><tbody>
-      ${funded.map((p) => `<tr><td>${esc(p.q.name)}</td><td>$${usd(p.s.totalRaised - p.s.poolAfterFees)}</td><td>${tok(p.s.platformTokens)} ${esc(p.q.symbol)}</td></tr>`).join("")}</tbody></table>`
+      ${funded.map((p) => `<tr><td>${esc(p.q.name)}</td><td>$${usd((p.s.totalRaised * 100n) / 10000n)}</td><td>${tok(p.s.platformTokens)} ${esc(p.q.symbol)}</td></tr>`).join("")}</tbody></table>`
       : `<p>No project has been funded yet. Fees reach your wallet the moment one closes successfully.</p>`}
   </section>
   <section class="block"><h2>Awaiting review</h2>
@@ -669,7 +778,7 @@ function route() {
   if (key === "launch" && $("#form")) return; // no borrar lo que el creador está escribiendo
   const keep = $("#amt")?.value;
   $("#app").innerHTML = p ? vProject(p) : key === "launch" ? vLaunch() : key === "portfolio" ? vPortfolio() : key === "owner" ? vOwner() : vHome();
-  if (p) { bindAmount(p); bindTab(p); celebrate(p); }
+  if (p) { bindAmount(p); bindTab(p); bindTrade(p); celebrate(p); if (p.mk && !p.trades) loadTrades(p).then(() => { if (S.tab === "trade") { $(".ptab-body").innerHTML = tabBody(p); } }); }
   if (!p && key === "home") bindCards();
   if (p && keep && $("#amt")) { $("#amt").value = keep; $("#amt").dispatchEvent(new Event("input")); }
   if ($("#form")) { $("#form").addEventListener("input", preview); $("#form").addEventListener("submit", submitProject); $("#f-logo").addEventListener("change", pickLogo);
@@ -808,6 +917,8 @@ async function postUpdate(id) {
 }
 
 document.addEventListener("click", async (e) => {
+  const sd = e.target.closest("[data-side]");
+  if (sd) { S.side = sd.dataset.side; const p = S.list.find((x) => location.hash === `#/p/${x.id}`); if (p) { const box = $(".cyber"); box.outerHTML = tradePanel(p); bindTrade(p); } return; }
   const tb = e.target.closest("[data-tab]");
   if (tb) { S.tab = tb.dataset.tab; document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", x === tb)); const p = S.list.find((x) => location.hash === `#/p/${x.id}`); if (p) { $(".ptab-body").innerHTML = tabBody(p); bindTab(p); } return; }
   if (e.target.closest("#bb-go")) { const v = $("#amt")?.value; if (v && Number(v) > 0) return $('[data-act="buy"]')?.click(); $("#amt")?.scrollIntoView({ block: "center", behavior: "smooth" }); setTimeout(() => $("#amt")?.focus(), 400); return; }
@@ -826,6 +937,7 @@ document.addEventListener("click", async (e) => {
     else if (act === "openPanel") return await openPanel();
     else if (act === "postUpdate") return await postUpdate(b.dataset.id);
     else if (act === "card") return await backerCard(p);
+    else if (act === "swap") { await swap(p); p.trades = null; }
     else if (act === "ask" || act === "answer") return await qaPost(p, act, b.dataset.qts);
     await refresh();
   } catch (x) { console.error(x); toast(x.shortMessage || x.message, true); }

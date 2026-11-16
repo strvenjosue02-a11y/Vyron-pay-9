@@ -2,7 +2,7 @@
 
 export const META_KEYS = ["category", "color", "tagline", "about", "logo", "team"];
 export const PARAM_KEYS = ["creator", "name", "symbol", "softcap", "hardcap", "saleTokens", "creatorTokens",
-  "saleEnd", "initialBps", "milestones", "milestonePeriod"];
+  "saleEnd", "initialBps", "milestones", "milestonePeriod", "liquidityBps"];
 
 export const CATEGORIES = ["Local business", "Technology", "Environment", "Education", "Arts & culture", "Health", "Food & drink", "Other"];
 export const COLORS = ["#18191D", "#E2512C", "#2F5D50", "#3B4FA8", "#8A4B12", "#6B3A8C", "#0E6E7A", "#9B2F55"];
@@ -48,7 +48,7 @@ export function validate(p, nowSec) {
   if (!/^0x[0-9a-fA-F]{40}$/.test(q.creator || "")) return "Invalid creator wallet.";
   if (!q.name || q.name.length < 3 || q.name.length > 40) return "The name must be 3 to 40 characters.";
   if (!/^[A-Z0-9]{2,8}$/.test(q.symbol || "")) return "The ticker must be 2 to 8 capital letters or digits.";
-  for (const k of ["softcap", "hardcap", "saleTokens", "creatorTokens", "saleEnd", "initialBps", "milestones", "milestonePeriod"])
+  for (const k of ["softcap", "hardcap", "saleTokens", "creatorTokens", "saleEnd", "initialBps", "milestones", "milestonePeriod", "liquidityBps"])
     if (!isInt(q[k])) return `Invalid value: ${k}.`;
   const soft = BigInt(q.softcap), hard = BigInt(q.hardcap);
   if (soft < 10n ** 6n) return "The minimum goal must be at least 1 USDC.";
@@ -59,6 +59,8 @@ export function validate(p, nowSec) {
   const bps = Number(q.initialBps), ms = Number(q.milestones), period = Number(q.milestonePeriod), end = Number(q.saleEnd);
   if (bps < 0 || bps > 3000) return "The upfront release must be 0% to 30%.";
   if (ms < 1 || ms > 6) return "There must be 1 to 6 milestones.";
+  const lb = Number(q.liquidityBps);
+  if (lb < 500 || lb > 2500) return "Liquidity must be 5% to 25%.";
   if (period < 14 * DAY || period > 180 * DAY) return "Each milestone window must be 14 to 180 days.";
   if (nowSec && (end < nowSec + 3 * DAY || end > nowSec + 180 * DAY)) return "The raise must close 3 to 180 days from today.";
   return null;

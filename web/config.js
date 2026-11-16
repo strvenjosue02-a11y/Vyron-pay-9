@@ -10,6 +10,10 @@ export const CONFIG = {
   usdc: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
   // Deployer CREATE2 público (existe en Sepolia, Base y casi todas las redes)
   deployer: "0x4e59b44847b379578588920cA78FbF26c0B4956C",
+  // Uniswap v3 (auditado) en esta red: pool de liquidez al cerrar y mercado secundario
+  positionManager: "0x1238536071E1c677A632429e3655c799b22cDA52",
+  swapRouter: "0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E",
+  quoter: "0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3",
   // Wallet que recibe 1% USDC + 1,5% tokens
   platform: "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
 };
