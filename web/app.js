@@ -236,7 +236,18 @@ function vProject(p) {
   const { q } = p, ph = phase(p), step = (10000 - q.initialBps) / q.milestones / 100;
   return `
   <a class="back" href="#/">All projects</a>
-  <div class="p-head">${mark(p, "lg")}<div><h1>${esc(q.name)}</h1><p>${esc(p.meta.category)}, token ${esc(q.symbol)}. <span class="status ${ph.c}">${ph.t}</span></p></div></div>
+  <header class="kv-hero" style="--pc:${esc(p.meta.color)}">
+    <div class="kv-art" aria-hidden="true"><i class="pc-sun"></i></div>
+    <div class="kv-id">
+      ${logoSrc(p) ? `<img class="kv-coin" src="${esc(logoSrc(p))}" alt="">` : `<div class="kv-coin kv-coin-text">${esc(q.symbol)}</div>`}
+      <div class="kv-text">
+        <div class="kv-tags"><span class="kv-rar ${rarity(p).k}">${STAR.repeat(rarity(p).n)} ${rarity(p).t}</span><span class="status ${ph.c}">${ph.t}</span></div>
+        <h1>${esc(q.name)}</h1>
+        <p>${esc(p.meta.tagline)}</p>
+        <div class="kv-meta"><span>${esc(p.meta.category)}</span><span>Token ${esc(q.symbol)}</span><span>${left(p)}</span></div>
+      </div>
+    </div>
+  </header>
   <div class="layout">
     <div>
       <section class="block"><h2>About</h2><p>${esc(p.meta.about)}</p></section>
@@ -273,31 +284,44 @@ function stages(p) {
 }
 function pInvest(p) {
   const { s, q } = p, ended = S.now >= Number(q.saleEnd) || s.totalRaised >= q.hardcap;
+  const room = q.hardcap > s.totalRaised ? q.hardcap - s.totalRaised : 0n;
   let act;
   if (s.state === 0 && !ended) {
     act = S.me ? `
-      <label for="amt" class="muted" style="font-size:14px">Amount to back</label>
-      <div class="field-amt"><input id="amt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" data-testid="amount"><span class="u">USDC</span><button type="button" data-max>Max</button></div>
-      <div class="under"><span id="receive">You get 0 ${esc(q.symbol)}</span><span>Balance ${usd(S.usdc)} USDC</span></div>
-      <button class="btn btn-dark btn-block" data-act="buy" data-testid="buy">Back this project</button>
-      ${p.exists ? "" : `<div class="note">You're early: your backing also creates this project's contract. It costs a few extra cents of gas, once.</div>`}`
-      : `<button class="btn btn-dark btn-block" data-act="connect">Connect wallet to back</button>`;
+      <div class="inv-field">
+        <label for="amt">Amount</label>
+        <div class="field-amt"><input id="amt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" data-testid="amount"><span class="u">USDC</span></div>
+        <div class="quick">${[25, 50, 100].map((v) => `<button type="button" data-quick="${v}">$${v}</button>`).join("")}<button type="button" data-max>Max</button></div>
+      </div>
+      <div class="lines inv-sum">
+        <div><span>You receive</span><b id="receive">0 ${esc(q.symbol)}</b></div>
+        <div><span>If the goal is missed</span><b id="refundline">100% back</b></div>
+        <div><span>Network fee</span><b>${p.exists ? "Less than $0.01" : "A few cents, once"}</b></div>
+        <div><span>Your balance</span><b>${usd(S.usdc)} USDC</b></div>
+      </div>
+      <button class="btn btn-ember btn-block" data-act="buy" data-testid="buy">Back ${esc(q.name)}</button>
+      ${p.exists ? "" : `<p class="inv-note">You're early: your backing also creates this project's contract.</p>`}`
+      : `<button class="btn btn-ember btn-block" data-act="connect">Connect wallet to back</button>`;
   } else if (s.state === 0) {
     act = p.exists ? `<button class="btn btn-dark btn-block" data-act="finalize" data-testid="finalize">Close the raise</button><div class="note">The raise has ended. Anyone can close it to release tokens or refunds.</div>`
       : `<div class="note">The raise ended with no backers.</div>`;
   } else if (s.state === 2) {
     act = `<div class="note warn">${s.succeeded ? "Backers rejected a release or the team missed a deadline." : "The minimum goal wasn't reached."} What's left is being returned to backers.</div>`;
   } else act = `<div class="note ok">Funded. The team is paid in stages that backers approve.</div>`;
-  return `<div class="panel lift">
+  return `<div class="panel inv">
+    <div class="inv-head"><span>Raised</span><span>${pct(s.totalRaised, q.hardcap).toFixed(0)}%</span></div>
     <div class="big">$${usd(s.totalRaised)} <small>of $${usd(q.hardcap)}</small></div>
     <div style="margin-top:16px">${meter(p)}</div>
-    <div class="meter-t"><span>${pct(s.totalRaised, q.hardcap).toFixed(0)}% raised</span><span>${left(p)}</span></div>
+    <div class="meter-t"><span>Minimum $${usd(q.softcap)}</span><span>${room > 0n && s.state === 0 ? `$${usd(room)} left` : left(p)}</span></div>
     <dl class="facts">
       <div><dt>Price</dt><dd>1 USDC = ${tok((q.saleTokens * 1_000_000n) / q.hardcap)} ${esc(q.symbol)}</dd></div>
-      <div><dt>Minimum goal</dt><dd>$${usd(q.softcap)}</dd></div>
-      <div><dt>Maximum goal</dt><dd>$${usd(q.hardcap)}</dd></div>
       <div><dt>Closes</dt><dd>${day(q.saleEnd)}</dd></div>
-    </dl>${act}</div>`;
+    </dl>${act}
+    <ul class="guarantees">
+      <li>${IC.back}<span>Refund if goal missed</span></li>
+      <li>${IC.lock}<span>No admin keys</span></li>
+      <li>${IC.steps}<span>Paid in voted stages</span></li>
+    </ul></div>`;
 }
 function pPosition(p) {
   const { s, u, q } = p;
@@ -509,9 +533,11 @@ function route() {
 }
 function bindAmount(p) {
   const el = $("#amt"); if (!el) return;
-  const upd = () => { let v = 0n; try { v = parseUnits(el.value || "0", 6); } catch {} $("#receive").textContent = `You get ${tok((v * p.q.saleTokens) / p.q.hardcap)} ${p.q.symbol}`; };
+  const upd = () => { let v = 0n; try { v = parseUnits(el.value || "0", 6); } catch {} $("#receive").textContent = `${tok((v * p.q.saleTokens) / p.q.hardcap)} ${p.q.symbol}`; if ($("#refundline")) $("#refundline").textContent = v > 0n ? `$${usd(v)} back` : "100% back"; };
   el.oninput = upd;
-  $("[data-max]").onclick = () => { const room = p.q.hardcap - p.s.totalRaised; el.value = formatUnits(S.usdc < room ? S.usdc : room, 6); upd(); };
+  const room = p.q.hardcap - p.s.totalRaised, cap = (v) => (v < room ? v : room);
+  $("[data-max]").onclick = () => { el.value = formatUnits(cap(S.usdc), 6); upd(); };
+  document.querySelectorAll("[data-quick]").forEach((b) => (b.onclick = () => { el.value = formatUnits(cap(parseUnits(b.dataset.quick, 6)), 6); upd(); }));
 }
 
 // ================================================================= wallet y transacciones
