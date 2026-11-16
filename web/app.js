@@ -402,6 +402,7 @@ function phase(p) {
   return { t: "Open", c: "open" };
 }
 function left(p) {
+  if (p.s?.succeeded) return p.mk ? "Market open" : "Funded";
   const d = Number(p.q.saleEnd) - S.now;
   if (d <= 0) return "Closed " + day(p.q.saleEnd);
   const days = Math.floor(d / 86400);
