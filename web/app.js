@@ -521,10 +521,10 @@ function vProject(p) {
     <div class="kv-id">
       ${coverSrc(p) ? "" : logoSrc(p) ? `<img class="kv-coin" src="${esc(logoSrc(p))}" alt="">` : `<div class="kv-coin kv-coin-text">${esc(q.symbol)}</div>`}
       <div class="kv-text">
-        <div class="kv-tags">${p.exists ? `<span class="kv-ver">✓ Verified</span>` : ""}<span class="kv-rar ${rarity(p).k}">${STAR.repeat(rarity(p).n)} ${rarity(p).t}</span><span class="status ${ph.c}">${ph.t}</span></div>
+        ${p.exists ? `<div class="kv-tags"><span class="kv-ver">✓ Verified</span></div>` : ""}
         <h1>${esc(q.name)}</h1>
         <p>${esc(p.meta.tagline)}</p>
-        <div class="kv-meta"><span>${esc(p.meta.category)}</span><span>Token ${esc(q.symbol)}</span><span>${left(p)}</span></div>
+        
       </div>
     </div>
   </header>
@@ -636,8 +636,8 @@ async function backerCard(p) {
   const c = document.createElement("canvas"); c.width = 900; c.height = 1260; const x = c.getContext("2d");
   const g = x.createLinearGradient(0, 0, 0, 1260); g.addColorStop(0, "#1a1b1f"); g.addColorStop(1, "#0f1012");
   x.fillStyle = g; x.beginPath(); x.roundRect(0, 0, 900, 1260, 48); x.fill();
-  const rim = x.createLinearGradient(0, 0, 900, 1260); ["#ff6a3d", "#ffd36b", "#4fd1c5", "#7868e6", "#e0335c"].forEach((col, i) => rim.addColorStop(i / 4, col));
-  x.strokeStyle = r.k === "legendary" ? rim : r.k === "common" ? "#393b40" : "#ff6a3d"; x.lineWidth = 8; x.beginPath(); x.roundRect(4, 4, 892, 1252, 46); x.stroke();
+  const rim = x.createLinearGradient(0, 0, 900, 1260); ["#ff2e88", "#ffd36b", "#4fd1c5", "#7868e6", "#e0335c"].forEach((col, i) => rim.addColorStop(i / 4, col));
+  x.strokeStyle = r.k === "legendary" ? rim : r.k === "common" ? "#393b40" : "#ff2e88"; x.lineWidth = 8; x.beginPath(); x.roundRect(4, 4, 892, 1252, 46); x.stroke();
   x.save(); x.beginPath(); x.roundRect(48, 120, 804, 600, 32); x.clip();
   x.fillStyle = p.meta.color; x.globalAlpha = .25; x.fillRect(48, 120, 804, 600); x.globalAlpha = 1;
   const sun = x.createLinearGradient(0, 200, 0, 680); sun.addColorStop(0, "#ffb27a"); sun.addColorStop(.5, p.meta.color); sun.addColorStop(1, "#3a1440");
@@ -650,7 +650,7 @@ async function backerCard(p) {
   x.textAlign = "right"; x.fillText("HOLDFAST", 844, 82); x.textAlign = "left";
   x.font = "500 76px 'Instrument Serif', Georgia, serif"; x.fillText(p.q.name, 56, 830);
   x.fillStyle = "#b4b5b1"; x.font = "400 34px 'Inter Tight', sans-serif"; x.fillText(n ? `Backer #${n}` : "Backer", 56, 890);
-  x.fillStyle = "#ff6a3d"; x.font = "600 96px 'Inter Tight', sans-serif"; x.fillText(`$${usd(amt)}`, 56, 1030);
+  x.fillStyle = "#ff2e88"; x.font = "600 96px 'Inter Tight', sans-serif"; x.fillText(`$${usd(amt)}`, 56, 1030);
   x.fillStyle = "#7e8085"; x.font = "400 30px 'Inter Tight', sans-serif"; x.fillText(`${tok((amt * p.q.saleTokens) / p.q.hardcap)} ${p.q.symbol}  ·  ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`, 56, 1090);
   x.fillText(short(S.me), 56, 1190); x.textAlign = "right"; x.fillText("holdfast", 844, 1190);
   const url = c.toDataURL("image/png");
