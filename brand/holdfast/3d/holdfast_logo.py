@@ -193,7 +193,9 @@ elif args.mode == "seq":
     r.resolution_x = r.resolution_y = args.res or 960
     scene.cycles.samples = args.samples or 24
     r.film_transparent = True
-    cyc.is_shadow_catcher = True
+    cyc.hide_render = True
+    bpy.ops.mesh.primitive_plane_add(size=4.0, location=(0, 0, 0))
+    floor = bpy.context.active_object; floor.name = "ShadowFloor"; floor.is_shadow_catcher = True
     r.image_settings.file_format = "PNG"; r.image_settings.color_mode = "RGBA"
     scene.frame_start, scene.frame_end = 1, 70
     r.filepath = os.path.join(out, "seq", "s_####")
