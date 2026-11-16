@@ -1263,3 +1263,11 @@ a.pcard .pc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8
 .tx-mood.pop { animation: moodpop .5s ease-out; } @keyframes moodpop { 30% { transform: scale(1.25) rotate(-6deg); } }
 @media (max-width: 760px) { .tx-mood { width: 64px; height: 64px; top: -10px; } }
 @media (max-width: 760px) { .hx-m img { width: min(100%, 380px) !important; } }
+
+/* ===== Inicio: fondo vivo de trading, solo rosa/fresa ===== */
+.hx { display: block; padding: 70px 0 40px; min-height: 380px; }
+.hx::before { background: radial-gradient(45% 60% at 70% 45%, rgba(255,46,136,.22), transparent 70%), radial-gradient(35% 40% at 10% 100%, rgba(190,30,85,.18), transparent 70%) !important; }
+.hx-bg { position: absolute; z-index: -1; left: 50%; top: 0; width: 100vw; height: 100%; transform: translateX(-50%); opacity: .85; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 35%, #000 100%), linear-gradient(180deg, #000 70%, transparent 100%); -webkit-mask-composite: source-in; mask-composite: intersect; mask-image: linear-gradient(90deg, transparent 0, #000 35%, #000 100%), linear-gradient(180deg, #000 70%, transparent 100%); }
+.hx-t h1 em { background: none !important; color: #ff3c8c !important; -webkit-text-fill-color: #ff3c8c; text-shadow: 0 0 40px rgba(255,60,140,.6); }
+@media (max-width: 760px) { .hx { padding: 50px 0 24px; } .hx-bg { opacity: .7; -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent); mask-image: linear-gradient(180deg, #000 60%, transparent); } .hx-t h1 { font-size: 52px; } }
+.tx-mood { display: none !important; }
