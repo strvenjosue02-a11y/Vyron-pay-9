@@ -1082,3 +1082,4 @@ body:has(.term.t-fs) { overflow: hidden; }
 .tx-share { display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; background: rgba(255,255,255,.05); border: 0; border-radius: 999px; padding: 6px 12px; color: #e9e6e4; font: 500 13px var(--font); cursor: pointer; } .tx-share:hover { background: rgba(255,255,255,.1); }
 .cy-trades .wh .ico { color: #ffd166; }
 .cy-trades li > span:first-child { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; } .cy-trades .ico { color: #ffd166; }
+.cy-trades.whales li > span:first-child { min-width: 96px; margin-right: 10px; }
