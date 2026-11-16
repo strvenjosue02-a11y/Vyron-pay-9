@@ -12,7 +12,7 @@ from mathutils import Vector
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 ap = argparse.ArgumentParser()
-ap.add_argument("--mode", default="preview", choices=["preview", "hero", "anim"])
+ap.add_argument("--mode", default="preview", choices=["preview", "hero", "anim", "seq"])
 ap.add_argument("--out", default="//out")
 ap.add_argument("--res", type=int, default=0)
 ap.add_argument("--samples", type=int, default=0)
@@ -129,7 +129,7 @@ def key(ob, f, x=None, rz=None, ry=None):
     if x is not None: ob.location.x = x; ob.keyframe_insert("location", index=0, frame=f)
     if rz is not None: ob.rotation_euler.z = rz; ob.keyframe_insert("rotation_euler", index=2, frame=f)
     if ry is not None: ob.rotation_euler.y = ry; ob.keyframe_insert("rotation_euler", index=1, frame=f)
-OUT_X = 0.95
+OUT_X = 0.42 if args.mode == "seq" else 0.95
 for ob, s in ((left, -1), (right, 1)):
     key(ob, 1, x=s * OUT_X, ry=s * math.radians(-28))
     key(ob, 46, x=0.0, ry=0.0)
@@ -188,6 +188,16 @@ elif args.mode == "hero":
     # versión transparente (sin fondo) para usar sobre cualquier color
     cyc.hide_render = True; r.film_transparent = True
     r.filepath = os.path.join(out, "holdfast-3d-transparente.png"); bpy.ops.render.render(write_still=True)
+elif args.mode == "seq":
+    # Secuencia transparente para la portada controlada por scroll: llegada + inicio del sostén (frames 1-70).
+    r.resolution_x = r.resolution_y = args.res or 960
+    scene.cycles.samples = args.samples or 24
+    r.film_transparent = True
+    cyc.is_shadow_catcher = True
+    r.image_settings.file_format = "PNG"; r.image_settings.color_mode = "RGBA"
+    scene.frame_start, scene.frame_end = 1, 70
+    r.filepath = os.path.join(out, "seq", "s_####")
+    bpy.ops.render.render(animation=True)
 else:
     r.resolution_x = r.resolution_y = args.res or 1080
     scene.cycles.samples = args.samples or 64

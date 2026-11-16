@@ -4,6 +4,8 @@ import {
 } from "https://cdn.jsdelivr.net/npm/viem@2.21.54/+esm";
 import { CONFIG } from "./config.js";
 import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
+import { mountHero } from "./hero.js";
+import { initI18n } from "./i18n.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, validate, CATEGORIES, COLORS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
@@ -118,16 +120,17 @@ function vHome() {
   const funded = live.filter((p) => p.s.succeeded).length;
   const open = S.list.filter((p) => phase(p).c === "open").length;
   return `
-  <section class="hero">
-    <div>
-      <h1>Hold fast to what you back.</h1>
-      <p>Back early-stage projects with USDC. Your money stays locked in a contract no one owns, and the team gets paid in stages, only when backers vote yes.</p>
-      <div class="cta"><button class="btn btn-dark" type="button" data-scroll="projects">Browse projects</button><a class="btn btn-line" href="#/launch">Launch a project</a></div>
-    </div>
-    <div class="stage">
-      <video autoplay muted loop playsinline preload="metadata" poster="./assets/holdfast-3d-poster.jpg" aria-label="The Holdfast mark: two halves that come together and hold">
-        <source src="./assets/holdfast-3d.webm" type="video/webm"><source src="./assets/holdfast-3d.mp4" type="video/mp4">
-      </video>
+  <section class="vitrina" aria-label="Holdfast">
+    <div class="vitrina-stage">
+      <div class="vitrina-light" aria-hidden="true"></div>
+      <canvas class="vitrina-art" role="img" aria-label="The two halves of the Holdfast mark coming together"></canvas>
+      <p class="vitrina-label left" data-beat="a">Your money.</p>
+      <p class="vitrina-label right" data-beat="a">Their work.</p>
+      <div class="vitrina-copy" data-beat="b">
+        <h1>Hold fast to what you back.</h1>
+        <p class="vitrina-promise">Goal missed? You get 100% back.</p>
+      </div>
+      <p class="vitrina-cue" data-beat="cue"><span aria-hidden="true"></span>Scroll to bring them together</p>
     </div>
   </section>
   <section class="live" aria-label="Live numbers">
@@ -413,6 +416,7 @@ function route() {
   if (key === "launch" && $("#form")) return; // no borrar lo que el creador está escribiendo
   const keep = $("#amt")?.value;
   $("#app").innerHTML = p ? vProject(p) : key === "launch" ? vLaunch() : key === "portfolio" ? vPortfolio() : key === "owner" ? vOwner() : vHome();
+  if (!p && key === "home") mountHero($("#app"));
   if (p) bindAmount(p);
   if (p && keep && $("#amt")) { $("#amt").value = keep; $("#amt").dispatchEvent(new Event("input")); }
   if ($("#form")) { $("#form").addEventListener("input", preview); $("#form").addEventListener("submit", submitProject); preview(); }
@@ -553,6 +557,7 @@ document.addEventListener("click", async (e) => {
 });
 
 async function main() {
+  initI18n();
   $("#net span").textContent = CONFIG.chainName;
   $("#connect").onclick = () => connect().catch((x) => toast(x.shortMessage || x.message, true));
   window.addEventListener("hashchange", () => { if (!location.hash.startsWith("#/launch")) $("#app").innerHTML = ""; route(); scrollTo(0, 0); });
