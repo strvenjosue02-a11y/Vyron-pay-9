@@ -1,5 +1,5 @@
 // Portada "escultura en vitrina": el scroll controla la animación del logo 3D (secuencia de imágenes en un canvas).
-const FRAMES = 70;
+const FRAMES = 35;
 const src = (i) => `./assets/seq/s_${String(i).padStart(4, "0")}.webp`;
 const cache = [];
 let loading = false;
