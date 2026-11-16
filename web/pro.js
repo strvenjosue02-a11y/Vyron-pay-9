@@ -39,14 +39,14 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     const every = Math.max(1, Math.round(cs.length / 6));
     s += cs.map((c, i) => (i % every === 0 ? `<line x1="${xc(i)}" x2="${xc(i)}" y1="0" y2="${PH}" class="cp-grid v"/><text x="${xc(i)}" y="${H - 6}" class="cp-ax t">${tlabel(c.t, st.period)}</text>` : "")).join("");
     // volumen
-    s += cs.map((c, i) => c.v ? `<rect x="${xc(i) - Math.max(2, Math.min(cw * 0.5, 12)) / 2}" y="${H - BX - (c.v / vmax) * VH}" width="${Math.max(2, Math.min(cw * 0.5, 12))}" height="${(c.v / vmax) * VH}" fill="${c.c >= c.o ? UP : DN}" opacity=".22"/>` : "").join("");
+    s += cs.map((c, i) => c.v ? `<rect x="${xc(i) - Math.max(2, Math.min(cw * 0.62, 18)) / 2}" y="${H - BX - (c.v / vmax) * VH}" width="${Math.max(2, Math.min(cw * 0.62, 18))}" height="${(c.v / vmax) * VH}" fill="${c.c >= c.o ? UP : DN}" opacity=".22"/>` : "").join("");
     // precio de la ronda
     s += `<line x1="0" x2="${W - AX}" y1="${y(d.round)}" y2="${y(d.round)}" class="cp-round"/>`;
     if (st.mode === "line") {
       const pts = cs.map((c, i) => `${i ? "L" : "M"}${xc(i).toFixed(1)} ${y(c.c).toFixed(1)}`).join(" ");
       s += `<path d="${pts} L${xc(cs.length - 1)} ${PH} L${xc(0)} ${PH}Z" fill="url(#cpA)"/><path d="${pts}" class="cp-line"/>`;
     } else {
-      const bw = Math.max(2, Math.min(cw * 0.5, 12));
+      const bw = Math.max(2, Math.min(cw * 0.62, 18));
       s += cs.map((c, i) => { const up = c.c >= c.o, col = up ? UP : DN, top = y(Math.max(c.o, c.c)), bh = Math.max(1, Math.abs(y(c.o) - y(c.c)));
         return `<line x1="${xc(i)}" x2="${xc(i)}" y1="${y(c.h)}" y2="${y(c.l)}" stroke="${col}" stroke-width="1" opacity=".85"/><rect x="${xc(i) - bw / 2}" y="${top}" width="${bw}" height="${bh}" fill="${col}" rx="1.5"/>`; }).join("");
     }
