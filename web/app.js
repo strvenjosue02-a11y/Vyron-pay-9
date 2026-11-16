@@ -126,7 +126,7 @@ function vHome() {
       <div class="cta"><button class="btn btn-dark" type="button" data-scroll="projects">Browse projects</button><a class="btn btn-line" href="#/launch">Launch a project</a></div>
       <p class="hero-promise"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ember)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Goal missed? You get 100% back.</p>
     </div>
-    <div class="stage"><img src="./assets/keystone-3d.webp" width="900" height="900" alt="The Holdfast keystone: a stone arch held together by its ember keystone" fetchpriority="high"></div>
+    <div class="stage"><img src="./assets/keystone-3d.webp" width="900" height="900" alt="The Holdfast torii: a gate held up by its ember beam" fetchpriority="high"></div>
   </section>
   <section class="live" aria-label="Live numbers">
     <div><b>$${usd(raised)}</b><span>Raised on Holdfast</span></div>

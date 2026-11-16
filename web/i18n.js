@@ -2,7 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
-  "The Holdfast keystone: a stone arch held together by its ember keystone": "La clave de Holdfast: un arco de piedra sostenido por su clave brasa", "Your money.": "Tu dinero.", "Their work.": "Su trabajo.", "Goal missed? You get 100% back.": "¿No llegan a la meta? Recuperas el 100%.",
+  "The Holdfast torii: a gate held up by its ember beam": "El torii de Holdfast: una puerta sostenida por su viga brasa", "Your money.": "Tu dinero.", "Their work.": "Su trabajo.", "Goal missed? You get 100% back.": "¿No llegan a la meta? Recuperas el 100%.",
   "Scroll to bring them together": "Desliza para unirlas", "For creators": "Para creadores", "Language": "Idioma",
   "Projects": "Proyectos", "Launch": "Lanzar", "Portfolio": "Portafolio", "Owner": "Dueño",
   "Connect wallet": "Conectar wallet", "Sepolia testnet": "Sepolia (prueba)",
