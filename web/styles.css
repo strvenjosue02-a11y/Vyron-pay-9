@@ -70,8 +70,12 @@ main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 var(-
 .hero p { font-size: clamp(17px, 2.2vw, 19px); color: var(--ink-2); margin: var(--s3) 0 var(--s4); max-width: 32em; }
 .cta { display: flex; flex-wrap: wrap; gap: var(--s1); }
 .stage { position: relative; aspect-ratio: 1; isolation: isolate; }
-.stage::before { content: ""; position: absolute; inset: 2%; border-radius: 50%;
-  background: radial-gradient(38% 34% at 50% 26%, rgba(255,106,61,.38), transparent 70%), radial-gradient(closest-side at 58% 62%, rgba(120,104,230,.28), transparent 72%); filter: blur(18px); }
+.stage .moon { position: absolute; z-index: -1; left: 50%; top: 14%; width: 66%; aspect-ratio: 1; translate: -50% 0; border-radius: 50%;
+  background: linear-gradient(180deg, #ff8a4d 0%, #ff6a3d 38%, #e0335c 78%, #9a2a73 100%);
+  box-shadow: 0 0 80px 10px rgba(255,106,61,.35), 0 0 220px 40px rgba(224,51,92,.18); }
+.stage .moon::after { content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: repeating-linear-gradient(180deg, transparent 0 62%, rgba(15,16,18,.55) 62% 66%, transparent 66% 72%, rgba(15,16,18,.55) 72% 75%, transparent 75% 82%, rgba(15,16,18,.55) 82% 84%); }
+.stage::before { content: ""; position: absolute; z-index: -2; inset: 4%; border-radius: 50%; background: radial-gradient(closest-side at 50% 60%, rgba(120,104,230,.22), transparent 72%); filter: blur(18px); }
 .stage::after { content: ""; position: absolute; inset: -6%; z-index: -1; pointer-events: none;
   background-image: radial-gradient(rgba(242,242,239,.16) 1px, transparent 1.6px); background-size: 9px 9px;
   -webkit-mask-image: radial-gradient(closest-side, #000 20%, transparent 78%); mask-image: radial-gradient(closest-side, #000 20%, transparent 78%); }
@@ -247,3 +251,18 @@ legend { font-family: var(--display); font-optical-sizing: auto; font-size: 20px
 .creator-link { font-size: 15px; font-weight: 500; text-decoration: none; color: var(--ink); white-space: nowrap; }
 .creator-link:hover { text-decoration: underline; text-underline-offset: 4px; }
 @media (max-width: 800px) { .creator-link { display: none; } .nav-in { gap: var(--s1); } .brand { margin-right: auto; } .nav-r { margin-left: 0; gap: var(--s1); } }
+
+/* ---------- cinta de actividad en vivo */
+.ticker { display: flex; align-items: center; gap: var(--s2); margin: 0; padding: 12px 0; border-top: 1px solid var(--rule); overflow: hidden; }
+.tk-label { flex: none; display: inline-flex; align-items: center; gap: var(--s1); font-size: 13px; font-weight: 600; color: var(--ink); padding-right: var(--s2); border-right: 1px solid var(--rule); }
+.tk-label i { width: 8px; height: 8px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 0 4px var(--ember-soft); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 7px rgba(255,106,61,0); } }
+.tk-track { flex: 1; min-width: 0; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+.tk-run { display: inline-flex; gap: var(--s4); white-space: nowrap; animation: run 40s linear infinite; }
+.ticker:hover .tk-run { animation-play-state: paused; }
+@keyframes run { to { transform: translateX(-50%); } }
+.tk-item { display: inline-flex; align-items: center; gap: var(--s1); font-size: 14px; color: var(--ink-2); }
+.tk-item b { color: var(--ink); font-weight: 600; }
+.tk-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); } .tk-dot.goal { background: var(--ember); } .tk-dot.miss { background: var(--warn); }
+.tk-ago { color: var(--ink-3); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .tk-run { animation: none; } .tk-label i { animation: none; } }

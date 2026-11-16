@@ -90,8 +90,39 @@ async function loadChain(p) {
 async function refresh() {
   S.now = Number((await pub.getBlock()).timestamp);
   await Promise.all(S.list.map(loadChain));
+  await loadActivity();
   if (S.me) S.usdc = await pub.readContract({ address: CONFIG.usdc, abi: erc20Abi, functionName: "balanceOf", args: [S.me] });
   route();
+}
+
+// ================================================================= actividad en vivo (eventos on-chain)
+async function loadActivity() {
+  try {
+    const head = await pub.getBlockNumber();
+    const fromBlock = head > 45000n ? head - 45000n : 0n;
+    const lists = await Promise.all(S.list.filter((p) => p.exists).map(async (p) => {
+      const [bought, fin] = await Promise.all([
+        pub.getContractEvents({ address: p.address, abi: ABI, eventName: "Bought", fromBlock }).catch(() => []),
+        pub.getContractEvents({ address: p.address, abi: ABI, eventName: "Finalized", fromBlock }).catch(() => []),
+      ]);
+      return [...bought.map((e) => ({ kind: "buy", p, who: e.args.buyer, amt: e.args.usdcAmount, block: e.blockNumber })),
+        ...fin.map((e) => ({ kind: e.args.success ? "goal" : "miss", p, block: e.blockNumber }))];
+    }));
+    S.activity = { head, items: lists.flat().sort((a, b) => Number(b.block - a.block)).slice(0, 12) };
+  } catch { S.activity = null; }
+}
+function ago(blocks) {
+  const m = Math.max(1, Math.round(Number(blocks) * 12 / 60));
+  return m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
+}
+function tickerHtml() {
+  const a = S.activity;
+  if (!a || !a.items.length) return "";
+  const one = (x) => `<span class="tk-item"><i class="tk-dot ${x.kind}"></i>${x.kind === "buy"
+    ? `<span class="addr">${short(x.who)}</span> backed <b>${esc(x.p.q.name)}</b> with ${usd(x.amt)} USDC`
+    : x.kind === "goal" ? `<b>${esc(x.p.q.name)}</b> reached its goal` : `<b>${esc(x.p.q.name)}</b> missed its goal, refunds open`}<span class="tk-ago">${ago(a.head - x.block)}</span></span>`;
+  const row = a.items.map(one).join("");
+  return `<section class="ticker" aria-label="Live activity"><div class="tk-label"><i></i>Live now</div><div class="tk-track"><div class="tk-run">${row}${a.items.length > 2 ? row : ""}</div></div></section>`;
 }
 
 // ================================================================= estados
@@ -126,8 +157,9 @@ function vHome() {
       <div class="cta"><button class="btn btn-dark" type="button" data-scroll="projects">Browse projects</button><a class="btn btn-line" href="#/launch">Launch a project</a></div>
       <p class="hero-promise"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ember)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Goal missed? You get 100% back.</p>
     </div>
-    <div class="stage"><img src="./assets/keystone-3d.webp" width="900" height="900" alt="The Holdfast torii: a gate held up by its ember beam" fetchpriority="high"></div>
+    <div class="stage"><div class="moon" aria-hidden="true"></div><img src="./assets/keystone-3d.webp" width="900" height="900" alt="The Holdfast torii: a gate held up by its ember beam" fetchpriority="high"></div>
   </section>
+  ${tickerHtml()}
   <section class="live" aria-label="Live numbers">
     <div><b>$${usd(raised)}</b><span>Raised on Holdfast</span></div>
     <div><b>${funded}</b><span>Projects funded</span></div>

@@ -90,7 +90,7 @@ const ES = {
   "Write at least 10 characters.": "Escribe al menos 10 caracteres.", "No wallet found. Install Phantom, MetaMask or Coinbase Wallet.": "No encontramos una wallet. Instala Phantom, MetaMask o Coinbase Wallet.",
   "The network rejected the transaction.": "La red rechazó la transacción.", "The server didn't respond.": "El servidor no respondió.",
   "Local business": "Comercio local", "Technology": "Tecnología", "Environment": "Medio ambiente", "Education": "Educación", "Arts & culture": "Arte y cultura",
-  "Health": "Salud", "Food & drink": "Comida y bebida", "Other": "Otro", "Live numbers": "Cifras en vivo", "Main": "Principal", "Holdfast home": "Inicio de Holdfast",
+  "Health": "Salud", "Food & drink": "Comida y bebida", "Other": "Otro", "Live numbers": "Cifras en vivo", "Live activity": "Actividad en vivo", "Live now": "En vivo", "Main": "Principal", "Holdfast home": "Inicio de Holdfast",
   "The two halves of the Holdfast mark coming together": "Las dos mitades del logo de Holdfast uniéndose",
   "The Holdfast mark: two halves that come together and hold": "El logo de Holdfast: dos mitades que se unen y se sostienen",
   "Choose a category.": "Elige una categoría.", "Invalid colour.": "Color inválido.", "The one-line summary must be 10 to 120 characters.": "El resumen debe tener entre 10 y 120 caracteres.",
@@ -104,6 +104,9 @@ const ES = {
 
 // Textos con números u otras partes variables.
 const RULES = [
+  [/^ backed $/, () => " invirtió en "], [/^ with (.+) USDC$/, (m) => ` con ${m[1]} USDC`],
+  [/^ reached its goal$/, () => " llegó a su meta"], [/^ missed its goal, refunds open$/, () => " no llegó a su meta, reembolsos abiertos"],
+  [/^(\d+) min ago$/, (m) => `hace ${m[1]} min`], [/^(\d+) h ago$/, (m) => `hace ${m[1]} h`], [/^(\d+) d ago$/, (m) => `hace ${m[1]} d`],
   [/^(\d+) days? left$/, (m) => `Quedan ${m[1]} día${m[1] === "1" ? "" : "s"}`],
   [/^(\d+) hours left$/, (m) => `Quedan ${m[1]} horas`],
   [/^Closed (.+)$/, (m) => `Cerró el ${m[1]}`],
