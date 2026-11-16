@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     const projects = subs.map((s) => ({ ...s.data, decision: byId[s.data.project.id] || null, updates: ups[s.data.project.id] || [] }));
     const qaBy = {};
     qa.forEach((x) => (qaBy[x.data.id] ||= []).push(x.data));
-    send(res, 200, { projects, qa: qaBy });
+    send(res, 200, { projects, qa: qaBy, updates: ups });
   } catch (e) {
     send(res, 500, { error: "Projects couldn't be loaded." });
   }

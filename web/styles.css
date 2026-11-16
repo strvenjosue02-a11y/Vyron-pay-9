@@ -848,3 +848,26 @@ body.sw-l #app { animation: swl .35s ease; } body.sw-r #app { animation: swr .35
 .cat-more { grid-column: 1 / -1; justify-self: center; border-radius: 999px; }
 .car-hot { display: inline-block; margin-right: 6px; font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 999px; color: #fff; background: rgba(255,46,136,.2); box-shadow: inset 0 0 0 1px rgba(255,46,136,.5); }
 @media (max-width: 760px) { .cat-search { min-width: 0; width: 100%; } }
+/* dónde está el dinero */
+.money { margin: 28px 0; padding: 22px 24px; border-radius: 22px; background: linear-gradient(180deg, #121113, #0b0a0c); box-shadow: 0 0 0 1px rgba(255,255,255,.06); }
+.money-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+.money-h h3 { font-size: 20px; margin: 0; } .money-h span { font-size: 12.5px; color: #77757a; }
+.money-h span::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #ff2e88; box-shadow: 0 0 8px #ff2e88; margin-right: 7px; vertical-align: 1px; }
+.money-bar { display: flex; height: 10px; border-radius: 10px; overflow: hidden; gap: 2px; background: rgba(255,255,255,.05); }
+.money-bar i, .money-k dt i { display: block; }
+.lk { background: #f4f1ef; } .pd { background: #ff2e88; box-shadow: 0 0 10px rgba(255,46,136,.6); } .pl { background: #ff7ab8; } .fe { background: #5a585d; }
+.money-k { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0 0; }
+.money-k dt { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #8d8f95; } .money-k dt i { width: 8px; height: 8px; border-radius: 50%; }
+.money-k dd { margin: 4px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+/* historial del creador */
+.hist { margin: 0 0 28px; padding: 18px 22px; border-radius: 22px; box-shadow: 0 0 0 1px rgba(255,255,255,.06); display: grid; gap: 8px; }
+.hist > b { font-weight: 600; letter-spacing: -0.02em; } .hist > span { color: #8d8f95; font-size: 14px; }
+.hist-n { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 6px; } .hist-n strong { display: block; font-size: 22px; letter-spacing: -0.03em; } .hist-n span { font-size: 12px; color: #8d8f95; }
+.hist-l { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; } .hist-l a { font-size: 13px; color: #e9e6e4; text-decoration: none; padding: 6px 12px; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); } .hist-l em { font-style: normal; color: #ff7ab8; margin-left: 4px; }
+/* avances */
+.ups { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.ups li { padding: 18px 20px; border-radius: 20px; background: linear-gradient(180deg, #141315, #0d0c0e); box-shadow: 0 0 0 1px rgba(255,255,255,.06); }
+.up-h { display: flex; justify-content: space-between; font-size: 12.5px; color: #77757a; } .up-ok { color: #ff7ab8; font-weight: 600; }
+.ups p { margin: 10px 0 0; color: #e0dcda; line-height: 1.6; white-space: pre-wrap; }
+@media (max-width: 760px) { .hist-n { grid-template-columns: repeat(2, 1fr); } }
+.ptabs { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; } .ptabs::-webkit-scrollbar { display: none; } .ptabs button { flex: 0 0 auto; }

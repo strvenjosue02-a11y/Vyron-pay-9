@@ -53,8 +53,8 @@ const blankU = () => ({ contributed: 0n, claimed: false, settled: false, voted: 
 
 async function loadCatalog() {
   const seeds = await (await fetch("./projects.json", { cache: "no-store" })).json();
-  let api = [], qaRaw = {};
-  try { const r = await fetch("./api/projects", { cache: "no-store" }); if (r.ok) { const j = await r.json(); api = j.projects || []; qaRaw = j.qa || {}; } } catch {}
+  let api = [], qaRaw = {}, upRaw = {};
+  try { const r = await fetch("./api/projects", { cache: "no-store" }); if (r.ok) { const j = await r.json(); api = j.projects || []; qaRaw = j.qa || {}; upRaw = j.updates || {}; } } catch {}
   // El servidor no es de confianza: cada proyecto, decisión y avance se verifica aquí con firmas.
   const checked = await Promise.all(api.map(async (x) => {
     const p = x.project, h = hashOf(p);
@@ -73,6 +73,11 @@ async function loadCatalog() {
     return { ...p, status, updates, sentAt: x.at };
   }));
   S.all = [...seeds.map((p) => ({ ...p, status: "approved", seed: true })), ...checked.filter(Boolean)].map(prepare);
+  // avances de proyectos semilla: también verificados con la firma del creador
+  await Promise.all(S.all.filter((p) => p.seed).map(async (p) => {
+    const ok = []; for (const u of upRaw[p.id] || []) if (await verifyMessage({ address: p.params.creator, message: msgUpdate(p.id, u.ts, keccak256(toBytes(u.text))), signature: u.signature }).catch(() => false)) ok.push(u);
+    p.updates = ok;
+  }));
   S.list = S.all.filter((p) => p.status === "approved");
   await Promise.all(S.all.map(async (p) => {
     const items = qaRaw[p.id] || [], qs = [], ans = {};
@@ -569,6 +574,23 @@ function bindSwipe(p) {
   h.addEventListener("touchend", (e) => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) { document.body.classList.add(dx < 0 ? "sw-l" : "sw-r"); setTimeout(() => document.body.classList.remove("sw-l", "sw-r"), 400); location.hash = `#/p/${sib(p, dx < 0 ? 1 : -1).id}`; } }, { passive: true });
 }
+function moneyBar(p) {
+  const s = p.s; if (!p.exists || s.totalRaised === 0n) return "";
+  const fee = s.succeeded ? (s.totalRaised * 100n) / 10000n : 0n, pool = s.liquidityUsdc || 0n, rel = s.usdcReleased || 0n;
+  const locked = s.succeeded ? (s.poolAfterFees > rel ? s.poolAfterFees - rel : 0n) : s.totalRaised;
+  const tot = Number(locked + rel + pool + fee) || 1, w = (x) => ((Number(x) / tot) * 100).toFixed(2);
+  const parts = [["Locked in the contract", locked, "lk"], ["Paid to the team", rel, "pd"], ["In the market pool", pool, "pl"], ["Holdfast fee", fee, "fe"]].filter((x) => x[1] > 0n);
+  return `<section class="money"><div class="money-h"><h3>Where the money is</h3><span>Read live from the contract</span></div>
+    <div class="money-bar">${parts.map(([, v, c]) => `<i class="${c}" style="width:${w(v)}%"></i>`).join("")}</div>
+    <dl class="money-k">${parts.map(([t, v, c]) => `<div><dt><i class="${c}"></i>${t}</dt><dd>$${usd(v)}</dd></div>`).join("")}</dl></section>`;
+}
+function creatorHistory(p) {
+  const c = p.params.creator.toLowerCase(), mine = S.list.filter((x) => x.params.creator.toLowerCase() === c && x.id !== p.id);
+  if (!mine.length) return `<section class="hist"><b>First project from this creator</b><span>Their track record on Holdfast starts here. Every release they deliver, or miss, will show on their next projects.</span></section>`;
+  const ok = mine.filter((x) => x.s.succeeded && x.s.state !== 2).length, bad = mine.filter((x) => x.s.state === 2).length, done = mine.reduce((n, x) => n + Number(x.s.milestonesDone || 0), 0);
+  return `<section class="hist"><b>Creator track record</b><div class="hist-n"><div><strong>${mine.length}</strong><span>Other projects</span></div><div><strong>${ok}</strong><span>Funded</span></div><div><strong>${done}</strong><span>Releases delivered</span></div><div><strong>${bad}</strong><span>Cancelled</span></div></div>
+    <div class="hist-l">${mine.slice(0, 4).map((x) => `<a href="#/p/${x.id}">${esc(x.q.name)} <em>${phase(x).t}</em></a>`).join("")}</div></section>`;
+}
 function vProject(p) {
   const { q } = p, ph = phase(p), step = (10000 - q.initialBps) / q.milestones / 100;
   return `
@@ -601,7 +623,7 @@ function vProject(p) {
   ${buyBar(p)}`;
 }
 const TORII = `<svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><path class="g-top" d="M6 18 Q50 27 94 18 L92 30 Q50 38 8 30Z"/><rect class="g-top" x="16" y="38" width="68" height="8" rx="2"/><path class="g-leg" d="M26 34 H35 L34 96 H25Z M65 34 H74 L75 96 H66Z"/></svg>`;
-const TABS_ALL = (p) => [["overview", "Overview"], ...(p.mk ? [["trade", "Trade"]] : []), ["team", "Team"], ["releases", "Releases"], ["backers", "Backers"], ["qa", "Q&A"], ["contract", "Contract"]];
+const TABS_ALL = (p) => [["overview", "Overview"], ...(p.mk ? [["trade", "Trade"]] : []), ["team", "Team"], ["releases", "Releases"], ["updates", "Updates"], ["backers", "Backers"], ["qa", "Q&A"], ["contract", "Contract"]];
 const TABS = TABS_ALL({});
 function avatar(addr, size = 36) {
   const h = keccak256(toBytes(addr.toLowerCase())), a = parseInt(h.slice(2, 6), 16) % 360, b = (a + 140) % 360;
@@ -629,6 +651,12 @@ function tabBody(p) {
     </div>`;
   }
   if (S.tab === "releases") return stages(p);
+  if (S.tab === "updates") {
+    const mine = S.me && S.me.toLowerCase() === p.params.creator.toLowerCase(), ups = (p.updates || []).slice().sort((x, y) => y.ts - x.ts);
+    return `${mine ? `<div class="ask"><textarea id="up-${p.id}" maxlength="1500" placeholder="Share progress with your backers: what shipped, links, numbers"></textarea><button class="btn btn-dark btn-sm" data-act="postUpdate" data-id="${p.id}">Sign and post</button></div>` : ""}
+      ${ups.length ? `<ol class="ups">${ups.map((u) => `<li><div class="up-h"><span class="up-ok">✓ Signed by the creator's wallet</span><time>${new Date(u.ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</time></div><p>${esc(u.text)}</p></li>`).join("")}</ol>`
+        : `<p class="prose">No updates yet. Every update here is signed by the creator's wallet, so no one else can post in their name.</p>`}`;
+  }
   if (S.tab === "backers") {
     const r = p.recent || [];
     return r.length ? `<ul class="backers">${r.map((x) => `<li>${avatar(x.who)}<span class="addr">${short(x.who)}</span><b>$${usd(x.amt)}</b><span class="faint">${ago((p.head || 0n) - x.block)}</span></li>`).join("")}</ul>
@@ -650,6 +678,7 @@ function tabBody(p) {
       <div><span class="muted">Holdfast fee</span><span>1% of funds + 1.5% of tokens, only if funded</span></div>
       <div><span class="muted">Network</span><span>${esc(CONFIG.chainName)}</span></div></div>`;
   return `<p class="prose">${esc(p.meta.about)}</p>
+    ${moneyBar(p)}${creatorHistory(p)}
     <section class="sim" aria-label="Investment simulator">
       <div class="sim-h"><h3>Simulate your backing</h3><b id="sim-v">$100</b></div>
       <input id="sim" type="range" min="10" max="1000" step="10" value="100" aria-label="Amount to simulate">
@@ -1140,7 +1169,7 @@ async function postUpdate(id) {
     async () => { sig = await sign(msgUpdate(id, ts, keccak256(toBytes(text)))); },
     async () => api("./api/update", { id, text, ts, signature: sig }),
   ], "Update posted");
-  if (ok) { await loadCatalog(); await refresh(); }
+  if (ok) { S.tab = "updates"; await loadCatalog(); await refresh(); }
 }
 
 document.addEventListener("click", async (e) => {
