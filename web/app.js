@@ -16,7 +16,7 @@ const chain = defineChain({
 });
 const pub = createPublicClient({ chain, transport: http(RPC) });
 
-const S = { me: null, wallet: null, usdc: 0n, all: [], list: [], reviews: null, now: Math.floor(Date.now() / 1000) };
+const S = { tab: "overview", me: null, wallet: null, usdc: 0n, all: [], list: [], reviews: null, now: Math.floor(Date.now() / 1000) };
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const n = (v, d, max = 2) => Number(formatUnits(v, d)).toLocaleString("en-US", { maximumFractionDigits: max });
@@ -105,6 +105,7 @@ async function loadActivity() {
         pub.getContractEvents({ address: p.address, abi: ABI, eventName: "Bought", fromBlock }).catch(() => []),
         pub.getContractEvents({ address: p.address, abi: ABI, eventName: "Finalized", fromBlock }).catch(() => []),
       ]);
+      p.backers = new Set(bought.map((e) => e.args.buyer.toLowerCase())).size; p.backersPartial = fromBlock > 0n;
       return [...bought.map((e) => ({ kind: "buy", p, who: e.args.buyer, amt: e.args.usdcAmount, block: e.blockNumber })),
         ...fin.map((e) => ({ kind: e.args.success ? "goal" : "miss", p, block: e.blockNumber }))];
     }));
@@ -248,26 +249,46 @@ function vProject(p) {
       </div>
     </div>
   </header>
+  <section class="kv-stats" aria-label="Key numbers">
+    <div><b>$${usd(p.s.totalRaised)}</b><span>Raised of $${usd(q.hardcap)}</span></div>
+    <div><b>${p.backers ?? "–"}</b><span>${p.backersPartial ? "Backers this week" : "Backers"}</span></div>
+    <div><b>${ph.c === "open" ? Math.max(0, Math.ceil((Number(q.saleEnd) - S.now) / 86400)) : "–"}</b><span>${ph.c === "open" ? "Days left" : ph.t}</span></div>
+  </section>
   <div class="layout">
     <div>
-      <section class="block"><h2>About</h2><p>${esc(p.meta.about)}</p></section>
-      <section class="block"><h2>How your money is protected</h2><div class="rules">
-        <div>${IC.back}<div><b>Goal missed, full refund</b><p>If less than $${usd(q.softcap)} is raised by the close, every backer withdraws 100% of what they put in. No fee.</p></div></div>
-        <div>${IC.steps}<div><b>The team is paid in stages</b><p>${q.initialBps / 100}% when the raise closes, then ${q.milestones} releases of ${step}%. Backers vote on each one.</p></div></div>
-        <div>${IC.lock}<div><b>No one can touch it</b><p>The contract has no admin. If the team vanishes or loses a vote, the rest goes back to backers.</p></div></div>
-      </div></section>
-      <section class="block"><h2>Releases</h2>${stages(p)}</section>
-      <section class="block"><h2>Team updates</h2>${p.updates.length ? p.updates.map((u) => `<div class="update"><time>${new Date(u.ts).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</time><p>${esc(u.text)}</p></div>`).join("") : `<p>No updates yet.</p>`}</section>
-      <section class="block"><h2>Contract</h2><div class="kv">
-        <div><span class="muted">Address</span><a class="addr" href="${CONFIG.explorer}/address/${p.address}" target="_blank" rel="noopener">${short(p.address)}</a></div>
-        <div><span class="muted">Status</span><span>${p.exists ? "Live on-chain" : "Created by the first backing"}</span></div>
-        <div><span class="muted">Team wallet</span><span class="addr">${short(q.creator)}</span></div>
-        <div><span class="muted">Holdfast fee</span><span>1% of funds + 1.5% of tokens, only if funded</span></div>
-        <div><span class="muted">Network</span><span>${esc(CONFIG.chainName)}</span></div>
-      </div></section>
+      <div class="ptabs" role="tablist" aria-label="Project sections">${TABS.map(([k, t]) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${S.tab === k}">${t}</button>`).join("")}</div>
+      <div class="ptab-body">${tabBody(p)}</div>
     </div>
     <aside class="aside">${pInvest(p)}${S.me && p.u.contributed > 0n ? pPosition(p) : ""}${pVote(p)}</aside>
-  </div>`;
+  </div>
+  ${buyBar(p)}`;
+}
+const TORII = `<svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><path class="g-top" d="M6 18 Q50 27 94 18 L92 30 Q50 38 8 30Z"/><rect class="g-top" x="16" y="38" width="68" height="8" rx="2"/><path class="g-leg" d="M26 34 H35 L34 96 H25Z M65 34 H74 L75 96 H66Z"/></svg>`;
+const TABS = [["overview", "Overview"], ["protection", "Protection"], ["releases", "Releases"], ["updates", "Updates"], ["contract", "Contract"]];
+function tabBody(p) {
+  const { q } = p, step = (10000 - q.initialBps) / q.milestones / 100;
+  if (S.tab === "protection") return `<div class="rules">
+      <div>${IC.back}<div><b>Goal missed, full refund</b><p>If less than $${usd(q.softcap)} is raised by the close, every backer withdraws 100% of what they put in. No fee.</p></div></div>
+      <div>${IC.steps}<div><b>The team is paid in stages</b><p>${q.initialBps / 100}% when the raise closes, then ${q.milestones} releases of ${step}%. Backers vote on each one.</p></div></div>
+      <div>${IC.lock}<div><b>No one can touch it</b><p>The contract has no admin. If the team vanishes or loses a vote, the rest goes back to backers.</p></div></div></div>`;
+  if (S.tab === "releases") return stages(p);
+  if (S.tab === "updates") return p.updates.length ? p.updates.map((u) => `<div class="update"><time>${new Date(u.ts).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</time><p>${esc(u.text)}</p></div>`).join("") : `<p class="prose">No updates yet.</p>`;
+  if (S.tab === "contract") return `<div class="kv">
+      <div><span class="muted">Address</span><a class="addr" href="${CONFIG.explorer}/address/${p.address}" target="_blank" rel="noopener">${short(p.address)}</a></div>
+      <div><span class="muted">Status</span><span>${p.exists ? "Live on-chain" : "Created by the first backing"}</span></div>
+      <div><span class="muted">Team wallet</span><span class="addr">${short(q.creator)}</span></div>
+      <div><span class="muted">Holdfast fee</span><span>1% of funds + 1.5% of tokens, only if funded</span></div>
+      <div><span class="muted">Network</span><span>${esc(CONFIG.chainName)}</span></div></div>`;
+  return `<p class="prose">${esc(p.meta.about)}</p>
+    <div class="ov-mini">
+      <div>${IC.back}<span>100% back if the goal of $${usd(q.softcap)} isn't met</span></div>
+      <div>${IC.steps}<span>${q.initialBps / 100}% upfront, then ${q.milestones} voted releases</span></div>
+    </div>`;
+}
+function buyBar(p) {
+  const ended = S.now >= Number(p.q.saleEnd) || p.s.totalRaised >= p.q.hardcap;
+  if (!S.me || p.s.state !== 0 || ended) return "";
+  return `<div class="buybar" id="buybar"><div><span class="bb-k">Back ${esc(p.q.symbol)}</span><b id="bb-amt">Enter an amount</b></div><button type="button" class="btn btn-ember" id="bb-go">Back now</button></div>`;
 }
 function stages(p) {
   const { s, q } = p, step = (10000 - q.initialBps) / q.milestones / 100;
@@ -279,7 +300,7 @@ function stages(p) {
     if (s.state === 2 && !done) sub = "Cancelled, funds returned to backers";
     items.push({ t: `Release ${i + 1}`, pct: step, done, now, sub });
   }
-  return `<ol class="tl">${items.map((x, i) => `<li class="${x.done ? "done" : x.now ? "now" : ""}"><span class="n">${x.done ? IC.ok : i}</span>
+  return `<ol class="tl tl-torii">${items.map((x, i) => `<li class="${x.done ? "done" : x.now ? "now" : ""}"><span class="gate">${TORII}</span>
     <div><div class="t">${x.t}</div><div class="s">${x.sub}</div></div><span class="pct">${x.pct}%</span></li>`).join("")}</ol>`;
 }
 function pInvest(p) {
@@ -533,8 +554,10 @@ function route() {
 }
 function bindAmount(p) {
   const el = $("#amt"); if (!el) return;
-  const upd = () => { let v = 0n; try { v = parseUnits(el.value || "0", 6); } catch {} $("#receive").textContent = `${tok((v * p.q.saleTokens) / p.q.hardcap)} ${p.q.symbol}`; if ($("#refundline")) $("#refundline").textContent = v > 0n ? `$${usd(v)} back` : "100% back"; };
+  const upd = () => { let v = 0n; try { v = parseUnits(el.value || "0", 6); } catch {} $("#receive").textContent = `${tok((v * p.q.saleTokens) / p.q.hardcap)} ${p.q.symbol}`; if ($("#bb-amt")) $("#bb-amt").textContent = v > 0n ? `$${usd(v)} for ${tok((v * p.q.saleTokens) / p.q.hardcap)} ${p.q.symbol}` : "Enter an amount"; if ($("#refundline")) $("#refundline").textContent = v > 0n ? `$${usd(v)} back` : "100% back"; };
   el.oninput = upd;
+  const bb = $("#buybar");
+  if (bb && "IntersectionObserver" in window) { const io = new IntersectionObserver(([en]) => bb.classList.toggle("show", !en.isIntersecting), { threshold: 0 }); io.observe($('[data-act="buy"]')); }
   const room = p.q.hardcap - p.s.totalRaised, cap = (v) => (v < room ? v : room);
   $("[data-max]").onclick = () => { el.value = formatUnits(cap(S.usdc), 6); upd(); };
   document.querySelectorAll("[data-quick]").forEach((b) => (b.onclick = () => { el.value = formatUnits(cap(parseUnits(b.dataset.quick, 6)), 6); upd(); }));
@@ -649,6 +672,9 @@ async function postUpdate(id) {
 }
 
 document.addEventListener("click", async (e) => {
+  const tb = e.target.closest("[data-tab]");
+  if (tb) { S.tab = tb.dataset.tab; document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", x === tb)); const p = S.list.find((x) => location.hash === `#/p/${x.id}`); if (p) $(".ptab-body").innerHTML = tabBody(p); return; }
+  if (e.target.closest("#bb-go")) { const v = $("#amt")?.value; if (v && Number(v) > 0) return $('[data-act="buy"]')?.click(); $("#amt")?.scrollIntoView({ block: "center", behavior: "smooth" }); setTimeout(() => $("#amt")?.focus(), 400); return; }
   const sc = e.target.closest("[data-scroll]");
   if (sc) return document.getElementById(sc.dataset.scroll)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   const b = e.target.closest("button[data-act]"); if (!b) return;
@@ -672,7 +698,7 @@ async function main() {
   initI18n();
   $("#net span").textContent = CONFIG.chainName;
   $("#connect").onclick = () => connect().catch((x) => toast(x.shortMessage || x.message, true));
-  window.addEventListener("hashchange", () => { if (!location.hash.startsWith("#/launch")) $("#app").innerHTML = ""; route(); scrollTo(0, 0); });
+  window.addEventListener("hashchange", () => { S.tab = "overview"; if (!location.hash.startsWith("#/launch")) $("#app").innerHTML = ""; route(); scrollTo(0, 0); });
   await loadCatalog();
   route();
   await refresh();
