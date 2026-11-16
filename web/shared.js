@@ -57,7 +57,7 @@ export function validate(p, nowSec) {
     if (!Array.isArray(t) || t.length > 4) return "Add up to 4 team members.";
     for (const x of t) {
       if (!x || typeof x.name !== "string" || x.name.length < 2 || x.name.length > 40) return "Each team member needs a name (2 to 40 characters).";
-      if (typeof x.role !== "string" || x.role.length > 40) return "Team roles must be under 40 characters.";
+      if (x.role !== undefined && (typeof x.role !== "string" || x.role.length > 40)) return "Team roles must be under 40 characters.";
       if (x.link && !/^https:\/\/[^\s]{4,120}$/.test(x.link)) return "Team links must start with https://.";
       if (x.photo && !(/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(x.photo) && x.photo.length <= 40000)) return "Team photos must be small images.";
     }

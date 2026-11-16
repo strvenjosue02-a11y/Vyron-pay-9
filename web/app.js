@@ -919,7 +919,7 @@ function vLaunch() {
 }
 function readForm() {
   const f = new FormData($("#form")), g = (k) => String(f.get(k) ?? "").trim();
-  const name = g("name"), id = S.draftId ||= (name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36) || "project") + "-" + Math.random().toString(16).slice(2, 6);
+  const name = g("name"), id = (name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36) || "project") + "-" + (S.draftId ||= Math.random().toString(16).slice(2, 6));
   const usdc = (v) => { try { return parseUnits(v || "0", 6).toString(); } catch { return "0"; } };
   const toks = (v) => { try { return parseUnits(v || "0", 18).toString(); } catch { return "0"; } };
   const anon = !!f.get("anon");
@@ -1059,6 +1059,50 @@ function vPortfolio() {
   </div>`).join("") : `<div class="list"><div class="empty">You haven't launched a project. <a href="#/launch">Launch one</a>.</div></div>`}`;
 }
 
+// ================================================================= estudio del creador
+function alertsFor(p) {
+  const s = p.s, q = p.q, out = [], dleft = Math.ceil((Number(q.saleEnd) - S.now) / 86400);
+  if (p.status === "review") out.push(["info", "In review", "Holdfast is reviewing your project. It goes live once approved."]);
+  if (p.status === "rejected") out.push(["bad", "Not approved", "Fix the details and submit again."]);
+  if (p.status !== "approved") return out;
+  if (phase(p).c === "open") out.push([dleft <= 5 ? "warn" : "info", `${dleft} days left in your raise`, `$${usd(s.totalRaised)} of $${usd(q.hardcap)} raised. Share your project to reach the goal.`]);
+  if (s.state === 1 && s.milestonesDone < q.milestones) {
+    if (s.voteEnd > 0n) out.push(["info", `Backers are voting on release ${s.milestonesDone + 1}`, `Voting closes ${day(s.voteEnd)}. Post an update showing what you delivered.`]);
+    else { const d = Math.ceil((Number(s.deadline) - S.now) / 86400); out.push([d <= 7 ? "warn" : "info", `Request release ${s.milestonesDone + 1} within ${Math.max(0, d)} days`, `Deadline ${day(s.deadline)}. If you miss it, what's left returns to backers.`, `#/p/${p.id}`, "Request release"]); }
+  }
+  const open = (p.qa || []).filter((x) => !x.answer).length;
+  if (open) out.push(["warn", `${open} question${open === 1 ? "" : "s"} waiting for your answer`, "Answering fast builds trust.", `#/p/${p.id}`, "Answer"]);
+  const last = Math.max(0, ...(p.updates || []).map((u) => u.ts));
+  if (s.succeeded && Date.now() - last > 30 * 86400000) out.push(["info", "No update in 30 days", "Backers trust teams that show progress. Post an update."]);
+  return out;
+}
+function vStudio() {
+  if (!S.me) return `<div class="page-h"><h1>Creator studio</h1><p>Connect the wallet you launched with.</p></div><button class="btn btn-dark" data-act="connect">Connect wallet</button>`;
+  const mine = S.all.filter((p) => isMe(p.q.creator)), live = mine.filter((p) => p.status === "approved");
+  if (!mine.length) return `<div class="page-h"><h1>Creator studio</h1><p>Launch your first project and manage it here.</p></div><a class="btn btn-ember" href="#/launch">Launch a project</a>`;
+  const raised = live.reduce((x, p) => x + p.s.totalRaised, 0n), paid = live.reduce((x, p) => x + (p.s.usdcReleased || 0n), 0n), backers = live.reduce((x, p) => x + (p.backers || 0), 0);
+  const done = live.reduce((x, p) => x + Number(p.s.milestonesDone || 0), 0), cancelled = live.filter((p) => p.s.state === 2).length, funded = live.filter((p) => p.s.succeeded).length;
+  const alerts = mine.flatMap((p) => alertsFor(p).map((x) => [p, ...x]));
+  return `<div class="page-h"><h1>Creator studio</h1><p>Your projects, what needs your attention, and your reputation as backers see it.</p></div>
+  <section class="st-stats"><div><b>$${usd(raised)}</b><span>Raised</span></div><div><b>${backers}</b><span>Backers</span></div><div><b>$${usd(paid)}</b><span>Paid to you</span></div><div><b>${mine.length}</b><span>Projects</span></div></section>
+  ${alerts.length ? `<section class="st-block"><h2>Needs your attention</h2><ul class="st-alerts">${alerts.map(([p, k, t, d, href, cta]) => `<li class="${k}"><i></i><div><b>${esc(t)}</b><span>${esc(p.q.name)} · ${esc(d)}</span></div>${href ? `<a class="btn btn-line btn-sm" href="${href}">${cta}</a>` : ""}</li>`).join("")}</ul></section>` : ""}
+  <section class="st-block"><h2>Your projects</h2><div class="st-list">${mine.map((p) => {
+    const ph = p.status === "approved" ? phase(p) : { t: p.status === "review" ? "In review" : "Not approved", c: p.status };
+    return `<article class="st-card" data-testid="mine-${p.id}">
+      <div class="st-cover">${coverSrc(p) ? `<img src="${esc(coverSrc(p))}" alt="">` : ""}<span class="st-chip ${ph.c}">${ph.t}</span></div>
+      <div class="st-body"><h3>${esc(p.q.name)} <small>${esc(p.q.symbol)}</small></h3>
+        ${p.status === "approved" ? `${meter(p)}<div class="st-nums"><div><b>$${usd(p.s.totalRaised)}</b><span>of $${usd(p.q.hardcap)}</span></div><div><b>${p.backers || 0}</b><span>Backers</span></div>
+          <div><b>${p.s.succeeded ? `${p.s.milestonesDone}/${p.q.milestones}` : phase(p).c === "open" ? Math.max(0, Math.ceil((Number(p.q.saleEnd) - S.now) / 86400)) : "–"}</b><span>${p.s.succeeded ? "Releases" : "Days left"}</span></div>
+          <div><b>${p.mk ? fmtP(p.mk.price) : `$${usd(p.s.usdcReleased || 0n)}`}</b><span>${p.mk ? "Market price" : "Paid to you"}</span></div></div>
+          <div class="st-act"><a class="btn btn-line btn-sm" href="#/p/${p.id}">Open project</a><button class="btn btn-ember btn-sm" type="button" data-upopen="${p.id}">Post update</button></div>
+          <div class="st-up" id="upbox-${p.id}" hidden><textarea id="up-${p.id}" maxlength="1500" placeholder="What you delivered, with links and numbers"></textarea><button class="btn btn-dark btn-sm" data-act="postUpdate" data-id="${p.id}" data-testid="post-${p.id}">Sign and post</button></div>`
+        : `<p class="muted">${p.status === "review" ? "Holdfast is reviewing it. You'll see it live here once approved." : "It wasn't approved. Fix it and submit again."}</p>`}
+      </div></article>`;
+  }).join("")}</div></section>
+  <section class="st-block"><h2>Your reputation</h2><p class="muted" style="margin-top:-6px">This is what backers see on every project you launch. It can't be edited: it comes from the blockchain.</p>
+    <div class="st-rep"><div><b>${funded}</b><span>Funded</span></div><div><b>${done}</b><span>Releases delivered</span></div><div><b>${cancelled}</b><span>Cancelled</span></div><div><b>${(mine.reduce((n, p) => n + (p.updates || []).length, 0))}</b><span>Updates posted</span></div></div></section>`;
+}
+
 // ================================================================= dueño
 function vOwner() {
   if (!isOwner()) return `<div class="page-h"><h1>Owner</h1><p>Only the platform wallet can open this panel.</p></div>`;
@@ -1102,15 +1146,16 @@ function route() {
   const m = h.match(/^#\/p\/([\w-]+)/);
   const p = m && S.list.find((x) => x.id === m[1]);
   const tm = h.match(/^#\/trade\/([\w-]+)/), tp = tm && S.list.find((x) => x.id === tm[1]);
-  const key = tp || h.startsWith("#/market") ? "market" : p ? "home" : h.startsWith("#/launch") ? "launch" : h.startsWith("#/portfolio") ? "portfolio" : h.startsWith("#/owner") ? "owner" : "home";
+  const key = tp || h.startsWith("#/market") ? "market" : p ? "home" : h.startsWith("#/launch") ? "launch" : h.startsWith("#/portfolio") ? "portfolio" : h.startsWith("#/studio") ? "studio" : h.startsWith("#/owner") ? "owner" : "home";
   document.querySelectorAll("[data-nav]").forEach((a) => (a.dataset.nav === key ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
   $("#nav-owner").classList.toggle("d-none", !isOwner()); $("#tab-owner").classList.toggle("d-none", !isOwner());
   if (key === "launch" && $("#form")) return; // no borrar lo que el creador está escribiendo
   const keep = $("#amt")?.value;
   if (tp) { const kv = $("#tamt")?.value; $("#app").innerHTML = vTerminal(tp); if (kv && $("#tamt")) $("#tamt").value = kv; startTerminal(tp); return; }
   if (key === "market") { $("#app").innerHTML = vMarket(); S.list.filter((x) => x.mk && !x.trades).forEach((x) => loadTrades(x).then(() => { if (location.hash.startsWith("#/market")) $("#app").innerHTML = vMarket(); })); return; }
-  $("#app").innerHTML = p ? vProject(p) : key === "launch" ? vLaunch() : key === "portfolio" ? vPortfolio() : key === "owner" ? vOwner() : vHome();
+  $("#app").innerHTML = p ? vProject(p) : key === "launch" ? vLaunch() : key === "portfolio" ? vPortfolio() : key === "studio" ? vStudio() : key === "owner" ? vOwner() : vHome();
   if (p) { bindSwipe(p); clearInterval(S.cdT); S.cdT = setInterval(() => { const e = document.querySelector(".kv-count"); if (!e) return clearInterval(S.cdT); e.textContent = countdown(Number(e.dataset.end)).replace("Closes in ", ""); }, 1000); bindAmount(p); bindTab(p); bindTrade(p); celebrate(p); if (p.mk && !p.trades) loadTrades(p).then(() => { if (S.tab === "trade") { $(".ptab-body").innerHTML = tabBody(p); } }); }
+  if (key === "studio") document.querySelectorAll("[data-upopen]").forEach((b) => (b.onclick = () => { const x = $(`#upbox-${b.dataset.upopen}`); x.hidden = !x.hidden; }));
   if (!p && key === "home") { bindCards(); bindCarousel(); bindCatalog(); S.list.filter((x) => x.mk).forEach((x) => loadTrades(x).then(() => { const el = document.querySelector(`[data-testid="row-${x.id}"] .pc-mkt .spark`); if (el) el.outerHTML = spark(x); })); }
   if (p && keep && $("#amt")) { $("#amt").value = keep; $("#amt").dispatchEvent(new Event("input")); }
   if ($("#form")) { S.wz = 0; S.draftId = ""; $("#form").addEventListener("input", preview); $("#form").addEventListener("change", preview); $("#form").addEventListener("submit", submitProject); $("#f-logo").addEventListener("change", pickLogo);
@@ -1211,7 +1256,7 @@ async function submitProject(e) {
     async () => { sig = await sign(msgSubmit(p.id, hashOf(p))); },
     async () => api("./api/submit", { project: p, signature: sig }),
   ], "Submitted for review");
-  if (ok) { $("#app").innerHTML = ""; location.hash = "#/portfolio"; await loadCatalog(); await refresh(); }
+  if (ok) { $("#app").innerHTML = ""; location.hash = "#/studio"; await loadCatalog(); await refresh(); }
 }
 async function decide(id, approve) {
   const p = S.all.find((x) => x.id === id), raw = { id: p.id, meta: p.meta, params: p.params };

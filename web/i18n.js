@@ -2,6 +2,8 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Creator studio": "Estudio del creador", "Your projects, what needs your attention, and your reputation as backers see it.": "Tus proyectos, lo que necesita tu atención y tu reputación tal como la ven los inversores.", "Needs your attention": "Necesita tu atención", "Your projects": "Tus proyectos", "Your reputation": "Tu reputación",
+  "This is what backers see on every project you launch. It can't be edited: it comes from the blockchain.": "Esto es lo que ven los inversores en cada proyecto que lances. No se puede editar: viene de la blockchain.", "Updates posted": "Avances publicados", "Post update": "Publicar avance", "Open project": "Abrir proyecto", "Paid to you": "Pagado a ti", "Request release": "Pedir entrega", "Answer": "Responder", "In review": "En revisión", "No update in 30 days": "Sin avances en 30 días", "Releases": "Entregas", "Raised": "Recaudado",
   "Four short steps. Holdfast reviews every project before it goes live. Signing is free.": "Cuatro pasos cortos. Holdfast revisa cada proyecto antes de publicarlo. Firmar es gratis.", "Project": "Proyecto", "Money": "Dinero", "Review": "Revisar",
   "Your project": "Tu proyecto", "Your team": "Tu equipo", "The money": "El dinero", "Review and sign": "Revisar y firmar", "Cover image": "Imagen de portada", "Upload cover · 4:3 · it's the first thing backers see": "Subir portada · 4:3 · es lo primero que ven los inversores",
   "Square. So people recognise your token.": "Cuadrado. Para que reconozcan tu token.", "Official links": "Links oficiales", "At least one. Backers use them to check you exist.": "Al menos uno. Los inversores los usan para comprobar que existes.",
