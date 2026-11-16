@@ -481,7 +481,7 @@ function vTerminal(p) {
     <header class="tx-top">
       <div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
       <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
-      <div class="tx-px"><b id="tt-price">${fmtP(m.price)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span></div>
+      <div class="tx-px"><img class="tx-mood" id="tx-mood" src="./assets/mood-${x.chg > 1 ? "up" : x.chg < -1 ? "down" : "calm"}.webp" alt="" width="72" height="72"><b id="tt-price">${fmtP(m.price)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span></div>
       <dl class="tx-stats">
         <div><dt>24h volume</dt><dd id="tt-vol">$${usd(x.vol)}</dd></div><div><dt>Market cap</dt><dd id="tx-cap">${x.cap ? "$" + x.cap.toLocaleString("en-US", { maximumFractionDigits: 0 }) : "–"}</dd></div>
         <div><dt>24h high</dt><dd id="tx-hi">${fmtP(x.hi)}</dd></div><div><dt>24h low</dt><dd id="tx-lo">${fmtP(x.lo)}</dd></div><div><dt>Liquidity</dt><dd>$${usd(m.poolUsdc)}</dd></div><div><dt>Round price</dt><dd>${fmtP(m.round)}</dd></div>
@@ -564,6 +564,7 @@ function startTerminal(p) {
     if (!p.trades || !p.trades.length) { await loadTrades(p); reTerm(); }
     if (Math.abs(p.mk.price - before) / before > 1e-6) {
       const el = $("#tt-price"); el.textContent = fmtP(p.mk.price);
+      const mo = $("#tx-mood"); if (mo) { const dn = p.mk.price < before, base = stats24(p).chg; mo.src = `./assets/mood-${dn ? "down" : "up"}.webp`; mo.classList.remove("pop"); void mo.offsetWidth; mo.classList.add("pop"); clearTimeout(S.moodT); S.moodT = setTimeout(() => { const m2 = $("#tx-mood"); if (m2) m2.src = `./assets/mood-${base > 1 ? "up" : base < -1 ? "down" : "calm"}.webp`; }, 3500); }
       el.classList.remove("flash-up", "flash-dn"); void el.offsetWidth; el.classList.add(p.mk.price > before ? "flash-up" : "flash-dn");
       const n0 = (p.trades || []).length; await loadTrades(p); reTerm();
       (p.trades || []).slice(n0).filter((t) => isWhale(p, t)).slice(-1).forEach((t) => toast(`Whale ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`));

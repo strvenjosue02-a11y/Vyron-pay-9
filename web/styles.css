@@ -1247,3 +1247,18 @@ a.pcard .pc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8
   .demo-bar { max-width: 94vw; overflow-x: auto; }
 }
 @media (max-width: 760px) { .deck { display: grid !important; grid-template-columns: 1fr !important; overflow: visible !important; scroll-snap-type: none !important; gap: 14px; } .deck > .pcard { flex: none !important; width: 100% !important; max-width: 100% !important; scroll-snap-align: none; } }
+/* ===== Trading en celular: como Photon/Axiom — gráfico primero, comprar/vender enseguida ===== */
+@media (max-width: 760px) {
+  .term.tx .term-grid { display: flex; flex-direction: column; gap: 12px; }
+  .term.tx .term-main { display: contents; }
+  .term.tx .tx-chart { order: 1; } .term.tx .term-side { order: 2; } .term.tx .term-tabs { order: 3; } .term.tx #term-tab { order: 4; }
+  .term.tx .tx-side-open, .term.tx .back { display: none; }
+  .tx-top { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; }
+  .tx-top .coin3d { width: 56px; height: 56px; } .tx-px b { font-size: 30px; } .tx-id h1 { font-size: 26px; }
+  .term.tx .tx-alert, .term.tx .tx-trust { display: none; }
+}
+
+/* mascota que reacciona al precio */
+.tx-px { position: relative; } .tx-mood { position: absolute; right: 0; top: -6px; width: 72px; height: 72px; object-fit: contain; filter: drop-shadow(0 6px 18px rgba(255,46,136,.4)); }
+.tx-mood.pop { animation: moodpop .5s ease-out; } @keyframes moodpop { 30% { transform: scale(1.25) rotate(-6deg); } }
+@media (max-width: 760px) { .tx-mood { width: 64px; height: 64px; top: -10px; } }
