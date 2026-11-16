@@ -162,20 +162,22 @@ function usdcPerToken(sqrt, usdc0) {
 }
 const fmtP = (x) => x >= 0.01 ? `$${x.toLocaleString("en-US", { maximumFractionDigits: 4 })}` : `$${x.toPrecision(3)}`;
 async function loadTrades(p) {
+  if (!p.mk) await loadChain(p).catch(() => {});
   if (!p.mk) return [];
   try {
     const head = await pub.getBlockNumber(), fromBlock = head > 45000n ? head - 45000n : 0n;
     const ev = await pub.getContractEvents({ address: p.s.pool, abi: POOL_ABI, eventName: "Swap", fromBlock });
-    p.trades = ev.map((e) => {
+    const list = ev.map((e) => {
       const usdcAmt = p.mk.usdc0 ? e.args.amount0 : e.args.amount1, tokAmt = p.mk.usdc0 ? e.args.amount1 : e.args.amount0;
       return { buy: usdcAmt > 0n, usdc: usdcAmt < 0n ? -usdcAmt : usdcAmt, tok: tokAmt < 0n ? -tokAmt : tokAmt, price: usdcPerToken(e.args.sqrtPriceX96, p.mk.usdc0), who: e.args.recipient, block: e.blockNumber };
     });
-    p.tHead = head;
-    const blocks = [...new Set(p.trades.map((t) => t.block))].slice(-300);
+    if (p.trades && list.length < p.trades.length) return p.trades; // respuesta incompleta del RPC: conservar lo que ya teníamos
+    p.tHead = head; S.now = Number((await pub.getBlock({ blockNumber: head })).timestamp);
+    const blocks = [...new Set(list.map((t) => t.block))].slice(-300);
     const times = await Promise.all(blocks.map((b) => pub.getBlock({ blockNumber: b }).then((x) => [b, Number(x.timestamp)]).catch(() => [b, 0])));
     const tm = Object.fromEntries(times.map(([b, t]) => [String(b), t]));
-    p.trades.forEach((t) => (t.ts = tm[String(t.block)] || 0));
-  } catch { p.trades = []; }
+    list.forEach((t) => (t.ts = tm[String(t.block)] || 0)); p.trades = list;
+  } catch { p.trades = p.trades || []; }
   return p.trades;
 }
 function chartSvg(p) {
@@ -239,7 +241,7 @@ async function swap(p) {
 }
 
 // ================================================================= terminal de trading y Market
-const PERIODS = { "1H": [3600, 300], "1D": [86400, 3600], "1W": [604800, 21600], ALL: [0, 0] };
+const PERIODS = { "1H": [3600, 120], "1D": [86400, 3600], "1W": [604800, 21600], ALL: [0, 0] };
 function buildCandles(p, period) {
   const tr = (p.trades || []).filter((t) => t.ts), now = S.now || Math.floor(Date.now() / 1000);
   let [span, step] = PERIODS[period];
@@ -257,22 +259,31 @@ function buildCandles(p, period) {
   return out;
 }
 function candlesSvg(p, period) {
-  const cs = buildCandles(p, period), W = 800, H = 300;
-  const hi = Math.max(...cs.map((c) => c.h), p.mk.round) * 1.04, lo = Math.min(...cs.map((c) => c.l), p.mk.round) * 0.96;
-  const y = (v) => H - ((v - lo) / (hi - lo || 1)) * H, bw = W / cs.length;
+  const cs = buildCandles(p, period), W = 800, H = 320, VH = 54, PH = H - VH - 8;
+  const hi = Math.max(...cs.map((c) => c.h), p.mk.round, p.mk.price) * 1.03, lo = Math.min(...cs.map((c) => c.l), p.mk.round, p.mk.price) * 0.97;
+  const y = (v) => PH - ((v - lo) / (hi - lo || 1)) * PH, bw = W / cs.length, vmax = Math.max(...cs.map((c) => c.v), 0.0001);
+  const grid = [0.25, 0.5, 0.75].map((k) => `<line x1="0" x2="${W}" y1="${PH * k}" y2="${PH * k}" class="cd-grid"/>`).join("");
+  const vols = cs.map((c, i) => c.v ? `<rect x="${i * bw + bw * 0.2}" y="${H - (c.v / vmax) * VH}" width="${bw * 0.6}" height="${(c.v / vmax) * VH}" class="cd-vol"/>` : "").join("");
   const body = cs.map((c, i) => {
-    const up = c.c >= c.o, x = i * bw + bw / 2, top = y(Math.max(c.o, c.c)), hgt = Math.max(1.5, Math.abs(y(c.o) - y(c.c)));
-    return `<line x1="${x}" x2="${x}" y1="${y(c.h)}" y2="${y(c.l)}" class="wick ${up ? "up" : "dn"}"/><rect x="${x - bw * 0.32}" y="${top}" width="${bw * 0.64}" height="${hgt}" class="body ${up ? "up" : "dn"}"/>`;
+    const up = c.c >= c.o, x = i * bw + bw / 2, top = y(Math.max(c.o, c.c)), hgt = Math.max(2, Math.abs(y(c.o) - y(c.c))), flat = c.o === c.c && c.h === c.l;
+    if (flat) return `<line x1="${x - bw * 0.3}" x2="${x + bw * 0.3}" y1="${y(c.c)}" y2="${y(c.c)}" class="cd-flat"/>`;
+    return `<line x1="${x}" x2="${x}" y1="${y(c.h)}" y2="${y(c.l)}" class="wick"/><rect x="${x - bw * 0.3}" y="${top}" width="${bw * 0.6}" height="${hgt}" rx="1.5" class="body ${up ? "up" : "dn"}"/>`;
   }).join("");
-  const ticks = [hi, (hi + lo) / 2, lo].map((v) => `<span style="top:${(y(v) / H) * 100}%">${fmtP(v)}</span>`).join("");
+  const line = cs.map((c, i) => `${i ? "L" : "M"}${(i * bw + bw / 2).toFixed(1)} ${y(c.c).toFixed(1)}`).join(" ");
+  const yp = y(p.mk.price), ticks = [hi, (hi + lo) / 2, lo].map((v) => `<span style="top:${(y(v) / H) * 100}%">${fmtP(v)}</span>`).join("");
   return `<div class="cd-wrap"><svg class="cd" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Candlestick chart">
-    <line x1="0" x2="${W}" y1="${y(p.mk.round)}" y2="${y(p.mk.round)}" class="cd-round"/>${body}</svg><div class="cd-y">${ticks}</div></div>`;
+    <defs><linearGradient id="cdA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff2e88" stop-opacity=".28"/><stop offset="1" stop-color="#ff2e88" stop-opacity="0"/></linearGradient>
+      <linearGradient id="cdB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7ab8"/><stop offset="1" stop-color="#ff2e88"/></linearGradient></defs>
+    ${grid}<path d="${line} L${W - bw / 2} ${PH} L${bw / 2} ${PH}Z" fill="url(#cdA)"/>${vols}
+    <line x1="0" x2="${W}" y1="${y(p.mk.round)}" y2="${y(p.mk.round)}" class="cd-round"/>${body}<path d="${line}" class="cd-line"/>
+    <line x1="0" x2="${W}" y1="${yp}" y2="${yp}" class="cd-now"/></svg>
+    <div class="cd-y">${ticks}<em class="cd-tag" style="top:${(yp / H) * 100}%">${fmtP(p.mk.price)}</em></div></div>`;
 }
 function spark(p) {
   const pts = [p.mk.round, ...(p.trades || []).map((t) => t.price)]; if (pts.length < 2) pts.push(p.mk.price);
   const lo = Math.min(...pts), hi = Math.max(...pts), W = 120, H = 36;
   const d = pts.map((v, i) => `${i ? "L" : "M"}${((i / (pts.length - 1)) * W).toFixed(1)} ${(H - ((v - lo) / (hi - lo || 1)) * H).toFixed(1)}`).join(" ");
-  return `<svg class="spark ${p.mk.price >= p.mk.round ? "up" : "dn"}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="${d}"/></svg>`;
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="${d}"/></svg>`;
 }
 const vol24 = (p) => (p.trades || []).filter((t) => t.ts > (S.now || 0) - 86400).reduce((a, t) => a + t.usdc, 0n);
 async function loadHolders(p) {
@@ -319,11 +330,11 @@ function vTerminal(p) {
       <div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
       <div class="tt-id"><h1>${esc(p.q.name)} <span>${esc(p.q.symbol)} / USDC</span></h1>
         <div class="tt-price" id="tt-price">${fmtP(m.price)}</div>
-        <div class="tt-delta ${up ? "up" : "dn"}">${up ? "+" : ""}${(((m.price - m.round) / m.round) * 100).toFixed(1)}% vs round price</div></div>
+        <div class="tt-delta ${up ? "up" : "dn"}" id="tt-delta">${up ? "+" : ""}${(((m.price - m.round) / m.round) * 100).toFixed(1)}% vs round price</div></div>
       <dl class="tt-stats">
         <div><dt>Round price</dt><dd>${fmtP(m.round)}</dd></div>
         <div><dt>Pool liquidity</dt><dd>$${usd(m.poolUsdc)}</dd></div>
-        <div><dt>24h volume</dt><dd>$${usd(vol24(p))}</dd></div>
+        <div><dt>24h volume</dt><dd id="tt-vol">$${usd(vol24(p))}</dd></div>
         <div><dt>Liquidity unlocks</dt><dd>${day(p.s.lpUnlock)}</dd></div>
       </dl>
     </header>
@@ -362,12 +373,16 @@ function startTerminal(p) {
   S.poll = setInterval(async () => {
     if (!location.hash.startsWith(`#/trade/${p.id}`)) return clearInterval(S.poll);
     const before = p.mk.price; await loadChain(p); if (!p.mk) return;
+    if (!p.trades || !p.trades.length) { await loadTrades(p); reTerm(); }
     if (Math.abs(p.mk.price - before) / before > 1e-6) {
       const el = $("#tt-price"); el.textContent = fmtP(p.mk.price);
       el.classList.remove("flash-up", "flash-dn"); void el.offsetWidth; el.classList.add(p.mk.price > before ? "flash-up" : "flash-dn");
       await loadTrades(p); reTerm();
+      const d = $("#tt-delta"), up = p.mk.price >= p.mk.round; if (d) { d.className = "tt-delta " + (up ? "up" : "dn"); d.textContent = `${up ? "+" : ""}${(((p.mk.price - p.mk.round) / p.mk.round) * 100).toFixed(1)}% vs round price`; }
+      const v = $("#tt-vol"); if (v) v.textContent = "$" + usd(vol24(p));
+      const cp = $(".cy-price"), cd = $(".cy-delta"); if (cp) cp.firstChild.textContent = fmtP(p.mk.price); if (cd && d) { cd.className = "cy-delta " + (up ? "up" : "down"); cd.textContent = d.textContent; }
     }
-  }, 12000);
+  }, Number(new URLSearchParams(location.search).get("poll")) || 12000);
 }
 
 // ================================================================= estados

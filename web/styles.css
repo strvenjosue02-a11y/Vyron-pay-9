@@ -544,3 +544,19 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 @media (max-width: 1000px) { .term { width: auto; margin-left: 0; transform: none; } }
 .term-grid > *, .term-top > * { min-width: 0; }
 @media (max-width: 1000px) { .term-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- gráfico rosa ciberpunk v2 */
+.cd .cd-grid { stroke: rgba(255,46,136,.10); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.cd .cd-vol { fill: rgba(255,46,136,.22); }
+.cd .wick { stroke: #ff7ab8; stroke-width: 1.4; vector-effect: non-scaling-stroke; opacity: .9; }
+.cd .body.up { fill: url(#cdB); filter: drop-shadow(0 0 5px rgba(255,46,136,.85)); }
+.cd .body.dn { fill: #1a0d16; stroke: #ff7ab8; stroke-width: 1.4; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 4px rgba(255,122,184,.55)); }
+.cd .cd-flat { stroke: rgba(255,122,184,.55); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.cd .cd-line { fill: none; stroke: #ff9fcb; stroke-width: 1.6; vector-effect: non-scaling-stroke; opacity: .85; filter: drop-shadow(0 0 6px rgba(255,46,136,.9)); }
+.cd .cd-round { stroke: rgba(61,224,255,.55); stroke-dasharray: 5 7; vector-effect: non-scaling-stroke; }
+.cd .cd-now { stroke: rgba(255,46,136,.7); stroke-dasharray: 2 4; vector-effect: non-scaling-stroke; }
+.cd-tag { position: absolute; right: 0; transform: translateY(-50%); font-style: normal; font-size: 11.5px; font-weight: 700; color: #0b0a10; background: #ff2e88; padding: 3px 7px;
+  box-shadow: 0 0 14px rgba(255,46,136,.8); clip-path: polygon(8px 0, 100% 0, 100% 100%, 8px 100%, 0 50%); }
+.spark path { stroke: #ff2e88 !important; filter: drop-shadow(0 0 4px rgba(255,46,136,.85)) !important; }
+.chart-card { background: radial-gradient(80% 60% at 50% 0%, rgba(255,46,136,.10), transparent 70%), #0b0a10; }
+.cy-legend .l1::before { background: #ff2e88; }
