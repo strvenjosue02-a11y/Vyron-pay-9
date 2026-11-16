@@ -2,6 +2,14 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Where the money is": "Dónde está el dinero", "Read live from the contract": "Leído en vivo del contrato", "Locked in the contract": "Bloqueado en el contrato", "Paid to the team": "Pagado al equipo", "In the market pool": "En el pool del mercado",
+  "Creator track record": "Historial del creador", "Other projects": "Otros proyectos", "Releases delivered": "Entregas cumplidas", "Cancelled": "Cancelados", "First project from this creator": "Primer proyecto de este creador",
+  "Their track record on Holdfast starts here. Every release they deliver, or miss, will show on their next projects.": "Su historial en Holdfast empieza aquí. Cada entrega que cumpla, o no, se verá en sus próximos proyectos.",
+  "Updates": "Avances", "✓ Signed by the creator's wallet": "✓ Firmado por la wallet del creador", "Share progress with your backers: what shipped, links, numbers": "Cuéntale a tus inversores qué avanzaste: qué salió, links, números",
+  "No updates yet. Every update here is signed by the creator's wallet, so no one else can post in their name.": "Aún no hay avances. Cada avance aquí va firmado por la wallet del creador, así nadie más puede publicar a su nombre.",
+  "Market open": "Mercado abierto", "Funded": "Financiado", "Verified": "Verificado", "🔥 Trending": "🔥 En tendencia", "New": "Nuevos", "Ending soon": "Cierran pronto", "Search name or token": "Buscar nombre o token", "Load more": "Cargar más",
+  "Nothing matches. Try another name or tab.": "No hay resultados. Prueba otro nombre o pestaña.", "Be the first backer": "Sé el primer inversor", "Until the raise closes": "Hasta que cierre la recaudación", "Market price": "Precio de mercado", "Details": "Detalles", "Safety": "Seguridad",
+  "No admin keys · paid in voted stages": "Sin llaves de admin · pagos por etapas votadas", "You receive": "Recibes", "Status": "Estado",
   "The Holdfast torii: a gate held up by its ember beam": "El torii de Holdfast: una puerta sostenida por su viga brasa", "Your money.": "Tu dinero.", "Their work.": "Su trabajo.", "Goal missed? You get 100% back.": "¿No llegan a la meta? Recuperas el 100%.",
   "Scroll to bring them together": "Desliza para unirlas", "For creators": "Para creadores", "Language": "Idioma",
   "Projects": "Proyectos", "Launch": "Lanzar", "Portfolio": "Portafolio", "Owner": "Dueño",
