@@ -197,7 +197,8 @@ elif args.mode == "seq":
     bpy.ops.mesh.primitive_plane_add(size=4.0, location=(0, 0, 0))
     floor = bpy.context.active_object; floor.name = "ShadowFloor"; floor.is_shadow_catcher = True
     r.image_settings.file_format = "PNG"; r.image_settings.color_mode = "RGBA"
-    scene.frame_start, scene.frame_end = 1, 70
+    scene.frame_start, scene.frame_end = int(os.environ.get("SEQ_START", 1)), 70
+    scene.frame_step = int(os.environ.get("SEQ_STEP", 1))
     r.filepath = os.path.join(out, "seq", "s_####")
     bpy.ops.render.render(animation=True)
 else:
