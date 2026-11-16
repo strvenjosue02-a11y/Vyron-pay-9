@@ -1118,3 +1118,6 @@ body:has(.term.t-fs) { overflow: hidden; }
 .tc input:not([type=file]) { width: 100%; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); color: #fff; padding: 10px 12px; font: inherit; }
 .tx-sq { width: 100%; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); color: #fff; padding: 8px 10px; font: 13px var(--font); margin-bottom: 6px; } .tx-sq:focus { outline: 0; border-color: rgba(255,255,255,.3); }
 .tx-none { font-size: 12.5px; color: #77757a; padding: 8px; margin: 0; } .tx-pnlhint { margin: 10px 0 0; font-size: 12.5px; color: #77757a; }
+.term.t-fs .cp-svg { height: calc(100vh - 235px); min-height: 300px; }
+.term.t-fs .tx-chart { margin-bottom: 8px; }
+.under { gap: 8px; flex-wrap: wrap; }
