@@ -262,3 +262,4 @@ legend { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; padding: 0;
 .creator-link { font-size: 15px; font-weight: 500; text-decoration: none; color: var(--ink); white-space: nowrap; }
 .creator-link:hover { text-decoration: underline; text-underline-offset: 4px; }
 @media (max-width: 800px) { .creator-link { display: none; } .nav-in { gap: var(--s1); } .brand { margin-right: auto; } .nav-r { margin-left: 0; gap: var(--s1); } }
+.vitrina-art { -webkit-mask-image: radial-gradient(closest-side, #000 72%, transparent 100%); mask-image: radial-gradient(closest-side, #000 72%, transparent 100%); }
