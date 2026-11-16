@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Launch it.": "Lánzalo.", "Fill it.": "Llénalo.", "Trade it.": "Opéralo.", "Put money in. If it fills, trading opens. If it doesn't, take it out.": "Mete dinero. Si se llena, se abre el mercado. Si no, lo sacas.", "See launches": "Ver lanzamientos", "Launch": "Lanzar",
   "Launches": "Lanzamientos",
   "Price / Market cap": "Precio / Valor total", "Market cap": "Valor total",
   "Investor": "Inversor", "Creator + Owner": "Creador + Dueño", "Skip 7 days": "Saltar 7 días", "Simulated chain, fake money. Switch who you are:": "Cadena simulada, dinero falso. Cambia quién eres:", "7 days later": "7 días después",

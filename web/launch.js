@@ -49,7 +49,7 @@ mk("Moon Bread", "BREAD", 500, 0, "", true);
 
 let timer = null, chart = null, cur = "";
 function tick() {
-  if (!location.hash.startsWith("#/lc")) { if (cur) stopLaunches(); return; }
+  if (!location.hash.startsWith("#/lc") && !["", "#", "#/"].includes(location.hash)) { if (cur) stopLaunches(); return; }
   const open = L.filter((l) => l.status === "open");
   if (open.length) { const l = open[Math.floor(Math.random() * open.length)], add = Math.min(l.goal - l.raised, rnd(4, 30) * (l.goal / 500 + 0.4)); l.raised += add; l.last = now(); if (l.raised >= l.goal - 0.01) goLive(l); }
   const live = L.filter((l) => l.status === "live"); if (live.length) { const l = live[Math.floor(Math.random() * live.length)]; if (Math.random() < 0.55) trade(l, "buy", rnd(1, 9) * (l.goal / 500)); else trade(l, "sell", (l.rT * rnd(0.002, 0.012))); l.last = now(); }
@@ -73,7 +73,7 @@ function pageHtml(l) {
   return `<a class="back" href="#/lc">${T("All launches", "Todos los lanzamientos")}</a>
   <div class="lc-pg"><div class="lc-hero">${art(l)}<div class="lc-hero-t"><span class="pc-tick">${esc(l.sym)}</span><h1>${esc(l.name)}</h1></div></div>
   <div class="lc-side" id="lc-side">${live ? liveHtml(l, tk) : openHtml(l, mine, left)}</div>
-  <div class="lc-main">${live ? `<div class="tx-chart" id="lc-chart"></div>` : `<div class="lc-note">${T("Everyone gets the same price. The moment the goal is reached the round closes, all the money goes into a locked pool and trading opens.", "Todos reciben el mismo precio. En cuanto se llega a la meta, la ronda se cierra, todo el dinero pasa a un pool bloqueado y se abre el mercado.")}</div>`}
+  <div class="lc-main">${live ? `<div class="tx-chart" id="lc-chart"></div>` : `<div class="lc-note">${T("Everyone gets the same price. The moment the goal is reached the round closes, all the money goes into a locked pool and trading opens.", "Todos reciben el mismo precio. En cuanto se llega a la meta, la ronda se cierra, todo el dinero pasa a un pool bloqueado y se abre el mercado.")}</div><div class="lc-lock"><span>${T("Chart and trading open when the round fills", "El gráfico y el trading se abren cuando se llene")}</span></div>`}
     ${l.creator ? `<p class="lc-dev">${T("Creator put in", "El creador metió")} <b>${l.creator}%</b> ${T("of the goal", "de la meta")}.</p>` : ""}
     <h3 class="lc-h">${T("Thread", "Hilo")}</h3><ul class="lc-cm" id="lc-cm">${cmHtml(l)}</ul>
     <div class="lc-cin"><input id="lc-ci" maxlength="140" placeholder="${T("Write something…", "Escribe algo…")}"><button class="btn btn-line btn-sm" id="lc-cs">${T("Post", "Publicar")}</button></div></div></div>`;
@@ -83,7 +83,7 @@ function openHtml(l, mine, left) {
   return `<div class="lc-big"><b>$${usd(l.raised)}</b><span>${T("of", "de")} $${usd(l.goal)}</span></div>${bar(l)}<p class="lc-left">${T("$" + usd(left) + " left to fill", "Faltan $" + usd(left) + " para llenarse")}</p>
   <label class="lc-lab">${T("Put in (USDC)", "Meter (USDC)")}</label><div class="field-amt cy-field"><input id="lc-amt" type="number" inputmode="decimal" placeholder="0"><span class="u">USDC</span></div>
   <div class="tx-q tx-amts">${[5, 10, 25, 50, 100].map((v) => `<button type="button" data-lcq="${v}">$${v}</button>`).join("")}<button type="button" data-lcq="max">Max</button></div>
-  <button class="btn btn-ember btn-block" id="lc-in">${T("Put in", "Meter")}</button><p class="lc-bal">${T("Balance", "Saldo")} $${usd(me.usdc)}</p>
+  <p class="lc-prev" id="lc-prev"></p><button class="btn btn-ember btn-block" id="lc-in">${T("Put in", "Meter")}</button><p class="lc-bal">${T("Balance", "Saldo")} $${usd(me.usdc)}</p>
   ${mine > 0 ? `<div class="lc-mine"><span>${T("You put in", "Pusiste")} <b>$${usd(mine)}</b></span><button class="btn btn-line btn-sm" id="lc-out">${T("Take my money out", "Sacar mi dinero")}</button></div>` : ""}`;
 }
 function liveHtml(l, tk) {
@@ -122,7 +122,10 @@ function liveUpdate() {
 }
 function bindSide(l) {
   const amt = () => document.getElementById("lc-amt"), q = (id, f) => { const e = document.getElementById(id); if (e) e.onclick = f; };
-  root.querySelectorAll("[data-lcq]").forEach((b) => (b.onclick = () => { amt().value = b.dataset.lcq === "max" ? Math.floor(me.usdc) : b.dataset.lcq; }));
+  const prev = () => { const el = document.getElementById("lc-prev"); if (!el) return; const v = parseFloat(amt()?.value) || 0;
+    el.innerHTML = v ? T(`With $${usd(v)} you get <b>${usd(v / l.p0)} ${esc(l.sym)}</b> at ${fmtP(l.p0)} each`, `Con $${usd(v)} recibes <b>${usd(v / l.p0)} ${esc(l.sym)}</b> a ${fmtP(l.p0)} cada uno`) : T(`Launch price ${fmtP(l.p0)} · same for everyone`, `Precio de salida ${fmtP(l.p0)} · igual para todos`); };
+  if (amt()) amt().oninput = prev; prev();
+  root.querySelectorAll("[data-lcq]").forEach((b) => (b.onclick = () => { amt().value = b.dataset.lcq === "max" ? Math.floor(me.usdc) : b.dataset.lcq; prev(); }));
   q("lc-in", () => { const v = Math.min(parseFloat(amt().value) || 0, me.usdc, l.goal - l.raised); if (v <= 0) return; me.usdc -= v; me.dep[l.id] = (me.dep[l.id] || 0) + v; l.raised += v; l.last = now(); if (l.raised >= l.goal - 0.01) { me.tok[l.id] = me.dep[l.id] / l.p0; goLive(l); for (const o of L) if (o.status === "live" && o !== l) {} } view(); });
   q("lc-out", () => { const v = me.dep[l.id] || 0; me.usdc += v; l.raised -= v; me.dep[l.id] = 0; view(); });
   q("lc-buy", () => { const v = Math.min(parseFloat(amt().value) || 0, me.usdc); if (v <= 0) return; me.usdc -= v; me.tok[l.id] = (me.tok[l.id] || 0) + trade(l, "buy", v); l.last = now(); view(); });
