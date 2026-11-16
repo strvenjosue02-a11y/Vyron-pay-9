@@ -173,7 +173,46 @@ function vHome() {
     <li><h3>Get it back if it fails</h3><p>If the goal isn't met, you get 100% back. If the team disappears or loses a vote, what's left returns to backers.</p></li>
   </ol>
   <div class="sec-h" id="projects"><h2 class="h2">Featured projects</h2><span class="faint">${S.list.length} live</span></div>
-  <div class="list">${S.list.length ? S.list.map(row).join("") : `<div class="empty">No projects are live yet. <a href="#/launch">Launch the first one</a>.</div>`}</div>`;
+  <div class="deck">${S.list.length ? S.list.map(card).join("") : `<div class="empty">No projects are live yet. <a href="#/launch">Launch the first one</a>.</div>`}</div>`;
+}
+const STAR = `<svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l2.6 7.2 7.4.3-5.8 4.7 2 7.3L12 16.8 5.8 21l2-7.3L2 9l7.4-.3z"/></svg>`;
+function rarity(p) {
+  const f = pct(p.s.totalRaised, p.q.hardcap);
+  if (p.s.succeeded || f >= 100) return { k: "legendary", t: "Legendary", n: 4 };
+  if (f >= 60) return { k: "epic", t: "Epic", n: 3 };
+  if (f >= 25) return { k: "rare", t: "Rare", n: 2 };
+  return { k: "common", t: "Common", n: 1 };
+}
+function card(p) {
+  const r = rarity(p), ph = phase(p), f = pct(p.s.totalRaised, p.q.hardcap);
+  const d = Math.max(0, Math.ceil((Number(p.q.saleEnd) - S.now) / 86400));
+  return `<a class="pcard ${r.k}" href="#/p/${p.id}" data-testid="row-${p.id}" style="--pc:${esc(p.meta.color)}">
+    <div class="pc-in">
+      <div class="pc-top"><span class="pc-rar">${STAR.repeat(r.n)}<span>${r.t}</span></span><span class="pc-pct">${f.toFixed(0)}%</span></div>
+      <div class="pc-art" aria-hidden="true"><i class="pc-sun"></i><b>${esc(p.q.symbol)}</b></div>
+      <div class="pc-body">
+        <h3>${esc(p.q.name)}</h3>
+        <p>${esc(p.meta.tagline)}</p>
+        <div class="meter"><b style="width:${f}%"></b><s style="left:${pct(p.q.softcap, p.q.hardcap)}%"></s></div>
+        <dl class="pc-stats">
+          <div><dt>Raised</dt><dd>$${usd(p.s.totalRaised)}</dd></div>
+          <div><dt>Goal</dt><dd>$${usd(p.q.hardcap)}</dd></div>
+          <div><dt>${ph.c === "open" ? "Days left" : "Status"}</dt><dd>${ph.c === "open" ? d : ph.t}</dd></div>
+        </dl>
+      </div>
+    </div>
+  </a>`;
+}
+function bindCards() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  document.querySelectorAll(".pcard").forEach((c) => {
+    c.onpointermove = (e) => {
+      const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      c.style.setProperty("--mx", `${x * 100}%`); c.style.setProperty("--my", `${y * 100}%`);
+      c.style.setProperty("--rx", `${(0.5 - y) * 8}deg`); c.style.setProperty("--ry", `${(x - 0.5) * 10}deg`);
+    };
+    c.onpointerleave = () => { c.style.setProperty("--rx", "0deg"); c.style.setProperty("--ry", "0deg"); };
+  });
 }
 function row(p) {
   const ph = phase(p);
@@ -444,6 +483,7 @@ function route() {
   const keep = $("#amt")?.value;
   $("#app").innerHTML = p ? vProject(p) : key === "launch" ? vLaunch() : key === "portfolio" ? vPortfolio() : key === "owner" ? vOwner() : vHome();
   if (p) bindAmount(p);
+  if (!p && key === "home") bindCards();
   if (p && keep && $("#amt")) { $("#amt").value = keep; $("#amt").dispatchEvent(new Event("input")); }
   if ($("#form")) { $("#form").addEventListener("input", preview); $("#form").addEventListener("submit", submitProject); preview(); }
 }
