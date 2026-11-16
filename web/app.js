@@ -294,6 +294,7 @@ function candlesSvg(p, period) {
     <div class="cd-y">${ticks}<em class="cd-tag" style="top:${(yp / H) * 100}%">${fmtP(p.mk.price)}</em></div></div>`;
 }
 function spark(p) {
+  if (!p.mk) return "";
   const pts = [p.mk.round, ...(p.trades || []).map((t) => t.price)]; if (pts.length < 2) pts.push(p.mk.price);
   const lo = Math.min(...pts), hi = Math.max(...pts), W = 120, H = 36;
   const d = pts.map((v, i) => `${i ? "L" : "M"}${((i / (pts.length - 1)) * W).toFixed(1)} ${(H - ((v - lo) / (hi - lo || 1)) * H).toFixed(1)}`).join(" ");
@@ -869,7 +870,7 @@ function vLaunch() {
       <div class="f"><label for="f-name">Name</label><input id="f-name" name="name" maxlength="40" placeholder="Rooftop Gardens"></div>
       <div class="two">
         <div class="f"><label for="f-symbol">Ticker</label><input id="f-symbol" name="symbol" maxlength="8" placeholder="ROOF" style="text-transform:uppercase"></div>
-        <div class="f"><label for="f-cat">Category</label><select id="f-cat" name="category">${CATEGORIES.map((c) => `<option>${c}</option>`).join("")}</select></div>
+        <div class="f"><label for="f-cat">Category</label><select id="f-cat" name="category">${CATEGORIES.map((c) => `<option value="${c}">${c}</option>`).join("")}</select></div>
       </div>
       <div class="f"><label for="f-tag">One-line summary</label><input id="f-tag" name="tagline" maxlength="120" placeholder="What you do and who it's for"></div>
       <div class="f"><label for="f-about">Description</label><textarea id="f-about" name="about" maxlength="2000" placeholder="What the money is for, the timeline, and how backers will see progress."></textarea><small>40 to 2,000 characters.</small></div>
@@ -1006,6 +1007,7 @@ function preview() {
 function review(d) {
   const err = validate(d, Math.floor(Date.now() / 1000)), links = JSON.parse(d.meta.links || "{}"), plan = JSON.parse(d.meta.plan || "[]"), use = JSON.parse(d.meta.use || "{}");
   $("#review").innerHTML = `${err ? `<div class="note warn">${esc(err)}</div>` : `<div class="note ok">Everything looks complete. Sign to send it for review.</div>`}
+    <div class="pay-to"><span>Payments go to your wallet</span><b>${esc(d.params.creator)}</b><small>The same wallet that signs. Every approved release lands here automatically, in USDC.</small></div>
     <div class="lines rv"><div><span>Project</span><b>${esc(d.params.name || "-")} · ${esc(d.params.symbol || "-")}</b></div>
       <div><span>Links</span><b>${Object.keys(links).join(", ") || "-"}</b></div>
       <div><span>Team</span><b>${d.meta.anon ? "Anonymous · protected mode" : `${JSON.parse(d.meta.team || "[]").length} people`}</b></div>
@@ -1086,7 +1088,7 @@ function vStudio() {
   const done = live.reduce((x, p) => x + Number(p.s.milestonesDone || 0), 0), cancelled = live.filter((p) => p.s.state === 2).length, funded = live.filter((p) => p.s.succeeded).length;
   const alerts = mine.flatMap((p) => alertsFor(p).map((x) => [p, ...x]));
   return `<div class="page-h"><h1>Creator studio</h1><p>Your projects, what needs your attention, and your reputation as backers see it.</p></div>
-  <section class="st-stats"><div><b>$${usd(raised)}</b><span>Raised</span></div><div><b>${backers}</b><span>Backers</span></div><div><b>$${usd(paid)}</b><span>Paid to you</span></div><div><b>${mine.length}</b><span>Projects</span></div></section>
+  <section class="st-stats"><div><b>$${usd(raised)}</b><span>Raised</span></div><div><b>${backers}</b><span>Backers</span></div><div><b>$${usd(paid)}</b><span>Paid to you</span></div><div><b>$${usd(S.usdc)}</b><span>USDC in your wallet ${short(S.me)}</span></div></section>
   ${alerts.length ? `<section class="st-block"><h2>Needs your attention</h2><ul class="st-alerts">${alerts.map(([p, k, t, d, href, cta]) => `<li class="${k}"><i></i><div><b>${esc(t)}</b><span>${esc(p.q.name)} · ${esc(d)}</span></div>${href ? `<a class="btn btn-line btn-sm" href="${href}">${cta}</a>` : ""}</li>`).join("")}</ul></section>` : ""}
   <section class="st-block"><h2>Your projects</h2><div class="st-list">${mine.map((p) => {
     const ph = p.status === "approved" ? phase(p) : { t: p.status === "review" ? "In review" : "Not approved", c: p.status };
