@@ -2,12 +2,12 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
-  "🐋 Whales": "🐋 Ballenas", "No big trades yet.": "Todavía no hay operaciones grandes.",
+  "Whales": "Ballenas", "Share": "Compartir", "Image saved": "Imagen guardada", "No big trades yet.": "Todavía no hay operaciones grandes.",
   "Minimum you'll get": "Mínimo que recibes", "Pool fee": "Comisión del pool", "Your position": "Tu posición", "You hold": "Tienes", "Worth today": "Vale hoy", "vs what you paid": "frente a lo que pagaste", "More data": "Ver más datos", "Less": "Ver menos", "Show more": "Ver más",
   "The price changed while you were trading. You didn't lose anything: try again or raise the slippage.": "El precio cambió mientras operabas. No perdiste nada: intenta otra vez o sube la tolerancia.", "You cancelled it in your wallet. Nothing happened.": "Lo cancelaste en tu wallet. No pasó nada.",
   "Your wallet needs a little ETH to pay the network fee.": "Tu wallet necesita un poco de ETH para pagar la comisión de la red.", "Something failed and nothing was charged. Try again.": "Algo falló y no se cobró nada. Intenta otra vez.",
   "24h high": "Máximo 24h", "24h low": "Mínimo 24h", "Market cap": "Valor total", "Liquidity": "Liquidez", "My trades": "Mis operaciones", "Price alert": "Alerta de precio", "Set": "Activar", "Update": "Actualizar",
-  "We'll show a notice here when the price crosses it.": "Te avisamos aquí cuando el precio llegue a ese valor.", "Safety": "Seguridad", "🔒 Liquidity locked until": "🔒 Liquidez bloqueada hasta", "Pool health": "Salud del pool", "Healthy": "Sana", "Medium": "Media", "Thin: prices move fast": "Baja: el precio se mueve rápido",
+  "We'll show a notice here when the price crosses it.": "Te avisamos aquí cuando el precio llegue a ese valor.", "Safety": "Seguridad", "Liquidity locked until": "Liquidez bloqueada hasta", "Pool health": "Salud del pool", "Healthy": "Sana", "Medium": "Media", "Thin: prices move fast": "Baja: el precio se mueve rápido",
   "Team tokens": "Tokens del equipo", "See the project, its releases and votes →": "Ver el proyecto, sus entregas y votos →", "Prices can go up or down. Holdfast doesn't control the market.": "El precio puede subir o bajar. Holdfast no controla el mercado.",
   "Top volume": "Más volumen", "Gainers": "Más suben", "Losers": "Más bajan", "★ Favorites": "★ Favoritos", "Tap ★ on a token to follow it.": "Toca ★ en un token para seguirlo.", "Connect your wallet to see your trades.": "Conecta tu wallet para ver tus operaciones.", "Alert removed": "Alerta quitada",
   "Payments go to your wallet": "Los pagos llegan a tu wallet", "The same wallet that signs. Every approved release lands here automatically, in USDC.": "La misma wallet que firma. Cada entrega aprobada llega aquí sola, en USDC.",
@@ -32,7 +32,7 @@ const ES = {
   "Their track record on Holdfast starts here. Every release they deliver, or miss, will show on their next projects.": "Su historial en Holdfast empieza aquí. Cada entrega que cumpla, o no, se verá en sus próximos proyectos.",
   "Updates": "Avances", "✓ Signed by the creator's wallet": "✓ Firmado por la wallet del creador", "Share progress with your backers: what shipped, links, numbers": "Cuéntale a tus inversores qué avanzaste: qué salió, links, números",
   "No updates yet. Every update here is signed by the creator's wallet, so no one else can post in their name.": "Aún no hay avances. Cada avance aquí va firmado por la wallet del creador, así nadie más puede publicar a su nombre.",
-  "Market open": "Mercado abierto", "Funded": "Financiado", "Verified": "Verificado", "🔥 Trending": "🔥 En tendencia", "New": "Nuevos", "Ending soon": "Cierran pronto", "Search name or token": "Buscar nombre o token", "Load more": "Cargar más",
+  "Market open": "Mercado abierto", "Funded": "Financiado", "Verified": "Verificado", "Trending": "En tendencia", "New": "Nuevos", "Ending soon": "Cierran pronto", "Search name or token": "Buscar nombre o token", "Load more": "Cargar más",
   "Nothing matches. Try another name or tab.": "No hay resultados. Prueba otro nombre o pestaña.", "Be the first backer": "Sé el primer inversor", "Until the raise closes": "Hasta que cierre la recaudación", "Market price": "Precio de mercado", "Details": "Detalles", "Safety": "Seguridad",
   "No admin keys · paid in voted stages": "Sin llaves de admin · pagos por etapas votadas", "You receive": "Recibes", "Status": "Estado",
   "The Holdfast torii: a gate held up by its ember beam": "El torii de Holdfast: una puerta sostenida por su viga brasa", "Your money.": "Tu dinero.", "Their work.": "Su trabajo.", "Goal missed? You get 100% back.": "¿No llegan a la meta? Recuperas el 100%.",
@@ -137,15 +137,14 @@ const ES = {
 
 // Textos con números u otras partes variables.
 const RULES = [
-  [/^🐋 (Buy|Sell)$/, (m) => `🐋 ${m[1] === "Buy" ? "Compra" : "Venta"}`],
-  [/^🐋 Whale (bought|sold) \$(.+) of (.+)$/, (m) => `🐋 Una ballena ${m[1] === "bought" ? "compró" : "vendió"} $${m[2]} de ${m[3]}`],
+  [/^Whale (bought|sold) \$(.+) of (.+)$/, (m) => `Una ballena ${m[1] === "bought" ? "compró" : "vendió"} $${m[2]} de ${m[3]}`],
   [/^Trades of \$(\d+) or more \(5% of the pool\)\. Big buys can push the price up; big sells can push it down\.$/, (m) => `Operaciones de $${m[1]} o más (5% del pool). Las compras grandes pueden subir el precio; las ventas grandes, bajarlo.`],
   [/^([+-]?[\d.]+)% 24h$/, (m) => `${m[1]}% 24h`], [/^Unlock only with approved releases \((\d+)\/(\d+)\)$/, (m) => `Se liberan solo con entregas aprobadas (${m[1]}/${m[2]})`],
-  [/^You haven't traded (.+) yet\.$/, (m) => `Todavía no operaste ${m[1]}.`], [/^Alert set at \$(.+)$/, (m) => `Alerta activada en $${m[1]}`], [/^🔔 (.+) reached \$(.+)$/, (m) => `🔔 ${m[1]} llegó a $${m[2]}`],
+  [/^You haven't traded (.+) yet\.$/, (m) => `Todavía no operaste ${m[1]}.`], [/^Alert set at \$(.+)$/, (m) => `Alerta activada en $${m[1]}`], [/^(.+) reached \$(.+)$/, (m) => `${m[1]} llegó a $${m[2]}`],
   [/^Confirm: moves the price (.+)%$/, (m) => `Confirmar: mueve el precio ${m[1]}%`], [/^High price impact \((.+)%\)\. Tap again to confirm\.$/, (m) => `Impacto alto en el precio (${m[1]}%). Toca otra vez para confirmar.`],
   [/^One wallet holds (.+)% of the supply\. If it sells, the price can drop fast\.$/, (m) => `Una wallet tiene el ${m[1]}% de los tokens. Si vende, el precio puede caer rápido.`],
   [/^USDC in your wallet (.+)$/, (m) => `USDC en tu wallet ${m[1]}`],
-  [/^🛡 (\d+)% of your money is still protected$/, (m) => `🛡 El ${m[1]}% de tu dinero sigue protegido`], [/^Buy or sell (.+)$/, (m) => `Comprar o vender ${m[1]}`], [/^Refund ready: (.+)$/, (m) => `Reembolso listo: ${m[1]}`],
+  [/^(\d+)% of your money is still protected$/, (m) => `El ${m[1]}% de tu dinero sigue protegido`], [/^Buy or sell (.+)$/, (m) => `Comprar o vender ${m[1]}`], [/^Refund ready: (.+)$/, (m) => `Reembolso listo: ${m[1]}`],
   [/^Release (\d+) of (\d+)( · second chance)?$/, (m) => `Entrega ${m[1]} de ${m[2]}${m[3] ? " · segunda oportunidad" : ""}`],
   [/^Closes (.+)$/, (m) => `Cierra el ${m[1]}`], [/^Vote on release (\d+)$/, (m) => `Votación de la entrega ${m[1]}`],
   [/^Approve \$(.+?)( · (\d+)%)?$/, (m) => `Aprobar $${m[1]}${m[2] ? ` · ${m[3]}%` : ""}`], [/^Reject \$(.+?)( · (\d+)%)?$/, (m) => `Rechazar $${m[1]}${m[2] ? ` · ${m[3]}%` : ""}`],

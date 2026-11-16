@@ -341,14 +341,41 @@ function termTab(p) {
     <ul class="depth"><li class="dh"><span>Move</span><b>Buy to push up</b><b>Sell to push down</b></li>${depthRows(p)}</ul>`;
   if (t === "mine" && !S.me) return `<p class="prose">Connect your wallet to see your trades.</p>`;
   if (t === "whales") { const wl = (p.trades || []).filter((x) => isWhale(p, x)).slice(-15).reverse();
-    return `<p class="fine" style="margin:0 0 12px">Trades of $${whaleMin(p).toFixed(0)} or more (5% of the pool). Big buys can push the price up; big sells can push it down.</p>` + (wl.length ? `<ul class="cy-trades whales">${wl.map((x) => `<li><span class="${x.buy ? "b" : "s"}">🐋 ${x.buy ? "Buy" : "Sell"}</span><span class="addr">${short(x.who || "0x0000000000")}</span><span>$${usd(x.usdc)}</span><span>${fmtP(x.price)}</span><span class="faint">${ago((p.tHead || 0n) - x.block)}</span></li>`).join("")}</ul>` : `<p class="prose">No big trades yet.</p>`); }
+    return `<p class="fine" style="margin:0 0 12px">Trades of $${whaleMin(p).toFixed(0)} or more (5% of the pool). Big buys can push the price up; big sells can push it down.</p>` + (wl.length ? `<ul class="cy-trades whales">${wl.map((x) => `<li><span class="${x.buy ? "b" : "s"}">${ICO.whale} ${x.buy ? "Buy" : "Sell"}</span><span class="addr">${short(x.who || "0x0000000000")}</span><span>$${usd(x.usdc)}</span><span>${fmtP(x.price)}</span><span class="faint">${ago((p.tHead || 0n) - x.block)}</span></li>`).join("")}</ul>` : `<p class="prose">No big trades yet.</p>`); }
   const tr = (p.trades || []).filter((x) => t !== "mine" || x.who?.toLowerCase() === S.me.toLowerCase()).slice(-(S.trN || 10)).reverse();
   const more = (p.trades || []).length > (S.trN || 10) && t === "trades";
   if (t === "mine" && !tr.length) return `<p class="prose">You haven't traded ${esc(p.q.symbol)} yet.</p>`;
-  return tr.length ? `<ul class="cy-trades">${tr.map((x) => `<li class="${isWhale(p, x) ? "wh" : ""}"><span class="${x.buy ? "b" : "s"}">${isWhale(p, x) ? "🐋 " : ""}${x.buy ? "Buy" : "Sell"}</span><span>${tok(x.tok)} ${esc(p.q.symbol)}</span><span>$${usd(x.usdc)}</span><span>${fmtP(x.price)}</span><span class="faint">${ago((p.tHead || 0n) - x.block)}</span></li>`).join("")}</ul>${more ? `<button type="button" class="btn btn-line btn-sm tx-trmore" data-trmore>Show more</button>` : ""}` : `<p class="prose">No trades yet. Be the first.</p>`;
+  return tr.length ? `<ul class="cy-trades">${tr.map((x) => `<li class="${isWhale(p, x) ? "wh" : ""}"><span class="${x.buy ? "b" : "s"}">${isWhale(p, x) ? ICO.whale + " " : ""}${x.buy ? "Buy" : "Sell"}</span><span>${tok(x.tok)} ${esc(p.q.symbol)}</span><span>$${usd(x.usdc)}</span><span>${fmtP(x.price)}</span><span class="faint">${ago((p.tHead || 0n) - x.block)}</span></li>`).join("")}</ul>${more ? `<button type="button" class="btn btn-line btn-sm tx-trmore" data-trmore>Show more</button>` : ""}` : `<p class="prose">No trades yet. Be the first.</p>`;
 }
+// íconos dibujados con código (sin emojis)
+const ICO = {
+  whale: `<svg class="ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13c0 3.3 3.6 6 8 6 4.6 0 8-3 8-7.5V9l2.5-2.5M19 9c-1 0-2-.6-2.5-1.5"/><path d="M3 13c2.5 0 4.5-1 6-3"/><circle cx="14.5" cy="12.5" r=".6" fill="currentColor"/></svg>`,
+  lock: `<svg class="ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`,
+  shield: `<svg class="ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>`,
+  flame: `<svg class="ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c-3.9 0-6.5-2.6-6.5-6 0-3.6 3-5.4 3.5-9 2 1.3 3.2 3 3.4 5 1-.7 1.6-1.8 1.8-3 2 1.6 4.3 4 4.3 7 0 3.4-2.6 6-6.5 6z"/></svg>`,
+  share: `<svg class="ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>`,
+};
 const whaleMin = (p) => Math.max(25, (Number(p.mk?.poolUsdc || 0n) / 1e6) * 0.05); // compra/venta >= 5% del pool
 const isWhale = (p, t) => Number(t.usdc) / 1e6 >= whaleMin(p);
+async function shareToken(p) {
+  const W = 1200, H = 630, c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d"), st = stats24(p), up = st.chg >= 0;
+  x.fillStyle = "#0b0b0d"; x.fillRect(0, 0, W, H);
+  const g = x.createRadialGradient(W * 0.8, H, 50, W * 0.8, H, 700); g.addColorStop(0, up ? "rgba(232,80,143,.28)" : "rgba(143,107,232,.28)"); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  const img = logoSrc(p) && await new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = logoSrc(p); });
+  if (img) { x.save(); x.beginPath(); x.arc(110, 110, 50, 0, Math.PI * 2); x.clip(); x.drawImage(img, 60, 60, 100, 100); x.restore(); x.strokeStyle = "rgba(255,255,255,.25)"; x.lineWidth = 2; x.beginPath(); x.arc(110, 110, 51, 0, Math.PI * 2); x.stroke(); }
+  x.fillStyle = "#fff"; x.font = "600 48px 'Inter Tight', sans-serif"; x.fillText(`${p.q.symbol} / USDC`, 185, 105);
+  x.fillStyle = "#8d8f95"; x.font = "400 26px 'Inter Tight', sans-serif"; x.fillText(p.q.name, 185, 145);
+  x.fillStyle = "#fff"; x.font = "700 92px 'Inter Tight', sans-serif"; x.fillText(fmtP(p.mk.price), 60, 300);
+  x.fillStyle = up ? "#e8508f" : "#8f6be8"; x.font = "600 40px 'Inter Tight', sans-serif"; x.fillText(`${up ? "+" : ""}${st.chg.toFixed(2)}% 24h`, 60, 360);
+  const cs = buildCandles(p, "5m"), lo = Math.min(...cs.map((k) => k.l)), hi = Math.max(...cs.map((k) => k.h)), cw = 560 / cs.length;
+  cs.forEach((k, i) => { const yy = (v) => 560 - ((v - lo) / (hi - lo || 1)) * 300, X = 600 + i * cw + cw / 2, col = k.c >= k.o ? "#e8508f" : "#8f6be8";
+    x.strokeStyle = col; x.lineWidth = 1.5; x.beginPath(); x.moveTo(X, yy(k.h)); x.lineTo(X, yy(k.l)); x.stroke(); x.fillStyle = col; const t = yy(Math.max(k.o, k.c)); x.fillRect(X - Math.max(1.5, cw * 0.25), t, Math.max(3, cw * 0.5), Math.max(2, Math.abs(yy(k.o) - yy(k.c)))); });
+  x.fillStyle = "#8d8f95"; x.font = "400 24px 'Inter Tight', sans-serif"; x.fillText(`Liquidity $${usd(p.mk.poolUsdc)}  ·  Volume 24h $${usd(st.vol)}`, 60, 520);
+  x.fillStyle = "#fff"; x.font = "600 30px 'Inter Tight', sans-serif"; x.fillText("Holdfast", 60, 585); x.fillStyle = "#77757a"; x.font = "400 22px 'Inter Tight', sans-serif"; x.fillText("Back it. Hold it. Trade it.", 210, 585);
+  const blob = await new Promise((r) => c.toBlob(r, "image/png")), file = new File([blob], `${p.q.symbol}-holdfast.png`, { type: "image/png" });
+  try { if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text: `${p.q.symbol} on Holdfast` }); return; } } catch { return; }
+  const a2 = document.createElement("a"); a2.href = URL.createObjectURL(blob); a2.download = file.name; a2.click(); toast("Image saved");
+}
 function stats24(p) {
   const now = S.now || Date.now() / 1000, tr = (p.trades || []).filter((t) => t.ts), day = tr.filter((t) => t.ts > now - 86400), before = tr.filter((t) => t.ts <= now - 86400);
   const open = before.length ? before[before.length - 1].price : p.mk.round, ps = day.map((t) => t.price);
@@ -375,7 +402,7 @@ function vTerminal(p) {
     <a class="back" href="#/market">All markets</a>
     <header class="tx-top">
       <div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
-      <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
+      <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
       <div class="tx-px"><b id="tt-price">${fmtP(m.price)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span></div>
       <dl class="tx-stats">
         <div><dt>24h volume</dt><dd id="tt-vol">$${usd(x.vol)}</dd></div><div><dt>Market cap</dt><dd id="tx-cap">${x.cap ? "$" + x.cap.toLocaleString("en-US", { maximumFractionDigits: 0 }) : "–"}</dd></div>
@@ -385,13 +412,13 @@ function vTerminal(p) {
     <div class="term-grid">
       <div class="term-main">
         <div class="tx-chart" id="chartpro"></div>
-        <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["whales", "🐋 Whales"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${t}</button>`).join("")}</div>
+        <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["whales", "Whales"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${k === "whales" ? ICO.whale + " " : ""}${t}</button>`).join("")}</div>
         <div id="term-tab">${termTab(p)}</div>
       </div>
       <aside class="term-side">${posBox(p)}${S.me ? tradePanel(p) : `<div class="panel cyber"><p class="muted" style="margin:0 0 16px">Connect your wallet to buy or sell ${esc(p.q.symbol)}. Anyone can buy with USDC.</p><button class="btn btn-cyber btn-block" data-act="connect">Connect wallet</button></div>`}
         <div class="panel tx-alert"><h3>Price alert</h3><div class="tx-al"><span>$</span><input id="alert" type="number" step="any" placeholder="${fmtP(m.price).slice(1)}" value="${esc(alert)}" aria-label="Alert price"><button type="button" class="btn btn-line btn-sm" id="alert-set">${alert ? "Update" : "Set"}</button></div><small>We'll show a notice here when the price crosses it.</small></div>
         <div class="panel tx-trust"><h3>Safety</h3>
-          <div><span>🔒 Liquidity locked until</span><b>${day(p.s.lpUnlock)}</b></div>
+          <div><span>${ICO.lock} Liquidity locked until</span><b>${day(p.s.lpUnlock)}</b></div>
           <div><span>Pool health</span><b class="hl-${health(p)[1]}">${health(p)[0]}</b></div>
           <div><span>Team tokens</span><b>Unlock only with approved releases (${p.s.milestonesDone}/${p.q.milestones})</b></div>
           <a href="#/p/${p.id}">See the project, its releases and votes →</a>
@@ -423,6 +450,7 @@ function bindMarket() {
 let coinOff = null;
 let chartOff = null;
 function startTerminal(p) {
+  if (!p.mk || !$("#chartpro")) return;
   if (coinOff) { coinOff(); coinOff = null; } if (chartOff) { chartOff.destroy(); chartOff = null; }
   const weak = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 3 || matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (weak) $("#coin3d").innerHTML = logoSrc(p) ? `<img src="${esc(logoSrc(p))}" alt="" class="coin-flat">` : "";
@@ -438,6 +466,7 @@ function startTerminal(p) {
   const hl = async () => { if (!p.order) await loadActivity(); await loadHolders(p); stats(); if ((S.ttab || "trades") === "holders") reTerm(); };
   if (!p.trades) loadTrades(p).then(() => { reTerm(); hl(); }); else { reTerm(); if (!p.holders) hl(); }
   $("#term-tab").onclick = (e) => { if (e.target.closest("[data-trmore]")) { S.trN = (S.trN || 10) + 20; $("#term-tab").innerHTML = termTab(p); } };
+  $("#share").onclick = () => shareToken(p);
   $("#fav").onclick = () => { let f = favs(); f = f.includes(p.id) ? f.filter((x) => x !== p.id) : [...f, p.id]; try { localStorage.setItem("hf-fav", JSON.stringify(f)); } catch {} $("#fav").classList.toggle("on", f.includes(p.id)); };
   $("#alert-set").onclick = () => { const v = $("#alert").value.trim(); try { v ? localStorage.setItem(`hf-alert-${p.id}`, v) : localStorage.removeItem(`hf-alert-${p.id}`); } catch {} p.alertSide = v ? (Number(v) >= p.mk.price ? "up" : "dn") : null; toast(v ? `Alert set at $${v}` : "Alert removed"); };
   { const v = Number(localStorage.getItem(`hf-alert-${p.id}`) || 0); p.alertSide = v ? (v >= p.mk.price ? "up" : "dn") : null; }
@@ -450,10 +479,10 @@ function startTerminal(p) {
       const el = $("#tt-price"); el.textContent = fmtP(p.mk.price);
       el.classList.remove("flash-up", "flash-dn"); void el.offsetWidth; el.classList.add(p.mk.price > before ? "flash-up" : "flash-dn");
       const n0 = (p.trades || []).length; await loadTrades(p); reTerm();
-      (p.trades || []).slice(n0).filter((t) => isWhale(p, t)).slice(-1).forEach((t) => toast(`🐋 Whale ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`));
+      (p.trades || []).slice(n0).filter((t) => isWhale(p, t)).slice(-1).forEach((t) => toast(`Whale ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`));
       const pb = $("#tx-pos"); if (pb) pb.outerHTML = posBox(p);
       const av = Number(localStorage.getItem(`hf-alert-${p.id}`) || 0);
-      if (av && p.alertSide && ((p.alertSide === "up" && p.mk.price >= av) || (p.alertSide === "dn" && p.mk.price <= av))) { toast(`🔔 ${p.q.symbol} reached $${av}`); p.alertSide = null; }
+      if (av && p.alertSide && ((p.alertSide === "up" && p.mk.price >= av) || (p.alertSide === "dn" && p.mk.price <= av))) { toast(`${p.q.symbol} reached $${av}`); p.alertSide = null; }
     }
   }, Number(new URLSearchParams(location.search).get("poll")) || 12000);
 }
@@ -511,7 +540,7 @@ function vHome() {
   </ol>
   ${carousel()}
   <div class="sec-h" id="projects"><h2 class="h2">Featured projects</h2><span class="faint">${S.list.length} live</span></div>
-  <div class="cat-bar"><div class="cat-tabs" role="tablist">${[["trending", "🔥 Trending"], ["new", "New"], ["ending", "Ending soon"], ["funded", "Funded"]].map(([k, t]) => `<button type="button" role="tab" data-cat="${k}" aria-selected="${(S.cat || "trending") === k}">${t}</button>`).join("")}</div>
+  <div class="cat-bar"><div class="cat-tabs" role="tablist">${[["trending", "Trending"], ["new", "New"], ["ending", "Ending soon"], ["funded", "Funded"]].map(([k, t]) => `<button type="button" role="tab" data-cat="${k}" aria-selected="${(S.cat || "trending") === k}">${k === "trending" ? ICO.flame + " " : ""}${t}</button>`).join("")}</div>
     <label class="cat-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="cat-q" type="search" placeholder="Search name or token" value="${esc(S.catQ || "")}" aria-label="Search projects"></label></div>
   <div class="deck" id="deck">${deckHtml()}</div>`;
 }
@@ -558,7 +587,7 @@ function carousel() {
   return `<section class="car" aria-roledescription="carousel" aria-label="Featured">
     <div class="car-track" id="car">${list.map((p) => `<a class="car-slide" href="#/p/${p.id}" style="--pc:${esc(p.meta.color)}">
       <img src="${esc(coverSrc(p))}" alt="" loading="lazy">
-      <div class="car-txt">${hot(p) > 0 ? `<span class="car-hot">🔥 Trending</span>` : ""}${p.exists ? `<span class="kv-ver">✓ Verified</span>` : ""}<h3>${esc(p.q.name)}</h3><p>${esc(p.meta.tagline)}</p>
+      <div class="car-txt">${hot(p) > 0 ? `<span class="car-hot">${ICO.flame} Trending</span>` : ""}${p.exists ? `<span class="kv-ver">✓ Verified</span>` : ""}<h3>${esc(p.q.name)}</h3><p>${esc(p.meta.tagline)}</p>
         <div class="car-num">${p.mk ? `<b>${fmtP(p.mk.price)}</b><span>Market price</span>` : `<b>$${usd(p.s.totalRaised)} <small>of $${usd(p.q.hardcap)}</small></b><span>Raised</span>`}</div></div></a>`).join("")}</div>
     <div class="car-dots">${list.map((_, i) => `<button type="button" data-car="${i}" aria-label="Slide ${i + 1}"${i ? "" : ' aria-current="true"'}></button>`).join("")}</div>
   </section>`;
@@ -876,7 +905,7 @@ function pPosition(p) {
   if (s.state === 2 && !u.settled) btns.push(`<button class="btn btn-ember btn-block" data-act="refund" data-testid="refund">Get my money back</button>`);
   const safe = s.state === 0 ? "100% protected until the raise closes" : s.state === 1 ? `${(100 - maxLoss(p)).toFixed(0)}% of your money is still protected` : s.state === 2 ? (u.settled ? "Refund withdrawn" : `Refund ready: $${usd(back)}`) : "";
   return `<div class="panel pos-c"><div class="pos-top"><div><span>Your investment</span><b>$${usd(u.contributed)}</b></div><div><span>Your tokens</span><b>${tok(s.succeeded && !u.claimed ? (u.contributed * q.saleTokens) / q.hardcap : u.balance)} ${esc(q.symbol)}</b></div></div>
-    ${safe ? `<p class="pos-safe" data-testid="risk">🛡 ${safe}</p>` : ""}
+    ${safe ? `<p class="pos-safe" data-testid="risk">${ICO.shield} ${safe}</p>` : ""}
     ${btns.length ? `<div style="display:grid;gap:8px;margin-top:12px">${btns.join("")}</div>` : ""}
     <button class="pos-card" type="button" data-act="card" data-testid="backer-card">Get my backer card →</button></div>`;
 }
