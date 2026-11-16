@@ -809,8 +809,8 @@ function pPosition(p) {
   if (s.state === 1) {
     const kept = s.poolAfterFees - s.usdcReleased, inPool = s.liquidityUsdc || 0n, fee = (s.totalRaised * 100n) / 10000n;
     top = `<div class="muted" style="font-size:14px">Most you could lose today</div><div class="big" data-testid="risk">${maxLoss(p).toFixed(1)}%</div>
-      <div class="split"><i style="width:${pct(kept, s.totalRaised)}%;background:var(--ink)"></i><i style="width:${pct(s.usdcReleased, s.totalRaised)}%;background:var(--ember)"></i><i style="width:${pct(inPool, s.totalRaised)}%;background:#3de0ff"></i><i style="width:${pct(fee, s.totalRaised)}%;background:var(--rule-2)"></i></div>
-      <div class="keys"><span style="--c:var(--ink)">Locked $${usd(kept)}</span><span style="--c:var(--ember)">Released $${usd(s.usdcReleased)}</span>${inPool > 0n ? `<span style="--c:#3de0ff">In pool $${usd(inPool)}</span>` : ""}<span style="--c:var(--rule-2)">Fee $${usd(fee)}</span></div>`;
+      <div class="split"><i style="width:${pct(kept, s.totalRaised)}%;background:var(--ink)"></i><i style="width:${pct(s.usdcReleased, s.totalRaised)}%;background:var(--ember)"></i><i style="width:${pct(inPool, s.totalRaised)}%;background:#ff7ab8"></i><i style="width:${pct(fee, s.totalRaised)}%;background:var(--rule-2)"></i></div>
+      <div class="keys"><span style="--c:var(--ink)">Locked $${usd(kept)}</span><span style="--c:var(--ember)">Released $${usd(s.usdcReleased)}</span>${inPool > 0n ? `<span style="--c:#ff7ab8">In pool $${usd(inPool)}</span>` : ""}<span style="--c:var(--rule-2)">Fee $${usd(fee)}</span></div>`;
   }
   if (s.state === 0) top = `<div class="note ok" style="margin:0 0 8px">Fully protected until the raise closes.</div>`;
   const back = s.state === 2 && s.totalRaised > 0n ? (s.refundPool * u.contributed) / s.totalRaised : 0n;
@@ -832,11 +832,16 @@ function pVote(p) {
   const open = s.voteEnd > 0n && S.now < Number(s.voteEnd), total = s.votesYes + s.votesNo || 1n;
   let b;
   if (s.voteEnd > 0n) {
-    b = `<p class="muted" style="margin:0">Release ${s.milestonesDone + 1} of ${q.milestones}. ${open ? `Voting closes ${day(s.voteEnd)}.` : "Voting has ended."}</p>
-      <div class="split"><i style="width:${pct(s.votesYes, total)}%;background:var(--ok)"></i><i style="width:${pct(s.votesNo, total)}%;background:var(--bad)"></i></div>
-      <div class="keys"><span style="--c:var(--ok)">Approve $${usd(s.votesYes)}</span><span style="--c:var(--bad)">Reject $${usd(s.votesNo)}</span></div>`;
-    if (open && u.contributed > 0n && !u.voted) b += `<div class="votes"><button class="btn btn-dark" data-act="voteYes" data-testid="vote-yes">Approve</button><button class="btn btn-danger" data-act="voteNo" data-testid="vote-no">Reject</button></div>`;
-    else if (open && u.voted) b += `<div class="note">You've voted on this release.</div>`;
+    const promise = (() => { try { return JSON.parse(p.meta.plan || "[]")[s.milestonesDone] || ""; } catch { return ""; } })();
+    const yp = pct(s.votesYes, total), np = pct(s.votesNo, total);
+    b = `<div class="vt-h"><span>Release ${s.milestonesDone + 1} of ${q.milestones}${s.retrying ? " · second chance" : ""}</span><b>${open ? `Closes ${day(s.voteEnd)}` : "Voting ended"}</b></div>
+      ${promise ? `<div class="vt-promise"><span>They promised</span><p>${esc(promise)}</p></div>` : ""}
+      <p class="vt-hint">Check the Updates tab, then vote. Your vote weighs as much as you put in.</p>
+      <div class="vt-bar"><i class="y" style="width:${yp}%"></i><i class="n" style="width:${np}%"></i></div>
+      <div class="vt-k"><span class="y">Approve $${usd(s.votesYes)} · ${yp.toFixed(0)}%</span><span class="n">Reject $${usd(s.votesNo)} · ${np.toFixed(0)}%</span></div>`;
+    if (open && u.contributed > 0n && !u.voted) b += `<div class="vt-btns"><button class="btn btn-ember" data-act="voteYes" data-testid="vote-yes">Approve release</button><button class="btn btn-line" data-act="voteNo" data-testid="vote-no">Reject</button></div>`;
+    else if (open && u.voted) b += `<div class="note ok">You voted on this release. Results update live.</div>`;
+    else if (open) b += `<p class="vt-hint">Only backers can vote.</p>`;
     if (!open) b += `<button class="btn btn-dark btn-block" style="margin-top:16px" data-act="closeVote" data-testid="close-vote">Apply the result</button>`;
   } else if (S.now <= Number(s.deadline)) {
     b = s.retrying ? `<div class="note warn">Backers rejected release ${s.milestonesDone + 1}. Second chance: the team has until ${day(s.deadline)} to show progress and ask again. No money is released meanwhile; if they lose again, what's left returns to backers.</div>`
@@ -846,7 +851,7 @@ function pVote(p) {
     b = `<p class="muted" style="margin:0">The team missed the deadline. Anyone can cancel the project and return what's left.</p>
       <button class="btn btn-danger btn-block" style="margin-top:16px" data-act="abandon" data-testid="abandon">Cancel and refund backers</button>`;
   }
-  return `<div class="panel"><h3>Release vote</h3>${b}</div>`;
+  return `<div class="panel vt"><h3>Release vote</h3>${b}</div>`;
 }
 
 // ================================================================= creador
@@ -1095,6 +1100,7 @@ function vStudio() {
         ${p.status === "approved" ? `${meter(p)}<div class="st-nums"><div><b>$${usd(p.s.totalRaised)}</b><span>of $${usd(p.q.hardcap)}</span></div><div><b>${p.backers || 0}</b><span>Backers</span></div>
           <div><b>${p.s.succeeded ? `${p.s.milestonesDone}/${p.q.milestones}` : phase(p).c === "open" ? Math.max(0, Math.ceil((Number(p.q.saleEnd) - S.now) / 86400)) : "–"}</b><span>${p.s.succeeded ? "Releases" : "Days left"}</span></div>
           <div><b>${p.mk ? fmtP(p.mk.price) : `$${usd(p.s.usdcReleased || 0n)}`}</b><span>${p.mk ? "Market price" : "Paid to you"}</span></div></div>
+          ${p.s.voteEnd > 0n ? (() => { const t = p.s.votesYes + p.s.votesNo || 1n, y = pct(p.s.votesYes, t); return `<div class="st-vote"><div class="vt-h"><span>Vote on release ${p.s.milestonesDone + 1}</span><b>Closes ${day(p.s.voteEnd)}</b></div><div class="vt-bar"><i class="y" style="width:${y}%"></i><i class="n" style="width:${pct(p.s.votesNo, t)}%"></i></div><div class="vt-k"><span class="y">Approve $${usd(p.s.votesYes)}</span><span class="n">Reject $${usd(p.s.votesNo)}</span></div></div>`; })() : ""}
           <div class="st-act"><a class="btn btn-line btn-sm" href="#/p/${p.id}">Open project</a><button class="btn btn-ember btn-sm" type="button" data-upopen="${p.id}">Post update</button></div>
           <div class="st-up" id="upbox-${p.id}" hidden><textarea id="up-${p.id}" maxlength="1500" placeholder="What you delivered, with links and numbers"></textarea><button class="btn btn-dark btn-sm" data-act="postUpdate" data-id="${p.id}" data-testid="post-${p.id}">Sign and post</button></div>`
         : `<p class="muted">${p.status === "review" ? "Holdfast is reviewing it. You'll see it live here once approved." : "It wasn't approved. Fix it and submit again."}</p>`}

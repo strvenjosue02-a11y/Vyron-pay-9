@@ -934,3 +934,15 @@ body.sw-l #app { animation: swl .35s ease; } body.sw-r #app { animation: swr .35
 .st-rep { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; } .st-rep > div { padding: 18px; border-radius: 18px; box-shadow: 0 0 0 1px rgba(255,255,255,.06); }
 .st-rep b { display: block; font-size: 30px; font-weight: 600; letter-spacing: -0.04em; } .st-rep span { font-size: 12.5px; color: #8d8f95; }
 @media (max-width: 760px) { .st-stats, .st-rep { grid-template-columns: repeat(2, 1fr); } .st-nums { grid-template-columns: repeat(2, 1fr); } .st-list { grid-template-columns: 1fr; } }
+/* votación */
+.panel.vt { border-radius: 24px; border: 0; background: radial-gradient(120% 50% at 50% 0%, #1b1719, transparent 60%), linear-gradient(180deg, #121113, #09090a); box-shadow: 0 0 0 1px rgba(255,46,136,.35), 0 0 80px -40px rgba(255,46,136,.6); }
+.vt-h { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: #8d8f95; } .vt-h b { color: #ff7ab8; font-weight: 600; }
+.vt-promise { margin: 14px 0 6px; padding: 12px 14px; border-radius: 14px; background: rgba(255,46,136,.07); box-shadow: inset 2px 0 0 #ff2e88; }
+.vt-promise span { font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: #ff7ab8; } .vt-promise p { margin: 4px 0 0; color: #f0ecea; font-weight: 500; }
+.vt-hint { font-size: 12.5px; color: #77757a; margin: 10px 0; }
+.vt-bar { display: flex; height: 10px; border-radius: 10px; overflow: hidden; gap: 2px; background: rgba(255,255,255,.06); margin-top: 8px; }
+.vt-bar .y { background: linear-gradient(90deg, #ff2e88, #ff7ab8); box-shadow: 0 0 10px rgba(255,46,136,.6); } .vt-bar .n { background: #5a585d; }
+.vt-k { display: flex; justify-content: space-between; font-size: 12.5px; margin-top: 8px; font-variant-numeric: tabular-nums; } .vt-k .y { color: #ff7ab8; } .vt-k .n { color: #a3a1a6; }
+.vt-btns { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; margin-top: 16px; } .vt-btns .btn { border-radius: 999px; }
+.st-vote { margin: 4px 0 14px; padding: 12px 14px; border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(255,46,136,.35); }
+.note.ok { color: #ffc2dc !important; background: rgba(255,46,136,.08) !important; border-color: rgba(255,46,136,.3) !important; }
