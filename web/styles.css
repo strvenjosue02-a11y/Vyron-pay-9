@@ -1180,3 +1180,14 @@ body:has(.term.t-fs) { overflow: hidden; }
 @media (min-width: 761px) { .lb { width: 100%; max-width: 640px; } .lb li { display: block; } .lb li button { grid-template-columns: 28px 40px minmax(140px, 1fr) 96px 60px; padding: 10px 8px; } .lb .nm { white-space: nowrap; } .lb b { text-align: right; } }
 
 .tx-amts { grid-template-columns: repeat(6, 1fr); } .tx-amts button { font-size: 12.5px; padding: 8px 0; }
+
+/* ===== Cartas simples: foto grande + 3 datos ===== */
+a.pcard { display: block; border-radius: 20px; overflow: hidden; background: #111113; box-shadow: 0 0 0 1px rgba(255,255,255,.07); transition: transform .2s, box-shadow .2s; transform: none !important; }
+a.pcard::before, a.pcard::after, a.pcard .pc-in::after { display: none !important; }
+a.pcard:hover { box-shadow: 0 0 0 1px rgba(255,255,255,.18); transform: translateY(-2px) !important; }
+.pc-img { position: relative; aspect-ratio: 4 / 3; background: #0b0b0d; display: grid; place-items: center; overflow: hidden; }
+.pc-img img { width: 100%; height: 100%; object-fit: cover; } .pc-img img.pc-logo { width: 42%; height: auto; border-radius: 50%; }
+.pc-img .pc-tick { position: absolute; left: 12px; bottom: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(0,0,0,.55); font-size: 12px; font-weight: 600; letter-spacing: .06em; color: #fff; backdrop-filter: blur(8px); }
+a.pcard .pc-body { padding: 14px 16px 16px; } a.pcard h3 { font-size: 22px; margin: 0 0 12px; }
+a.pcard .meter { height: 4px; border-radius: 4px; margin-bottom: 12px; }
+a.pcard .pc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0; } a.pcard dt { font-size: 11.5px; color: #77757a; } a.pcard dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; color: #f0ecea; }

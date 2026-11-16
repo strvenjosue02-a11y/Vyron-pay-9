@@ -689,25 +689,19 @@ function bindCarousel() {
   S.carT = setInterval(() => { if (!document.body.contains(t)) return clearInterval(S.carT); if (Date.now() > hold) go((idx() + 1) % dots.length); }, 5000);
 }
 function card(p) {
-  const r = rarity(p), ph = phase(p), f = pct(p.s.totalRaised, p.q.hardcap);
+  const ph = phase(p), f = pct(p.s.totalRaised, p.q.hardcap);
   const d = Math.max(0, Math.ceil((Number(p.q.saleEnd) - S.now) / 86400));
-  return `<a class="pcard ${r.k}" href="#/p/${p.id}" data-testid="row-${p.id}" style="--pc:${esc(p.meta.color)}">
-    <div class="pc-in">
-      <div class="pc-top"><span class="pc-rar">${STAR.repeat(r.n)}<span>${r.t}</span></span><span class="pc-pct">${f.toFixed(0)}%</span></div>
-      ${coverSrc(p) ? `<div class="pc-art has-cover" aria-hidden="true"><img class="pc-cover" src="${esc(coverSrc(p))}" alt="" loading="lazy"><span class="pc-tick">${esc(p.q.symbol)}</span>${p.exists ? `<span class="pc-ver" title="Contract created on-chain"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Verified</span>` : ""}${ph.c === "open" ? `<span class="pc-count" data-end="${Number(p.q.saleEnd)}">${countdown(Number(p.q.saleEnd))}</span>` : ""}</div>`
-        : `<div class="pc-art" aria-hidden="true"><i class="pc-sun"></i>${logoSrc(p) ? `<img class="pc-coin" src="${esc(logoSrc(p))}" alt="">` : `<b>${esc(p.q.symbol)}</b>`}<span class="pc-tick">${esc(p.q.symbol)}</span></div>`}
-      <div class="pc-body">
-        <h3>${esc(p.q.name)}</h3>
-        <p>${esc(p.meta.tagline)}</p>
-        ${p.mk ? `<div class="pc-mkt"><span class="pc-px">${fmtP(p.mk.price)}</span><span class="pc-chg ${p.mk.price >= p.mk.round ? "up" : "dn"}">${p.mk.price >= p.mk.round ? "+" : ""}${(((p.mk.price - p.mk.round) / p.mk.round) * 100).toFixed(1)}%</span>${spark(p)}</div>` : ""}
-        <div class="pc-backers">${faces(p)}</div>
-        <div class="meter"><b style="width:${f}%"></b><s style="left:${pct(p.q.softcap, p.q.hardcap)}%"></s></div>
-        <dl class="pc-stats">
-          <div><dt>Raised</dt><dd>$${usd(p.s.totalRaised)}</dd></div>
-          <div><dt>Goal</dt><dd>$${usd(p.q.hardcap)}</dd></div>
-          <div><dt>${ph.c === "open" ? "Days left" : "Status"}</dt><dd>${ph.c === "open" ? d : ph.t}</dd></div>
-        </dl>
-      </div>
+  const img = coverSrc(p) ? `<img src="${esc(coverSrc(p))}" alt="" loading="lazy">` : logoSrc(p) ? `<img class="pc-logo" src="${esc(logoSrc(p))}" alt="">` : `<b>${esc(p.q.symbol)}</b>`;
+  return `<a class="pcard" href="#/p/${p.id}" data-testid="row-${p.id}" style="--pc:${esc(p.meta.color)}">
+    <div class="pc-img">${img}<span class="pc-tick">${esc(p.q.symbol)}</span></div>
+    <div class="pc-body">
+      <h3>${esc(p.q.name)}</h3>
+      <div class="meter"><b style="width:${f}%"></b><s style="left:${pct(p.q.softcap, p.q.hardcap)}%"></s></div>
+      <dl class="pc-stats">
+        <div><dt>Raised</dt><dd>$${usd(p.s.totalRaised)}</dd></div>
+        <div><dt>Goal</dt><dd>$${usd(p.q.hardcap)}</dd></div>
+        <div><dt>${ph.c === "open" ? "Days left" : "Status"}</dt><dd>${ph.c === "open" ? d : ph.t}</dd></div>
+      </dl>
     </div>
   </a>`;
 }
