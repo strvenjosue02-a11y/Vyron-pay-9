@@ -1,6 +1,6 @@
 // Código compartido entre la web y el servidor (sin dependencias).
 
-export const META_KEYS = ["category", "color", "tagline", "about", "logo", "team"];
+export const META_KEYS = ["category", "color", "tagline", "about", "logo", "team", "cover"];
 export const PARAM_KEYS = ["creator", "name", "symbol", "softcap", "hardcap", "saleTokens", "creatorTokens",
   "saleEnd", "initialBps", "milestones", "milestonePeriod", "liquidityBps"];
 
@@ -34,6 +34,7 @@ export function validate(p, nowSec) {
   if (!COLORS.includes(m.color)) return "Invalid colour.";
   if (!m.tagline || m.tagline.length < 10 || m.tagline.length > 120) return "The one-line summary must be 10 to 120 characters.";
   if (!m.about || m.about.length < 40 || m.about.length > 2000) return "The description must be 40 to 2,000 characters.";
+  if (m.cover && !(/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(m.cover) && m.cover.length <= 300000)) return "The cover image must be a PNG, JPG or WebP under 220 KB.";
   if (m.logo && !(/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(m.logo) && m.logo.length <= 90000)) return "The token logo must be a PNG, JPG or WebP under 60 KB.";
   if (m.team) {
     let t; try { t = JSON.parse(m.team); } catch { return "Invalid team data."; }

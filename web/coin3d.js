@@ -13,7 +13,7 @@ function faceTexture(T, logo, color, symbol) {
     x.strokeStyle = "rgba(255,46,136,.35)"; x.lineWidth = 2; x.beginPath(); x.arc(256, 256, 214, 0, Math.PI * 2); x.stroke();
     const done = () => { const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 4; resolve(t); };
     if (!logo) {
-      x.fillStyle = color || "#ff2e88"; x.font = "italic 600 150px Newsreader, Georgia, serif"; x.textAlign = "center"; x.textBaseline = "middle";
+      x.fillStyle = color || "#ff2e88"; x.font = "italic 600 150px 'Instrument Serif', Georgia, serif"; x.textAlign = "center"; x.textBaseline = "middle";
       x.fillText(symbol || "", 256, 262); return done();
     }
     const im = new Image(); im.crossOrigin = "anonymous";

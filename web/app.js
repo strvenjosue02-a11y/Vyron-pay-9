@@ -117,6 +117,13 @@ async function refresh() {
   route();
 }
 
+// eventos con rango que se achica si el RPC rechaza rangos grandes
+async function events(args, head) {
+  for (const span of [45000n, 5000n, 800n]) {
+    try { return await pub.getContractEvents({ ...args, fromBlock: head > span ? head - span : 0n }); } catch {}
+  }
+  return [];
+}
 // ================================================================= actividad en vivo (eventos on-chain)
 async function loadActivity() {
   try {
@@ -124,8 +131,8 @@ async function loadActivity() {
     const fromBlock = head > 45000n ? head - 45000n : 0n;
     const lists = await Promise.all(S.list.filter((p) => p.exists).map(async (p) => {
       const [bought, fin] = await Promise.all([
-        pub.getContractEvents({ address: p.address, abi: ABI, eventName: "Bought", fromBlock }).catch(() => []),
-        pub.getContractEvents({ address: p.address, abi: ABI, eventName: "Finalized", fromBlock }).catch(() => []),
+        events({ address: p.address, abi: ABI, eventName: "Bought" }, head),
+        events({ address: p.address, abi: ABI, eventName: "Finalized" }, head),
       ]);
       p.backers = new Set(bought.map((e) => e.args.buyer.toLowerCase())).size; p.backersPartial = fromBlock > 0n;
       p.order = {}; bought.forEach((e) => { const a = e.args.buyer.toLowerCase(); if (!(a in p.order)) p.order[a] = Object.keys(p.order).length + 1; });
@@ -166,7 +173,7 @@ async function loadTrades(p) {
   if (!p.mk) return [];
   try {
     const head = await pub.getBlockNumber(), fromBlock = head > 45000n ? head - 45000n : 0n;
-    const ev = await pub.getContractEvents({ address: p.s.pool, abi: POOL_ABI, eventName: "Swap", fromBlock });
+    const ev = await events({ address: p.s.pool, abi: POOL_ABI, eventName: "Swap" }, head);
     const list = ev.map((e) => {
       const usdcAmt = p.mk.usdc0 ? e.args.amount0 : e.args.amount1, tokAmt = p.mk.usdc0 ? e.args.amount1 : e.args.amount0;
       return { buy: usdcAmt > 0n, usdc: usdcAmt < 0n ? -usdcAmt : usdcAmt, tok: tokAmt < 0n ? -tokAmt : tokAmt, price: usdcPerToken(e.args.sqrtPriceX96, p.mk.usdc0), who: e.args.recipient, block: e.blockNumber };
@@ -400,6 +407,7 @@ function left(p) {
   return days >= 1 ? `${days} day${days === 1 ? "" : "s"} left` : `${Math.ceil(d / 3600)} hours left`;
 }
 const logoSrc = (p) => { const l = p.meta?.logo || ""; return /^data:image\/(webp|png|jpeg);base64,/.test(l) || /^\.\/assets\/tokens\/[\w-]+\.svg$/.test(l) ? l : ""; };
+const coverSrc = (p) => { const c = p.meta?.cover || ""; return /^data:image\/(webp|png|jpeg);base64,/.test(c) || /^\.\/assets\/covers\/[\w-]+\.webp$/.test(c) ? c : ""; };
 const mark = (p, lg = "") => logoSrc(p) ? `<img class="mark ${lg} logo" src="${esc(logoSrc(p))}" alt="" width="64" height="64">` : `<div class="mark ${lg}" style="background:${esc(p.meta.color)}" aria-hidden="true">${esc(initials(p.q.name))}</div>`;
 const meter = (p) => `<div class="meter" role="img" aria-label="${pct(p.s.totalRaised, p.q.hardcap).toFixed(0)}% raised"><b style="width:${pct(p.s.totalRaised, p.q.hardcap)}%"></b><s style="left:${pct(p.q.softcap, p.q.hardcap)}%"></s></div>`;
 const maxLoss = (p) => (p.s.state === 1 ? 100 - pct(p.s.poolAfterFees - p.s.usdcReleased, p.s.totalRaised) : p.s.state === 2 ? null : 0);
@@ -414,7 +422,7 @@ function vHome() {
   <section class="hero">
     <div class="noir" aria-hidden="true"><div class="city3d"></div><div class="rain"></div><div class="rain r2"></div><div class="wet"></div></div>
     <div>
-      <h1 class="glitch" data-text="Hold fast to what you back.">Hold fast to what you back.</h1>
+      <h1 class="glitch" data-text="Hold fast to what you back.">Hold fast to <em>what you back.</em></h1>
       <p>Back early-stage projects with USDC. Your money stays locked in a contract no one owns, and the team gets paid in stages, only when backers vote yes.</p>
       <div class="cta"><button class="btn btn-dark" type="button" data-scroll="projects">Browse projects</button><a class="btn btn-line" href="#/launch">Launch a project</a></div>
       <p class="hero-promise"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ember)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Goal missed? You get 100% back.</p>
@@ -445,16 +453,24 @@ function rarity(p) {
   if (f >= 25) return { k: "rare", t: "Rare", n: 2 };
   return { k: "common", t: "Common", n: 1 };
 }
+const countdown = (end) => { const s = Math.max(0, end - Math.floor(Date.now() / 1000) - ((S.now || 0) ? 0 : 0)); const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), x = s % 60;
+  return s ? `Closes in ${d}d ${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m ${String(x).padStart(2, "0")}s` : "Closing"; };
+const faces = (p) => { const list = Object.keys(p.order || {}).slice(-4).reverse(), n = p.backers || 0;
+  if (!n) return `<span class="pc-first">Be the first backer</span>`;
+  return `<span class="pc-faces">${list.map((a) => `<i style="--h:${parseInt(a.slice(2, 6), 16) % 360}"></i>`).join("")}</span><span>${n} backer${n === 1 ? "" : "s"}</span>`; };
 function card(p) {
   const r = rarity(p), ph = phase(p), f = pct(p.s.totalRaised, p.q.hardcap);
   const d = Math.max(0, Math.ceil((Number(p.q.saleEnd) - S.now) / 86400));
   return `<a class="pcard ${r.k}" href="#/p/${p.id}" data-testid="row-${p.id}" style="--pc:${esc(p.meta.color)}">
     <div class="pc-in">
       <div class="pc-top"><span class="pc-rar">${STAR.repeat(r.n)}<span>${r.t}</span></span><span class="pc-pct">${f.toFixed(0)}%</span></div>
-      <div class="pc-art" aria-hidden="true"><i class="pc-sun"></i>${logoSrc(p) ? `<img class="pc-coin" src="${esc(logoSrc(p))}" alt="">` : `<b>${esc(p.q.symbol)}</b>`}<span class="pc-tick">${esc(p.q.symbol)}</span></div>
+      ${coverSrc(p) ? `<div class="pc-art has-cover" aria-hidden="true"><img class="pc-cover" src="${esc(coverSrc(p))}" alt="" loading="lazy"><span class="pc-tick">${esc(p.q.symbol)}</span>${p.exists ? `<span class="pc-ver" title="Contract created on-chain"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Verified</span>` : ""}${ph.c === "open" ? `<span class="pc-count" data-end="${Number(p.q.saleEnd)}">${countdown(Number(p.q.saleEnd))}</span>` : ""}</div>`
+        : `<div class="pc-art" aria-hidden="true"><i class="pc-sun"></i>${logoSrc(p) ? `<img class="pc-coin" src="${esc(logoSrc(p))}" alt="">` : `<b>${esc(p.q.symbol)}</b>`}<span class="pc-tick">${esc(p.q.symbol)}</span></div>`}
       <div class="pc-body">
         <h3>${esc(p.q.name)}</h3>
         <p>${esc(p.meta.tagline)}</p>
+        ${p.mk ? `<div class="pc-mkt"><span class="pc-px">${fmtP(p.mk.price)}</span><span class="pc-chg ${p.mk.price >= p.mk.round ? "up" : "dn"}">${p.mk.price >= p.mk.round ? "+" : ""}${(((p.mk.price - p.mk.round) / p.mk.round) * 100).toFixed(1)}%</span>${spark(p)}</div>` : ""}
+        <div class="pc-backers">${faces(p)}</div>
         <div class="meter"><b style="width:${f}%"></b><s style="left:${pct(p.q.softcap, p.q.hardcap)}%"></s></div>
         <dl class="pc-stats">
           <div><dt>Raised</dt><dd>$${usd(p.s.totalRaised)}</dd></div>
@@ -466,6 +482,7 @@ function card(p) {
   </a>`;
 }
 function bindCards() {
+  clearInterval(S.cdT); S.cdT = setInterval(() => { const els = document.querySelectorAll(".pc-count"); if (!els.length) return clearInterval(S.cdT); els.forEach((e) => (e.textContent = countdown(Number(e.dataset.end)))); }, 1000);
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   document.querySelectorAll(".pcard").forEach((c) => {
     c.onpointermove = (e) => {
@@ -625,12 +642,12 @@ async function backerCard(p) {
   x.restore();
   const src = logoSrc(p);
   if (src) { const im = new Image(); im.src = src; await im.decode().catch(() => {}); x.save(); x.beginPath(); x.arc(450, 420, 120, 0, Math.PI * 2); x.clip(); x.drawImage(im, 330, 300, 240, 240); x.restore(); }
-  x.fillStyle = "#f2f2ef"; x.font = "600 30px Geist, sans-serif"; x.fillText(`${"★".repeat(r.n)} ${r.t.toUpperCase()}`, 56, 82);
+  x.fillStyle = "#f2f2ef"; x.font = "600 30px 'Inter Tight', sans-serif"; x.fillText(`${"★".repeat(r.n)} ${r.t.toUpperCase()}`, 56, 82);
   x.textAlign = "right"; x.fillText("HOLDFAST", 844, 82); x.textAlign = "left";
-  x.font = "500 76px Newsreader, Georgia, serif"; x.fillText(p.q.name, 56, 830);
-  x.fillStyle = "#b4b5b1"; x.font = "400 34px Geist, sans-serif"; x.fillText(n ? `Backer #${n}` : "Backer", 56, 890);
-  x.fillStyle = "#ff6a3d"; x.font = "600 96px Geist, sans-serif"; x.fillText(`$${usd(amt)}`, 56, 1030);
-  x.fillStyle = "#7e8085"; x.font = "400 30px Geist, sans-serif"; x.fillText(`${tok((amt * p.q.saleTokens) / p.q.hardcap)} ${p.q.symbol}  ·  ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`, 56, 1090);
+  x.font = "500 76px 'Instrument Serif', Georgia, serif"; x.fillText(p.q.name, 56, 830);
+  x.fillStyle = "#b4b5b1"; x.font = "400 34px 'Inter Tight', sans-serif"; x.fillText(n ? `Backer #${n}` : "Backer", 56, 890);
+  x.fillStyle = "#ff6a3d"; x.font = "600 96px 'Inter Tight', sans-serif"; x.fillText(`$${usd(amt)}`, 56, 1030);
+  x.fillStyle = "#7e8085"; x.font = "400 30px 'Inter Tight', sans-serif"; x.fillText(`${tok((amt * p.q.saleTokens) / p.q.hardcap)} ${p.q.symbol}  ·  ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`, 56, 1090);
   x.fillText(short(S.me), 56, 1190); x.textAlign = "right"; x.fillText("holdfast", 844, 1190);
   const url = c.toDataURL("image/png");
   const el = $("#sheet");
@@ -936,7 +953,7 @@ function route() {
   if (key === "market") { $("#app").innerHTML = vMarket(); S.list.filter((x) => x.mk && !x.trades).forEach((x) => loadTrades(x).then(() => { if (location.hash.startsWith("#/market")) $("#app").innerHTML = vMarket(); })); return; }
   $("#app").innerHTML = p ? vProject(p) : key === "launch" ? vLaunch() : key === "portfolio" ? vPortfolio() : key === "owner" ? vOwner() : vHome();
   if (p) { bindAmount(p); bindTab(p); bindTrade(p); celebrate(p); if (p.mk && !p.trades) loadTrades(p).then(() => { if (S.tab === "trade") { $(".ptab-body").innerHTML = tabBody(p); } }); }
-  if (!p && key === "home") bindCards();
+  if (!p && key === "home") { bindCards(); S.list.filter((x) => x.mk).forEach((x) => loadTrades(x).then(() => { const el = document.querySelector(`[data-testid="row-${x.id}"] .pc-mkt .spark`); if (el) el.outerHTML = spark(x); })); }
   if (p && keep && $("#amt")) { $("#amt").value = keep; $("#amt").dispatchEvent(new Event("input")); }
   if ($("#form")) { $("#form").addEventListener("input", preview); $("#form").addEventListener("submit", submitProject); $("#f-logo").addEventListener("change", pickLogo);
     $("#tm-add").onclick = () => { const h = document.querySelector(".tm-row.d-none"); if (h) h.classList.remove("d-none"); if (!document.querySelector(".tm-row.d-none")) $("#tm-add").remove(); };

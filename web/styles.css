@@ -9,8 +9,8 @@
   --ok: #4fbf8b; --ok-soft: rgba(79,191,139,.12); --warn: #f0b04a; --warn-soft: rgba(240,176,74,.12); --bad: #ff6b5e; --bad-soft: rgba(255,107,94,.12);
   --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s6: 48px; --s8: 64px; --s12: 96px;
   --r-sm: 12px; --r-md: 16px; --r-lg: 24px; --r-xl: 32px;
-  --display: "Newsreader", Georgia, "Times New Roman", serif;
-  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Instrument Serif", "Newsreader", Georgia, "Times New Roman", serif;
+  --font: "Inter Tight", "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --gutter: clamp(16px, 4vw, 32px);
 }
 * { box-sizing: border-box; }
@@ -610,3 +610,74 @@ html, body { overflow-x: clip; }
 }
 @media (prefers-reduced-motion: reduce) { .city3d { animation: none; } }
 .city3d { -webkit-mask: linear-gradient(#000 65%, transparent); mask: linear-gradient(#000 65%, transparent); }
+
+
+/* ===== Parte 2 v2: moderno, limpio, oscuro + cartas negras de lujo ===== */
+body { font-feature-settings: "ss01", "cv11"; letter-spacing: -0.005em; }
+h1, h2, h3, .hero h1 { font-family: var(--display); font-weight: 400; letter-spacing: -0.02em; }
+.hero h1 { font-size: clamp(56px, 9.5vw, 120px); line-height: .92; }
+.hero h1 em, h2 em { font-style: italic; color: #ffd9cc; }
+.live { border: 0; background: none; padding: 0; gap: 0; margin-top: 8px; border-top: 1px solid rgba(255,255,255,.07); border-bottom: 1px solid rgba(255,255,255,.07); }
+.live > div:not(.live-note) { padding: 32px 0; }
+.live b { font-family: var(--display); font-weight: 400; font-size: clamp(44px, 6vw, 64px); letter-spacing: -0.02em; background: linear-gradient(180deg, #fff, #ffc4b3); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.live span { font-size: 13px; color: #8d8f95; letter-spacing: .01em; }
+.steps { counter-reset: st; }
+.steps li { background: none; border: 0; border-top: 1px solid rgba(255,255,255,.08); border-radius: 0; padding: 28px 0 0; }
+.steps li::before { counter-increment: st; content: "0" counter(st); display: block; font-family: var(--display); font-style: italic; font-size: 22px; color: #ff6a3d; margin-bottom: 18px; }
+.steps li > :first-child:not(h3) { display: none; }
+.ticker { border-color: rgba(255,255,255,.06); background: rgba(255,255,255,.015); }
+
+/* cartas: tarjeta negra de lujo */
+a.pcard { --rc: rgba(255,255,255,.18); --sh: rgba(255,106,61,0); border-radius: 22px; background: none; border: 0; box-shadow: none; padding: 0; overflow: visible;
+  transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .4s cubic-bezier(.2,.7,.2,1), box-shadow .4s; }
+a.pcard.rare { --rc: rgba(255,159,107,.45); --sh: rgba(255,106,61,.10); }
+a.pcard.epic { --rc: rgba(255,46,136,.55); --sh: rgba(255,46,136,.14); }
+a.pcard.legendary { --rc: rgba(255,214,190,.8); --sh: rgba(255,170,130,.2); }
+a.pcard::before { content: ""; position: absolute; inset: 0; border-radius: 22px; padding: 1px; z-index: 2; pointer-events: none; animation: none;
+  background: linear-gradient(150deg, var(--rc), rgba(255,255,255,.04) 30%, rgba(255,255,255,.02) 70%, var(--rc));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+a.pcard .pc-in { position: relative; border-radius: 22px; overflow: hidden; clip-path: none; border: 0;
+  background: radial-gradient(120% 60% at 50% 0%, #1a1719, transparent 60%), linear-gradient(180deg, #121113, #09090a);
+  box-shadow: 0 30px 60px -20px rgba(0,0,0,.8), 0 0 80px -30px var(--sh); }
+/* reflejo satinado que sigue al dedo, muy sutil */
+a.pcard .pc-in::after { content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: normal; opacity: 1;
+  background: radial-gradient(500px circle at var(--mx, 30%) var(--my, 0%), rgba(255,255,255,.06), transparent 40%),
+    linear-gradient(115deg, transparent 40%, rgba(255,255,255,.035) 50%, transparent 60%); }
+a.pcard:hover .pc-in { box-shadow: 0 40px 80px -24px rgba(0,0,0,.9), 0 0 100px -20px var(--sh), 0 0 0 1px rgba(255,255,255,.04); }
+a.pcard .pc-art { background: radial-gradient(60% 70% at 50% 75%, color-mix(in srgb, var(--pc) 22%, transparent), transparent 70%); }
+a.pcard .pc-art .pc-sun { opacity: .5; filter: saturate(.8); }
+a.pcard .pc-coin { filter: drop-shadow(0 16px 30px rgba(0,0,0,.6)); }
+a.pcard .pc-rar { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #a9a4a3; }
+a.pcard.legendary .pc-rar, a.pcard.epic .pc-rar, a.pcard.rare .pc-rar { color: #ffd2c2; }
+a.pcard .pc-pct { font-variant-numeric: tabular-nums; font-size: 12.5px; color: #e9e6e4; background: rgba(255,255,255,.05); border-radius: 999px; padding: 3px 10px; box-shadow: none; }
+a.pcard .pc-tick { background: rgba(0,0,0,.4); backdrop-filter: blur(8px); border-radius: 999px; letter-spacing: .14em; font-size: 11px; }
+a.pcard h3 { font-family: var(--display); font-size: 30px; letter-spacing: -0.015em; }
+a.pcard .meter { height: 3px; border-radius: 3px; background: rgba(255,255,255,.07); box-shadow: none; }
+a.pcard .meter b { border-radius: 3px; background: linear-gradient(90deg, #ff6a3d, #ff2e88); box-shadow: 0 0 10px rgba(255,46,136,.5); }
+a.pcard dt { font-size: 11.5px; color: #77757a; letter-spacing: .02em; text-transform: none; }
+a.pcard dd { font-variant-numeric: tabular-nums; font-weight: 500; color: #f2efed; }
+.steps li::before { background: none; width: auto; height: auto; border-radius: 0; box-shadow: none; padding: 0; display: block; text-align: left; line-height: 1; }
+.steps li h3 { font-family: var(--font); font-weight: 600; font-size: 19px; letter-spacing: -0.015em; }
+/* portada del creador en la carta */
+a.pcard .pc-art.has-cover { position: relative; padding: 0; background: #000; aspect-ratio: 4 / 3; overflow: hidden; }
+a.pcard .pc-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(.2) contrast(1.05); transition: transform .8s cubic-bezier(.2,.7,.2,1); }
+a.pcard:hover .pc-cover { transform: scale(1.04); }
+a.pcard .pc-art.has-cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, #0c0b0d), radial-gradient(80% 60% at 50% 120%, color-mix(in srgb, var(--pc) 35%, transparent), transparent); mix-blend-mode: normal; }
+a.pcard .pc-mini { position: absolute; z-index: 2; left: 16px; bottom: 14px; width: 44px; height: 44px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(0,0,0,.6), 0 8px 20px rgba(0,0,0,.6); }
+a.pcard .has-cover .pc-tick { position: absolute; z-index: 2; left: 70px; bottom: 24px; }
+a.pcard .has-cover .pc-tick { left: 16px; bottom: 16px; }
+/* extras de la carta */
+a.pcard .pc-ver { position: absolute; z-index: 2; top: 14px; left: 14px; display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px 4px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .04em; color: #fff; background: rgba(0,0,0,.45); backdrop-filter: blur(10px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+a.pcard .pc-ver svg { color: #ff6a3d; }
+a.pcard .pc-count { position: absolute; z-index: 2; right: 14px; bottom: 16px; padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-variant-numeric: tabular-nums; color: #ffd9cc; background: rgba(0,0,0,.5); backdrop-filter: blur(10px); box-shadow: inset 0 0 0 1px rgba(255,106,61,.35); }
+a.pcard .pc-mkt { display: flex; align-items: center; gap: 10px; margin: 2px 0 12px; }
+a.pcard .pc-px { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 15px; color: #fff; }
+a.pcard .pc-chg { font-size: 12.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+a.pcard .pc-chg.up { color: #ff2e88; background: rgba(255,46,136,.14); text-shadow: 0 0 10px rgba(255,46,136,.5); }
+a.pcard .pc-chg.dn { color: #c58aa6; background: transparent; box-shadow: inset 0 0 0 1px rgba(255,46,136,.3); }
+a.pcard .pc-mkt .spark { margin-left: auto; width: 90px; height: 26px; }
+a.pcard .pc-backers { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 12.5px; color: #8d8b90; }
+a.pcard .pc-faces { display: inline-flex; }
+a.pcard .pc-faces i { width: 22px; height: 22px; border-radius: 50%; margin-left: -7px; box-shadow: 0 0 0 2px #0f0e10; background: radial-gradient(circle at 35% 30%, hsl(calc(var(--h) * 1deg) 90% 75%), hsl(calc(var(--h) * 1deg + 40deg) 80% 45%)); }
+a.pcard .pc-faces i:first-child { margin-left: 0; }
+a.pcard .pc-first { color: #ff9f6b; }
