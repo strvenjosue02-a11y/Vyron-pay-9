@@ -5,7 +5,7 @@ import {
 import { CONFIG } from "./config.js";
 import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
 import { initI18n } from "./i18n.js";
-import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, validate, CATEGORIES, COLORS } from "./shared.js";
+import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, validate, CATEGORIES, COLORS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
 const SALT = "0x" + "00".repeat(32);
@@ -51,8 +51,8 @@ const blankU = () => ({ contributed: 0n, claimed: false, settled: false, voted: 
 
 async function loadCatalog() {
   const seeds = await (await fetch("./projects.json", { cache: "no-store" })).json();
-  let api = [];
-  try { const r = await fetch("./api/projects", { cache: "no-store" }); if (r.ok) api = (await r.json()).projects || []; } catch {}
+  let api = [], qaRaw = {};
+  try { const r = await fetch("./api/projects", { cache: "no-store" }); if (r.ok) { const j = await r.json(); api = j.projects || []; qaRaw = j.qa || {}; } } catch {}
   // El servidor no es de confianza: cada proyecto, decisión y avance se verifica aquí con firmas.
   const checked = await Promise.all(api.map(async (x) => {
     const p = x.project, h = hashOf(p);
@@ -72,6 +72,15 @@ async function loadCatalog() {
   }));
   S.all = [...seeds.map((p) => ({ ...p, status: "approved", seed: true })), ...checked.filter(Boolean)].map(prepare);
   S.list = S.all.filter((p) => p.status === "approved");
+  await Promise.all(S.all.map(async (p) => {
+    const items = qaRaw[p.id] || [], qs = [], ans = {};
+    for (const x of items) {
+      const h = keccak256(toBytes(x.text));
+      if (x.kind === "q" && await verifyMessage({ address: x.author, message: msgQuestion(p.id, x.ts, h), signature: x.signature }).catch(() => false)) qs.push(x);
+      if (x.kind === "a" && x.author.toLowerCase() === p.params.creator.toLowerCase() && await verifyMessage({ address: x.author, message: msgAnswer(p.id, x.qts, x.ts, h), signature: x.signature }).catch(() => false)) ans[x.qts] = x;
+    }
+    p.qa = qs.sort((a, b) => b.ts - a.ts).map((q) => ({ ...q, answer: ans[q.ts] || null }));
+  }));
 }
 
 const READS = ["state", "totalRaised", "poolAfterFees", "usdcReleased", "milestonesDone", "voteEnd", "votesYes", "votesNo", "deadline", "succeeded", "refundPool", "voteRound"];
@@ -106,6 +115,8 @@ async function loadActivity() {
         pub.getContractEvents({ address: p.address, abi: ABI, eventName: "Finalized", fromBlock }).catch(() => []),
       ]);
       p.backers = new Set(bought.map((e) => e.args.buyer.toLowerCase())).size; p.backersPartial = fromBlock > 0n;
+      p.order = {}; bought.forEach((e) => { const a = e.args.buyer.toLowerCase(); if (!(a in p.order)) p.order[a] = Object.keys(p.order).length + 1; });
+      p.recent = bought.slice(-12).reverse().map((e) => ({ who: e.args.buyer, amt: e.args.usdcAmount, block: e.blockNumber })); p.head = head;
       return [...bought.map((e) => ({ kind: "buy", p, who: e.args.buyer, amt: e.args.usdcAmount, block: e.blockNumber })),
         ...fin.map((e) => ({ kind: e.args.success ? "goal" : "miss", p, block: e.blockNumber }))];
     }));
@@ -264,15 +275,35 @@ function vProject(p) {
   ${buyBar(p)}`;
 }
 const TORII = `<svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><path class="g-top" d="M6 18 Q50 27 94 18 L92 30 Q50 38 8 30Z"/><rect class="g-top" x="16" y="38" width="68" height="8" rx="2"/><path class="g-leg" d="M26 34 H35 L34 96 H25Z M65 34 H74 L75 96 H66Z"/></svg>`;
-const TABS = [["overview", "Overview"], ["protection", "Protection"], ["releases", "Releases"], ["updates", "Updates"], ["contract", "Contract"]];
+const TABS = [["overview", "Overview"], ["team", "Team"], ["releases", "Releases"], ["backers", "Backers"], ["qa", "Q&A"], ["contract", "Contract"]];
+function avatar(addr, size = 36) {
+  const h = keccak256(toBytes(addr.toLowerCase())), a = parseInt(h.slice(2, 6), 16) % 360, b = (a + 140) % 360;
+  return `<span class="ava" style="width:${size}px;height:${size}px;background:conic-gradient(from ${parseInt(h.slice(6, 8), 16)}deg, hsl(${a} 70% 55%), hsl(${b} 65% 45%), hsl(${a} 70% 55%))" aria-hidden="true"></span>`;
+}
+function team(p) { try { return JSON.parse(p.meta.team || "[]"); } catch { return []; } }
 function tabBody(p) {
   const { q } = p, step = (10000 - q.initialBps) / q.milestones / 100;
-  if (S.tab === "protection") return `<div class="rules">
-      <div>${IC.back}<div><b>Goal missed, full refund</b><p>If less than $${usd(q.softcap)} is raised by the close, every backer withdraws 100% of what they put in. No fee.</p></div></div>
-      <div>${IC.steps}<div><b>The team is paid in stages</b><p>${q.initialBps / 100}% when the raise closes, then ${q.milestones} releases of ${step}%. Backers vote on each one.</p></div></div>
-      <div>${IC.lock}<div><b>No one can touch it</b><p>The contract has no admin. If the team vanishes or loses a vote, the rest goes back to backers.</p></div></div></div>`;
+  if (S.tab === "team") {
+    const t = team(p);
+    return t.length ? `<div class="team">${t.map((m) => `<div class="member">${m.photo ? `<img src="${esc(m.photo)}" alt="" width="56" height="56">` : `<span class="m-ini" style="--pc:${esc(p.meta.color)}">${esc(initials(m.name))}</span>`}
+      <div><b>${esc(m.name)}</b><span>${esc(m.role || "")}</span>${m.link ? `<a href="${esc(m.link)}" target="_blank" rel="noopener nofollow">${esc(m.link.replace(/^https:\/\//, "").replace(/\/$/, ""))}</a>` : ""}</div></div>`).join("")}</div>
+      <p class="fine">Team details are provided and signed by the creator. Holdfast reviews them before approval.</p>` : `<p class="prose">The team hasn't added profiles yet.</p>`;
+  }
   if (S.tab === "releases") return stages(p);
-  if (S.tab === "updates") return p.updates.length ? p.updates.map((u) => `<div class="update"><time>${new Date(u.ts).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</time><p>${esc(u.text)}</p></div>`).join("") : `<p class="prose">No updates yet.</p>`;
+  if (S.tab === "backers") {
+    const r = p.recent || [];
+    return r.length ? `<ul class="backers">${r.map((x) => `<li>${avatar(x.who)}<span class="addr">${short(x.who)}</span><b>$${usd(x.amt)}</b><span class="faint">${ago((p.head || 0n) - x.block)}</span></li>`).join("")}</ul>
+      <p class="fine">Read live from the blockchain.</p>` : `<p class="prose">No backers yet. Be the first: your backing also creates the contract.</p>`;
+  }
+  if (S.tab === "qa") {
+    const isCreator = isMe(q.creator);
+    const list = (p.qa || []).map((x) => `<div class="qa">
+      <div class="qa-q">${avatar(x.author, 28)}<div><div class="qa-meta"><span class="addr">${short(x.author)}</span>${p.order?.[x.author.toLowerCase()] ? `<span class="tag-b">Backer</span>` : ""}</div><p>${esc(x.text)}</p></div></div>
+      ${x.answer ? `<div class="qa-a"><span class="tag-c">Creator</span><p>${esc(x.answer.text)}</p></div>` : isCreator ? `<div class="qa-reply"><textarea id="ans-${x.ts}" maxlength="800" placeholder="Write your answer"></textarea><button class="btn btn-line btn-sm" data-act="answer" data-qts="${x.ts}">Sign and answer</button></div>` : `<p class="faint qa-wait">Waiting for the creator's answer.</p>`}
+    </div>`).join("");
+    return `${S.me ? `<div class="ask"><textarea id="ask" maxlength="800" placeholder="Ask the team anything about this project"></textarea><button class="btn btn-dark btn-sm" data-act="ask">Sign and ask</button></div>` : `<p class="fine">Connect your wallet to ask a question.</p>`}
+      ${list || `<p class="prose">No questions yet.</p>`}`;
+  }
   if (S.tab === "contract") return `<div class="kv">
       <div><span class="muted">Address</span><a class="addr" href="${CONFIG.explorer}/address/${p.address}" target="_blank" rel="noopener">${short(p.address)}</a></div>
       <div><span class="muted">Status</span><span>${p.exists ? "Live on-chain" : "Created by the first backing"}</span></div>
@@ -280,10 +311,77 @@ function tabBody(p) {
       <div><span class="muted">Holdfast fee</span><span>1% of funds + 1.5% of tokens, only if funded</span></div>
       <div><span class="muted">Network</span><span>${esc(CONFIG.chainName)}</span></div></div>`;
   return `<p class="prose">${esc(p.meta.about)}</p>
-    <div class="ov-mini">
-      <div>${IC.back}<span>100% back if the goal of $${usd(q.softcap)} isn't met</span></div>
-      <div>${IC.steps}<span>${q.initialBps / 100}% upfront, then ${q.milestones} voted releases</span></div>
+    <section class="sim" aria-label="Investment simulator">
+      <div class="sim-h"><h3>Simulate your backing</h3><b id="sim-v">$100</b></div>
+      <input id="sim" type="range" min="10" max="1000" step="10" value="100" aria-label="Amount to simulate">
+      <div class="sim-rows">
+        <div><span>You receive</span><b id="sim-tok"></b></div>
+        <div><span>Goal of $${usd(q.softcap)} missed</span><b id="sim-miss"></b></div>
+        <div><span>Team stops after release 1</span><b id="sim-stop"></b></div>
+        <div><span>Every release approved</span><b>You keep all your tokens</b></div>
+      </div>
+    </section>
+    <div class="rules">
+      <div>${IC.back}<div><b>Goal missed, full refund</b><p>If less than $${usd(q.softcap)} is raised by the close, every backer withdraws 100% of what they put in. No fee.</p></div></div>
+      <div>${IC.steps}<div><b>The team is paid in stages</b><p>${q.initialBps / 100}% when the raise closes, then ${q.milestones} releases of ${step}%. Backers vote on each one.</p></div></div>
+      <div>${IC.lock}<div><b>No one can touch it</b><p>The contract has no admin. If the team vanishes or loses a vote, the rest goes back to backers.</p></div></div>
     </div>`;
+}
+function bindTab(p) {
+  const r = $("#sim"); if (!r) return;
+  const upd = () => {
+    const v = BigInt(r.value) * 1_000_000n, q = p.q, first = BigInt(q.initialBps) + BigInt(Math.floor((10000 - q.initialBps) / q.milestones));
+    $("#sim-v").textContent = `$${usd(v)}`;
+    $("#sim-tok").textContent = `${tok((v * q.saleTokens) / q.hardcap)} ${q.symbol}`;
+    $("#sim-miss").textContent = `$${usd(v)} back`;
+    $("#sim-stop").textContent = `about $${usd((v * 99n * (10000n - first)) / 1000000n)} back`;
+    r.style.setProperty("--fill", `${((Number(r.value) - 10) / 990) * 100}%`);
+  };
+  r.oninput = upd; upd();
+}
+function celebrate(p) {
+  if (!p.s.succeeded) return;
+  const k = `hf-cele-${p.id}`;
+  try { if (localStorage.getItem(k)) return; localStorage.setItem(k, "1"); } catch {}
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const el = document.createElement("div"); el.className = "cele"; el.setAttribute("aria-hidden", "true");
+  el.innerHTML = `<div class="cele-in">${TORII}<b>Goal reached</b><span>${esc(p.q.name)} is funded</span></div>`;
+  document.body.appendChild(el); setTimeout(() => el.remove(), 2600);
+}
+async function backerCard(p) {
+  const n = p.order?.[S.me.toLowerCase()], amt = p.u.contributed, r = rarity(p);
+  const c = document.createElement("canvas"); c.width = 900; c.height = 1260; const x = c.getContext("2d");
+  const g = x.createLinearGradient(0, 0, 0, 1260); g.addColorStop(0, "#1a1b1f"); g.addColorStop(1, "#0f1012");
+  x.fillStyle = g; x.beginPath(); x.roundRect(0, 0, 900, 1260, 48); x.fill();
+  const rim = x.createLinearGradient(0, 0, 900, 1260); ["#ff6a3d", "#ffd36b", "#4fd1c5", "#7868e6", "#e0335c"].forEach((col, i) => rim.addColorStop(i / 4, col));
+  x.strokeStyle = r.k === "legendary" ? rim : r.k === "common" ? "#393b40" : "#ff6a3d"; x.lineWidth = 8; x.beginPath(); x.roundRect(4, 4, 892, 1252, 46); x.stroke();
+  x.save(); x.beginPath(); x.roundRect(48, 120, 804, 600, 32); x.clip();
+  x.fillStyle = p.meta.color; x.globalAlpha = .25; x.fillRect(48, 120, 804, 600); x.globalAlpha = 1;
+  const sun = x.createLinearGradient(0, 200, 0, 680); sun.addColorStop(0, "#ffb27a"); sun.addColorStop(.5, p.meta.color); sun.addColorStop(1, "#3a1440");
+  x.fillStyle = sun; x.beginPath(); x.arc(450, 440, 230, 0, Math.PI * 2); x.fill();
+  x.fillStyle = "rgba(15,16,18,.6)"; [[520, 14], [570, 12], [615, 10]].forEach(([y, h]) => x.fillRect(200, y, 500, h));
+  x.restore();
+  const src = logoSrc(p);
+  if (src) { const im = new Image(); im.src = src; await im.decode().catch(() => {}); x.save(); x.beginPath(); x.arc(450, 420, 120, 0, Math.PI * 2); x.clip(); x.drawImage(im, 330, 300, 240, 240); x.restore(); }
+  x.fillStyle = "#f2f2ef"; x.font = "600 30px Geist, sans-serif"; x.fillText(`${"★".repeat(r.n)} ${r.t.toUpperCase()}`, 56, 82);
+  x.textAlign = "right"; x.fillText("HOLDFAST", 844, 82); x.textAlign = "left";
+  x.font = "500 76px Newsreader, Georgia, serif"; x.fillText(p.q.name, 56, 830);
+  x.fillStyle = "#b4b5b1"; x.font = "400 34px Geist, sans-serif"; x.fillText(n ? `Backer #${n}` : "Backer", 56, 890);
+  x.fillStyle = "#ff6a3d"; x.font = "600 96px Geist, sans-serif"; x.fillText(`$${usd(amt)}`, 56, 1030);
+  x.fillStyle = "#7e8085"; x.font = "400 30px Geist, sans-serif"; x.fillText(`${tok((amt * p.q.saleTokens) / p.q.hardcap)} ${p.q.symbol}  ·  ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`, 56, 1090);
+  x.fillText(short(S.me), 56, 1190); x.textAlign = "right"; x.fillText("holdfast", 844, 1190);
+  const url = c.toDataURL("image/png");
+  const el = $("#sheet");
+  el.innerHTML = `<h3>Your backer card</h3><p class="muted" style="margin:0;font-size:14.5px">Save it or share it. It shows your backing, not a financial instrument.</p>
+    <img class="bcard" src="${url}" alt="Your Holdfast backer card for ${esc(p.q.name)}">
+    <div class="actions"><a class="btn btn-ember btn-sm" href="${url}" download="holdfast-${p.id}-backer.png">Download</a><button class="btn btn-line btn-sm" type="button" id="bc-share">Share</button><button class="btn btn-soft btn-sm" type="button" id="bc-close">Close</button></div>`;
+  el.classList.add("on"); $("#veil").classList.add("on");
+  $("#bc-close").onclick = () => { el.classList.remove("on"); $("#veil").classList.remove("on"); };
+  $("#bc-share").onclick = async () => {
+    try { const blob = await (await fetch(url)).blob(); const file = new File([blob], `holdfast-${p.id}.png`, { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: `I backed ${p.q.name} on Holdfast` }); else toast("Sharing isn't available here. Use Download.");
+    } catch {}
+  };
 }
 function buyBar(p) {
   const ended = S.now >= Number(p.q.saleEnd) || p.s.totalRaised >= p.q.hardcap;
@@ -358,6 +456,7 @@ function pPosition(p) {
   const btns = [];
   if (s.succeeded && !u.claimed) btns.push(`<button class="btn btn-dark btn-block" data-act="claimTokens" data-testid="claim">Claim my tokens</button>`);
   if (s.state === 2 && !u.settled) btns.push(`<button class="btn btn-dark btn-block" data-act="refund" data-testid="refund">Get my money back</button>`);
+  btns.push(`<button class="btn btn-line btn-block" data-act="card" data-testid="backer-card">Get my backer card</button>`);
   return `<div class="panel"><h3>Your position</h3>${top}
     <div class="lines" style="margin-top:12px">
       <div><span>You put in</span><b>$${usd(u.contributed)}</b></div>
@@ -407,6 +506,16 @@ function vLaunch() {
         <small>Optional. PNG, JPG or WebP. It's shown on your project card and is part of what you sign.</small></div>
       <div class="f"><label>Colour</label><div class="chips swatch">${COLORS.map((c, i) => `<label><input type="radio" name="color" value="${c}" ${i ? "" : "checked"}><span style="--c:${c}" aria-label="Colour ${i + 1}"></span></label>`).join("")}</div></div>
     </fieldset>
+    <fieldset><legend>Your team</legend>
+      <p class="fine" style="margin:0 0 16px">Backers trust teams they can see. Add up to 4 people with a public link (X, GitHub, LinkedIn or a website).</p>
+      ${[0, 1, 2, 3].map((i) => `<div class="tm-row${i > 0 ? " d-none" : ""}" data-tm="${i}">
+        <label class="tm-photo" title="Photo"><input type="file" accept="image/png,image/jpeg,image/webp" data-tmphoto="${i}"><span id="tmp-${i}" aria-hidden="true"></span></label>
+        <input name="tm-name-${i}" maxlength="40" placeholder="Name" aria-label="Team member name">
+        <input name="tm-role-${i}" maxlength="40" placeholder="Role" aria-label="Team member role">
+        <input name="tm-link-${i}" maxlength="120" placeholder="https://" aria-label="Team member link">
+      </div>`).join("")}
+      <button type="button" class="btn btn-soft btn-sm" id="tm-add">Add team member</button>
+    </fieldset>
     <fieldset><legend>The money</legend>
       <div class="two">
         <div class="f"><label for="f-soft">Minimum goal (USDC)</label><input id="f-soft" name="soft" type="number" inputmode="decimal" min="1" value="1000"><small>Below this, everyone is refunded.</small></div>
@@ -433,10 +542,23 @@ function readForm() {
   const name = g("name"), id = (name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36) || "project") + "-" + Math.random().toString(16).slice(2, 6);
   const usdc = (v) => { try { return parseUnits(v || "0", 6).toString(); } catch { return "0"; } };
   const toks = (v) => { try { return parseUnits(v || "0", 18).toString(); } catch { return "0"; } };
-  return { id, meta: { category: g("category"), color: g("color"), tagline: g("tagline"), about: g("about"), logo: S.logo || "" },
+  const tm = [0, 1, 2, 3].map((i) => ({ name: g(`tm-name-${i}`), role: g(`tm-role-${i}`), link: g(`tm-link-${i}`), photo: S.tmPhotos?.[i] || "" }))
+    .filter((m) => m.name).map((m) => Object.fromEntries(Object.entries(m).filter(([, v]) => v)));
+  return { id, meta: { category: g("category"), color: g("color"), tagline: g("tagline"), about: g("about"), logo: S.logo || "", team: tm.length ? JSON.stringify(tm) : "" },
     params: { creator: S.me, name, symbol: g("symbol").toUpperCase(), softcap: usdc(g("soft")), hardcap: usdc(g("hard")),
       saleTokens: toks(g("saleTokens")), creatorTokens: toks(g("creatorTokens")), saleEnd: String(Math.floor(Date.now() / 1000) + Number(g("days")) * 86400),
       initialBps: String(Number(g("initial")) * 100), milestones: g("ms"), milestonePeriod: String(Number(g("period")) * 86400) } };
+}
+async function pickImage(e, size, max, done) {
+  const f = e.target.files?.[0]; if (!f) return;
+  try {
+    const img = await createImageBitmap(f), c = document.createElement("canvas"); c.width = c.height = size;
+    const k = Math.max(size / img.width, size / img.height), w = img.width * k, h = img.height * k;
+    c.getContext("2d").drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+    let url = c.toDataURL("image/webp", 0.85); if (!url.startsWith("data:image/webp")) url = c.toDataURL("image/png");
+    if (url.length > max) return toast("That image is too big. Try a simpler one.", true);
+    done(url);
+  } catch { toast("That file isn't an image we can read.", true); }
 }
 async function pickLogo(e) {
   const f = e.target.files?.[0];
@@ -547,10 +669,13 @@ function route() {
   if (key === "launch" && $("#form")) return; // no borrar lo que el creador está escribiendo
   const keep = $("#amt")?.value;
   $("#app").innerHTML = p ? vProject(p) : key === "launch" ? vLaunch() : key === "portfolio" ? vPortfolio() : key === "owner" ? vOwner() : vHome();
-  if (p) bindAmount(p);
+  if (p) { bindAmount(p); bindTab(p); celebrate(p); }
   if (!p && key === "home") bindCards();
   if (p && keep && $("#amt")) { $("#amt").value = keep; $("#amt").dispatchEvent(new Event("input")); }
-  if ($("#form")) { $("#form").addEventListener("input", preview); $("#form").addEventListener("submit", submitProject); $("#f-logo").addEventListener("change", pickLogo); preview(); }
+  if ($("#form")) { $("#form").addEventListener("input", preview); $("#form").addEventListener("submit", submitProject); $("#f-logo").addEventListener("change", pickLogo);
+    $("#tm-add").onclick = () => { const h = document.querySelector(".tm-row.d-none"); if (h) h.classList.remove("d-none"); if (!document.querySelector(".tm-row.d-none")) $("#tm-add").remove(); };
+    document.querySelectorAll("[data-tmphoto]").forEach((inp) => inp.addEventListener("change", (e) => pickImage(e, 128, 40000, (url) => { (S.tmPhotos ||= [])[inp.dataset.tmphoto] = url; $(`#tmp-${inp.dataset.tmphoto}`).style.backgroundImage = `url("${url}")`; })));
+    preview(); }
 }
 function bindAmount(p) {
   const el = $("#amt"); if (!el) return;
@@ -620,7 +745,7 @@ async function buy(p) {
   if (allowance < amount) { labels.push("Allow your USDC"); fns.push(() => S.wallet.writeContract({ address: CONFIG.usdc, abi: erc20Abi, functionName: "approve", args: [p.address, amount] })); }
   if (!code || code === "0x") { labels.push("Create the project contract"); fns.push(() => S.wallet.sendTransaction({ to: CONFIG.deployer, data: concat([SALT, p.initCode]) })); }
   labels.push(`Back with ${usd(amount)} USDC`); fns.push(() => S.wallet.writeContract({ address: p.address, abi: ABI, functionName: "buy", args: [amount, S.me] }));
-  await flow("Back this project", labels, fns, "Backed");
+  if (await flow("Back this project", labels, fns, "Backed")) { await refresh(); await loadActivity(); const np = S.list.find((x) => x.id === p.id); if (np) setTimeout(() => backerCard(np), 900); }
 }
 const ACTS = { finalize: ["Close the raise", "finalize", []], claimTokens: ["Claim my tokens", "claimTokens", []], refund: ["Get my money back", "refund", []],
   voteYes: ["Approve release", "vote", [true]], voteNo: ["Reject release", "vote", [false]], closeVote: ["Apply the result", "closeVote", []],
@@ -660,6 +785,17 @@ async function openPanel() {
   try { S.reviews = (await api("./api/reviews", { day: d, signature: sig })).reviews; } catch (e) { toast(e.message, true); }
   route();
 }
+async function qaPost(p, act, qts) {
+  const text = (act === "ask" ? $("#ask") : $(`#ans-${qts}`)).value.trim();
+  if (text.length < 5) return toast("Write at least 5 characters.", true);
+  const ts = Date.now(); let sig;
+  const msg = act === "ask" ? msgQuestion(p.id, ts, keccak256(toBytes(text))) : msgAnswer(p.id, Number(qts), ts, keccak256(toBytes(text)));
+  const ok = await flow(act === "ask" ? "Ask a question" : "Answer", ["Sign with your wallet", "Post"], [
+    async () => { sig = await sign(msg); },
+    async () => api("./api/qa", { id: p.id, kind: act === "ask" ? "q" : "a", text, ts, qts: Number(qts) || undefined, author: S.me, signature: sig }),
+  ], act === "ask" ? "Question posted" : "Answer posted");
+  if (ok) { S.tab = "qa"; await loadCatalog(); await refresh(); }
+}
 async function postUpdate(id) {
   const text = $(`#up-${id}`).value.trim();
   if (text.length < 10) return toast("Write at least 10 characters.", true);
@@ -673,7 +809,7 @@ async function postUpdate(id) {
 
 document.addEventListener("click", async (e) => {
   const tb = e.target.closest("[data-tab]");
-  if (tb) { S.tab = tb.dataset.tab; document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", x === tb)); const p = S.list.find((x) => location.hash === `#/p/${x.id}`); if (p) $(".ptab-body").innerHTML = tabBody(p); return; }
+  if (tb) { S.tab = tb.dataset.tab; document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", x === tb)); const p = S.list.find((x) => location.hash === `#/p/${x.id}`); if (p) { $(".ptab-body").innerHTML = tabBody(p); bindTab(p); } return; }
   if (e.target.closest("#bb-go")) { const v = $("#amt")?.value; if (v && Number(v) > 0) return $('[data-act="buy"]')?.click(); $("#amt")?.scrollIntoView({ block: "center", behavior: "smooth" }); setTimeout(() => $("#amt")?.focus(), 400); return; }
   const sc = e.target.closest("[data-scroll]");
   if (sc) return document.getElementById(sc.dataset.scroll)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
@@ -689,6 +825,8 @@ document.addEventListener("click", async (e) => {
     else if (act === "approve" || act === "reject") return await decide(b.dataset.id, act === "approve");
     else if (act === "openPanel") return await openPanel();
     else if (act === "postUpdate") return await postUpdate(b.dataset.id);
+    else if (act === "card") return await backerCard(p);
+    else if (act === "ask" || act === "answer") return await qaPost(p, act, b.dataset.qts);
     await refresh();
   } catch (x) { console.error(x); toast(x.shortMessage || x.message, true); }
   finally { document.querySelectorAll("button").forEach((x) => (x.disabled = false)); }

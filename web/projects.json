@@ -6,7 +6,8 @@
       "color": "#E0335C",
       "logo": "./assets/tokens/kite.svg",
       "tagline": "USDC payouts for Latin American freelancers, settled in seconds.",
-      "about": "Kite Pay lets clients pay freelancers in USDC and lets freelancers cash out to local bank accounts in Mexico, Colombia and Argentina. Release one ships the payout app, release two adds bank partners in two countries, release three opens the API for marketplaces. Demo with a small goal so the full cycle can be tested with a few test USDC."
+      "about": "Kite Pay lets clients pay freelancers in USDC and lets freelancers cash out to local bank accounts in Mexico, Colombia and Argentina. Release one ships the payout app, release two adds bank partners in two countries, release three opens the API for marketplaces. Demo with a small goal so the full cycle can be tested with a few test USDC.",
+      "team": "[{\"name\": \"Valeria Ortiz\", \"role\": \"Founder, payments\", \"link\": \"https://github.com\"}, {\"name\": \"Tomás Ríos\", \"role\": \"Engineering lead\", \"link\": \"https://github.com\"}]"
     },
     "params": {
       "creator": "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
@@ -29,7 +30,8 @@
       "color": "#0E7490",
       "logo": "./assets/tokens/atlas.svg",
       "tagline": "Reliable on-chain prices for emerging-market currencies.",
-      "about": "Atlas Oracle publishes signed price feeds for currencies most oracles ignore, such as COP, ARS, NGN and PHP, so lending and payment protocols can serve those markets safely. Funds pay for independent data providers, an audit of the feed contracts and the first two production integrations."
+      "about": "Atlas Oracle publishes signed price feeds for currencies most oracles ignore, such as COP, ARS, NGN and PHP, so lending and payment protocols can serve those markets safely. Funds pay for independent data providers, an audit of the feed contracts and the first two production integrations.",
+      "team": "[{\"name\": \"Adaeze Okafor\", \"role\": \"Founder, data\", \"link\": \"https://github.com\"}, {\"name\": \"Marco Lim\", \"role\": \"Smart contracts\", \"link\": \"https://github.com\"}, {\"name\": \"Sofía Paz\", \"role\": \"Partnerships\", \"link\": \"https://github.com\"}]"
     },
     "params": {
       "creator": "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
@@ -52,7 +54,8 @@
       "color": "#6B3A8C",
       "logo": "./assets/tokens/lumen.svg",
       "tagline": "A self-custody mobile wallet with social recovery and no seed phrase.",
-      "about": "Lumen Wallet replaces the seed phrase with recovery by trusted contacts and a hardware key, so people can hold their own crypto without the fear of losing twelve words. Releases cover the security audit, the iOS and Android betas and a public bug bounty."
+      "about": "Lumen Wallet replaces the seed phrase with recovery by trusted contacts and a hardware key, so people can hold their own crypto without the fear of losing twelve words. Releases cover the security audit, the iOS and Android betas and a public bug bounty.",
+      "team": "[{\"name\": \"Kenji Arai\", \"role\": \"Founder, security\", \"link\": \"https://github.com\"}, {\"name\": \"Lea Moreau\", \"role\": \"Mobile lead\", \"link\": \"https://github.com\"}]"
     },
     "params": {
       "creator": "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",

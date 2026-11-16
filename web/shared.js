@@ -1,6 +1,6 @@
 // Código compartido entre la web y el servidor (sin dependencias).
 
-export const META_KEYS = ["category", "color", "tagline", "about", "logo"];
+export const META_KEYS = ["category", "color", "tagline", "about", "logo", "team"];
 export const PARAM_KEYS = ["creator", "name", "symbol", "softcap", "hardcap", "saleTokens", "creatorTokens",
   "saleEnd", "initialBps", "milestones", "milestonePeriod"];
 
@@ -18,6 +18,8 @@ export function canonical(p) {
 export const msgSubmit = (id, hash) => `Holdfast: submit project\nid: ${id}\nhash: ${hash}`;
 export const msgDecision = (approve, id, hash) => `Holdfast: ${approve ? "approve" : "reject"} project\nid: ${id}\nhash: ${hash}`;
 export const msgUpdate = (id, ts, hash) => `Holdfast: post update\nproject: ${id}\ntime: ${ts}\nhash: ${hash}`;
+export const msgQuestion = (id, ts, hash) => `Holdfast: ask a question\nproject: ${id}\ntime: ${ts}\nhash: ${hash}`;
+export const msgAnswer = (id, qts, ts, hash) => `Holdfast: answer a question\nproject: ${id}\nquestion: ${qts}\ntime: ${ts}\nhash: ${hash}`;
 export const msgPanel = (day) => `Holdfast: open owner panel\ndate: ${day}`;
 
 const DAY = 86400;
@@ -33,6 +35,16 @@ export function validate(p, nowSec) {
   if (!m.tagline || m.tagline.length < 10 || m.tagline.length > 120) return "The one-line summary must be 10 to 120 characters.";
   if (!m.about || m.about.length < 40 || m.about.length > 2000) return "The description must be 40 to 2,000 characters.";
   if (m.logo && !(/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(m.logo) && m.logo.length <= 90000)) return "The token logo must be a PNG, JPG or WebP under 60 KB.";
+  if (m.team) {
+    let t; try { t = JSON.parse(m.team); } catch { return "Invalid team data."; }
+    if (!Array.isArray(t) || t.length > 4) return "Add up to 4 team members.";
+    for (const x of t) {
+      if (!x || typeof x.name !== "string" || x.name.length < 2 || x.name.length > 40) return "Each team member needs a name (2 to 40 characters).";
+      if (typeof x.role !== "string" || x.role.length > 40) return "Team roles must be under 40 characters.";
+      if (x.link && !/^https:\/\/[^\s]{4,120}$/.test(x.link)) return "Team links must start with https://.";
+      if (x.photo && !(/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(x.photo) && x.photo.length <= 40000)) return "Team photos must be small images.";
+    }
+  }
   if (!/^0x[0-9a-fA-F]{40}$/.test(q.creator || "")) return "Invalid creator wallet.";
   if (!q.name || q.name.length < 3 || q.name.length > 40) return "The name must be 3 to 40 characters.";
   if (!/^[A-Z0-9]{2,8}$/.test(q.symbol || "")) return "The ticker must be 2 to 8 capital letters or digits.";
