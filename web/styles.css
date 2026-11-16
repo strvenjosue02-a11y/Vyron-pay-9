@@ -560,3 +560,53 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .spark path { stroke: #ff2e88 !important; filter: drop-shadow(0 0 4px rgba(255,46,136,.85)) !important; }
 .chart-card { background: radial-gradient(80% 60% at 50% 0%, rgba(255,46,136,.10), transparent 70%), #0b0a10; }
 .cy-legend .l1::before { background: #ff2e88; }
+
+/* ===== Parte 1 v2: neo-noir cyberpunk anime (ciudad, lluvia, glitch) ===== */
+html, body { overflow-x: clip; }
+.hero { position: relative; isolation: isolate; }
+.noir { position: absolute; z-index: -1; top: -120px; bottom: -40px; left: calc(50% - 50vw); right: calc(50% - 50vw); overflow: hidden; pointer-events: none;
+  background: radial-gradient(60% 50% at 72% 40%, rgba(255,46,136,.16), transparent 70%), radial-gradient(50% 40% at 20% 85%, rgba(255,106,61,.10), transparent 70%), linear-gradient(#0b0a0e, #0f1012 70%); }
+.noir::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(15,16,18,.92) 0%, rgba(15,16,18,.55) 38%, transparent 65%), linear-gradient(transparent 70%, #0f1012); }
+.city { position: absolute; left: 0; right: 0; bottom: 18%; width: 100%; height: 70%; }
+.city .sign { filter: drop-shadow(0 0 6px currentColor); animation: sign 7s infinite steps(1); }
+@keyframes sign { 0%, 100% { opacity: 1 } 47% { opacity: 1 } 48% { opacity: .2 } 49% { opacity: 1 } 51% { opacity: .35 } 52% { opacity: 1 } }
+.wet { position: absolute; left: 0; right: 0; bottom: 0; height: 18%; background: linear-gradient(rgba(255,46,136,.18), rgba(255,106,61,.06) 40%, transparent), repeating-linear-gradient(90deg, transparent 0 22px, rgba(255,46,136,.07) 22px 24px); filter: blur(1px); }
+.rain { position: absolute; inset: -20% 0 0; background-image: repeating-linear-gradient(100deg, transparent 0 46px, rgba(220,210,255,.10) 46px 47px, transparent 47px 90px);
+  background-size: 100% 140px; animation: rain .55s linear infinite; opacity: .8; }
+.rain.r2 { background-image: repeating-linear-gradient(100deg, transparent 0 71px, rgba(255,140,200,.08) 71px 72px, transparent 72px 130px); background-size: 100% 210px; animation-duration: .9s; opacity: .6; }
+@keyframes rain { to { background-position: -24px 140px; } }
+.rain.r2 { animation-name: rain2; } @keyframes rain2 { to { background-position: -36px 210px; } }
+.hero .stage img { filter: drop-shadow(0 0 40px rgba(255,46,136,.25)); }
+.glitch { position: relative; color: #fff4ef; text-shadow: 0 0 18px rgba(255,106,61,.45), 0 0 42px rgba(255,46,136,.25); }
+.glitch::before, .glitch::after { content: attr(data-text); position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+.glitch::before { color: #ff2e88; animation: gl1 6s infinite steps(1); }
+.glitch::after { color: #ff6a3d; animation: gl2 6s infinite steps(1); }
+@keyframes gl1 { 0%, 88%, 100% { opacity: 0; transform: none; clip-path: none } 89% { opacity: .9; transform: translate(-4px, 1px); clip-path: inset(12% 0 60% 0) } 91% { opacity: .9; transform: translate(5px, -2px); clip-path: inset(55% 0 20% 0) } 93% { opacity: .8; transform: translate(-3px, 0); clip-path: inset(30% 0 45% 0) } 94% { opacity: 0 } }
+@keyframes gl2 { 0%, 88%, 100% { opacity: 0; transform: none; clip-path: none } 89.5% { opacity: .85; transform: translate(4px, -1px); clip-path: inset(65% 0 8% 0) } 92% { opacity: .85; transform: translate(-5px, 2px); clip-path: inset(5% 0 75% 0) } 94% { opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .rain, .city .sign, .glitch::before, .glitch::after { animation: none; } }
+.wet { height: 22%; background: linear-gradient(transparent, rgba(255,46,136,.12) 30%, rgba(255,106,61,.05) 70%, transparent), repeating-linear-gradient(90deg, transparent 0 22px, rgba(255,46,136,.06) 22px 24px); -webkit-mask: linear-gradient(transparent, #000 30%, #000 60%, transparent); mask: linear-gradient(transparent, #000 30%, #000 60%, transparent); }
+@media (max-width: 900px) {
+  .city { top: 230px; bottom: auto; height: 340px; opacity: .9; }
+  .noir::after { background: linear-gradient(transparent 0%, rgba(15,16,18,.1) 30%, rgba(15,16,18,.9) 52%, rgba(15,16,18,.92) 85%, #0f1012); }
+}
+/* ciudad v3 */
+.city { bottom: 12%; height: 92%; }
+.city .edge { stroke-width: 2; filter: drop-shadow(0 0 4px currentColor); }
+.city .sign rect, .city .board rect { filter: drop-shadow(0 0 5px rgba(255,46,136,.7)); }
+.city .board { animation: sign 9s infinite steps(1); }
+.city .blink { animation: blink 2.4s infinite; } @keyframes blink { 0%, 60%, 100% { opacity: 1 } 70%, 90% { opacity: .1 } }
+.city .beam { fill: rgba(255,106,61,.06); transform-origin: 50% 100%; transform-box: fill-box; animation: beam 9s ease-in-out infinite alternate; }
+@keyframes beam { from { transform: rotate(-14deg) } to { transform: rotate(14deg) } }
+.city .car { animation: car linear infinite; } @keyframes car { from { transform: translate(-60px, var(--cy)) } to { transform: translate(1660px, var(--cy)) } }
+@media (max-width: 900px) { .city { top: 60px; bottom: auto; height: 560px; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .city .beam, .city .car, .city .blink, .city .board { animation: none; } }
+/* ciudad 3D (Blender) */
+.city3d { position: absolute; inset: 0 0 8%; background: url(./assets/city-noir.webp) center bottom / cover no-repeat; animation: drift 40s ease-in-out infinite alternate; }
+@keyframes drift { from { transform: scale(1.04) translateX(-1%) } to { transform: scale(1.04) translateX(1%) } }
+.noir::after { background: linear-gradient(90deg, rgba(15,16,18,.9) 0%, rgba(15,16,18,.55) 35%, rgba(15,16,18,.05) 62%), linear-gradient(rgba(15,16,18,.6), transparent 25%, transparent 70%, #0f1012); }
+@media (max-width: 900px) {
+  .city3d { inset: 0 0 auto; height: 560px; background-position: 55% bottom; }
+  .noir::after { background: linear-gradient(rgba(15,16,18,.35), transparent 15%, transparent 32%, rgba(15,16,18,.9) 50%, #0f1012 85%); }
+}
+@media (prefers-reduced-motion: reduce) { .city3d { animation: none; } }
+.city3d { -webkit-mask: linear-gradient(#000 65%, transparent); mask: linear-gradient(#000 65%, transparent); }

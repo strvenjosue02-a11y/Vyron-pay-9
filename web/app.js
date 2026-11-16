@@ -412,8 +412,9 @@ function vHome() {
   const open = S.list.filter((p) => phase(p).c === "open").length;
   return `
   <section class="hero">
+    <div class="noir" aria-hidden="true"><div class="city3d"></div><div class="rain"></div><div class="rain r2"></div><div class="wet"></div></div>
     <div>
-      <h1>Hold fast to what you back.</h1>
+      <h1 class="glitch" data-text="Hold fast to what you back.">Hold fast to what you back.</h1>
       <p>Back early-stage projects with USDC. Your money stays locked in a contract no one owns, and the team gets paid in stages, only when backers vote yes.</p>
       <div class="cta"><button class="btn btn-dark" type="button" data-scroll="projects">Browse projects</button><a class="btn btn-line" href="#/launch">Launch a project</a></div>
       <p class="hero-promise"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ember)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Goal missed? You get 100% back.</p>
