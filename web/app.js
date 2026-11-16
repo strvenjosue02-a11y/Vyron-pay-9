@@ -515,12 +515,12 @@ function vProject(p) {
   const { q } = p, ph = phase(p), step = (10000 - q.initialBps) / q.milestones / 100;
   return `
   <a class="back" href="#/">All projects</a>
-  <header class="kv-hero" style="--pc:${esc(p.meta.color)}">
-    <div class="kv-art" aria-hidden="true"><i class="pc-sun"></i></div>
+  <header class="kv-hero${coverSrc(p) ? " has-cover" : ""}" style="--pc:${esc(p.meta.color)}">
+    ${coverSrc(p) ? `<img class="kv-cover" src="${esc(coverSrc(p))}" alt="">` : `<div class="kv-art" aria-hidden="true"><i class="pc-sun"></i></div>`}
     <div class="kv-id">
-      ${logoSrc(p) ? `<img class="kv-coin" src="${esc(logoSrc(p))}" alt="">` : `<div class="kv-coin kv-coin-text">${esc(q.symbol)}</div>`}
+      ${coverSrc(p) ? "" : logoSrc(p) ? `<img class="kv-coin" src="${esc(logoSrc(p))}" alt="">` : `<div class="kv-coin kv-coin-text">${esc(q.symbol)}</div>`}
       <div class="kv-text">
-        <div class="kv-tags"><span class="kv-rar ${rarity(p).k}">${STAR.repeat(rarity(p).n)} ${rarity(p).t}</span><span class="status ${ph.c}">${ph.t}</span></div>
+        <div class="kv-tags">${p.exists ? `<span class="kv-ver">✓ Verified</span>` : ""}<span class="kv-rar ${rarity(p).k}">${STAR.repeat(rarity(p).n)} ${rarity(p).t}</span><span class="status ${ph.c}">${ph.t}</span></div>
         <h1>${esc(q.name)}</h1>
         <p>${esc(p.meta.tagline)}</p>
         <div class="kv-meta"><span>${esc(p.meta.category)}</span><span>Token ${esc(q.symbol)}</span><span>${left(p)}</span></div>
@@ -528,9 +528,9 @@ function vProject(p) {
     </div>
   </header>
   <section class="kv-stats" aria-label="Key numbers">
-    <div><b>$${usd(p.s.totalRaised)}</b><span>Raised of $${usd(q.hardcap)}</span></div>
-    <div><b>${p.backers ?? "–"}</b><span>${p.backersPartial ? "Backers this week" : "Backers"}</span></div>
-    <div><b>${ph.c === "open" ? Math.max(0, Math.ceil((Number(q.saleEnd) - S.now) / 86400)) : "–"}</b><span>${ph.c === "open" ? "Days left" : ph.t}</span></div>
+    <div><b class="kv-faces">${faces(p)}</b><span>Backers</span></div>
+    <div>${ph.c === "open" ? `<b class="pc-count kv-count" data-end="${Number(q.saleEnd)}">${countdown(Number(q.saleEnd)).replace("Closes in ", "")}</b><span>Until the raise closes</span>` : `<b>${ph.t}</b><span>Status</span>`}</div>
+    <div>${p.mk ? `<b>${fmtP(p.mk.price)} <em class="kv-chg ${p.mk.price >= p.mk.round ? "up" : "dn"}">${p.mk.price >= p.mk.round ? "+" : ""}${(((p.mk.price - p.mk.round) / p.mk.round) * 100).toFixed(1)}%</em></b><span>Market price</span>` : `<b>${fmtP(Number(q.hardcap) / 1e6 / (Number(q.saleTokens) / 1e18))}</b><span>Price per ${esc(q.symbol)}</span>`}</div>
   </section>
   <div class="layout">
     <div>
@@ -595,10 +595,10 @@ function tabBody(p) {
       <div class="sim-h"><h3>Simulate your backing</h3><b id="sim-v">$100</b></div>
       <input id="sim" type="range" min="10" max="1000" step="10" value="100" aria-label="Amount to simulate">
       <div class="sim-rows">
-        <div><span>You receive</span><b id="sim-tok"></b></div>
-        <div><span>Goal of $${usd(q.softcap)} missed</span><b id="sim-miss"></b></div>
-        <div><span>Team stops after release 1</span><b id="sim-stop"></b></div>
-        <div><span>Every release approved</span><b>You keep all your tokens</b></div>
+        <div class="sim-tokrow"><span>You receive</span><b id="sim-tok"></b></div>
+        <div class="sim-case"><span>Goal of $${usd(q.softcap)} missed</span><b id="sim-miss"></b><i class="sim-bar"><s id="bar-miss"></s></i></div>
+        <div class="sim-case"><span>Team stops after release 1</span><b id="sim-stop"></b><i class="sim-bar"><s id="bar-stop"></s></i></div>
+        <div class="sim-case"><span>Every release approved</span><b>You keep all your tokens</b><i class="sim-bar"><s style="width:100%"></s></i></div>
       </div>
     </section>
     <div class="rules">
@@ -614,7 +614,9 @@ function bindTab(p) {
     $("#sim-v").textContent = `$${usd(v)}`;
     $("#sim-tok").textContent = `${tok((v * q.saleTokens) / q.hardcap)} ${q.symbol}`;
     $("#sim-miss").textContent = `$${usd(v)} back`;
-    $("#sim-stop").textContent = `about $${usd((v * 99n * (10000n - first)) / 1000000n)} back`;
+    const stop = (v * 99n * (10000n - first)) / 1000000n;
+    $("#sim-stop").textContent = `about $${usd(stop)} back`;
+    $("#bar-miss").style.width = "100%"; $("#bar-stop").style.width = `${Number((stop * 1000n) / v) / 10}%`;
     r.style.setProperty("--fill", `${((Number(r.value) - 10) / 990) * 100}%`);
   };
   r.oninput = upd; upd();
@@ -953,7 +955,7 @@ function route() {
   if (tp) { const kv = $("#tamt")?.value; $("#app").innerHTML = vTerminal(tp); if (kv && $("#tamt")) $("#tamt").value = kv; startTerminal(tp); return; }
   if (key === "market") { $("#app").innerHTML = vMarket(); S.list.filter((x) => x.mk && !x.trades).forEach((x) => loadTrades(x).then(() => { if (location.hash.startsWith("#/market")) $("#app").innerHTML = vMarket(); })); return; }
   $("#app").innerHTML = p ? vProject(p) : key === "launch" ? vLaunch() : key === "portfolio" ? vPortfolio() : key === "owner" ? vOwner() : vHome();
-  if (p) { bindAmount(p); bindTab(p); bindTrade(p); celebrate(p); if (p.mk && !p.trades) loadTrades(p).then(() => { if (S.tab === "trade") { $(".ptab-body").innerHTML = tabBody(p); } }); }
+  if (p) { clearInterval(S.cdT); S.cdT = setInterval(() => { const e = document.querySelector(".kv-count"); if (!e) return clearInterval(S.cdT); e.textContent = countdown(Number(e.dataset.end)).replace("Closes in ", ""); }, 1000); bindAmount(p); bindTab(p); bindTrade(p); celebrate(p); if (p.mk && !p.trades) loadTrades(p).then(() => { if (S.tab === "trade") { $(".ptab-body").innerHTML = tabBody(p); } }); }
   if (!p && key === "home") { bindCards(); S.list.filter((x) => x.mk).forEach((x) => loadTrades(x).then(() => { const el = document.querySelector(`[data-testid="row-${x.id}"] .pc-mkt .spark`); if (el) el.outerHTML = spark(x); })); }
   if (p && keep && $("#amt")) { $("#amt").value = keep; $("#amt").dispatchEvent(new Event("input")); }
   if ($("#form")) { $("#form").addEventListener("input", preview); $("#form").addEventListener("submit", submitProject); $("#f-logo").addEventListener("change", pickLogo);
