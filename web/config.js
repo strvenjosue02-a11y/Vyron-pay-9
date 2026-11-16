@@ -2,6 +2,7 @@
 // Para el lanzamiento real se usa Base: chainId 8453, rpc https://mainnet.base.org,
 // explorer https://basescan.org, USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913.
 export const CONFIG = {
+  demo: false,
   chainId: 11155111,
   chainName: "Sepolia testnet",
   rpc: "https://ethereum-sepolia-rpc.publicnode.com",

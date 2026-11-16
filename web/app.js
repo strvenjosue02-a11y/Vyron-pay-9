@@ -7,6 +7,7 @@ import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
 import { initI18n } from "./i18n.js";
 import { mountCoin } from "./coin3d.js";
 import { mountChart } from "./pro.js";
+import { createDemo } from "./demo.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, msgProfile, validProfile, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
@@ -16,7 +17,8 @@ const chain = defineChain({
   id: CONFIG.chainId, name: CONFIG.chainName, nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
   rpcUrls: { default: { http: [RPC] } }, contracts: { multicall3: { address: "0xcA11bde05977b3631167028862bE2a173976CA11" } },
 });
-const pub = createPublicClient({ chain, transport: http(RPC) });
+let pub = createPublicClient({ chain, transport: http(RPC) });
+let DEMO = null;
 
 const S = { tab: "overview", me: null, wallet: null, usdc: 0n, all: [], list: [], reviews: null, now: Math.floor(Date.now() / 1000) };
 const $ = (s, r = document) => r.querySelector(s);
@@ -74,6 +76,7 @@ async function loadCatalog() {
     return { ...p, status, updates, sentAt: x.at };
   }));
   S.all = [...seeds.map((p) => ({ ...p, status: "approved", seed: true })), ...checked.filter(Boolean)].map(prepare);
+  DEMO?.init(S.all);
   // avances de proyectos semilla: también verificados con la firma del creador
   await Promise.all(S.all.filter((p) => p.seed).map(async (p) => {
     const ok = []; for (const u of upRaw[p.id] || []) if (await verifyMessage({ address: p.params.creator, message: msgUpdate(p.id, u.ts, keccak256(toBytes(u.text))), signature: u.signature }).catch(() => false)) ok.push(u);
@@ -563,7 +566,7 @@ function startTerminal(p) {
       const av = Number(localStorage.getItem(`hf-alert-${p.id}`) || 0);
       if (av && p.alertSide && ((p.alertSide === "up" && p.mk.price >= av) || (p.alertSide === "dn" && p.mk.price <= av))) { toast(`${p.q.symbol} reached $${av}`); p.alertSide = null; }
     }
-  }, Number(new URLSearchParams(location.search).get("poll")) || 12000);
+  }, Number(new URLSearchParams(location.search).get("poll")) || (CONFIG.demo ? 4000 : 12000));
 }
 
 // ================================================================= estados
@@ -1508,7 +1511,16 @@ document.addEventListener("click", async (e) => {
   finally { document.querySelectorAll("button").forEach((x) => (x.disabled = false)); }
 });
 
+function demoBar() {
+  const bar = document.createElement("div"); bar.className = "demo-bar";
+  bar.innerHTML = `<b>DEMO</b><span>Simulated chain, fake money. Switch who you are:</span><button data-role="investor" class="on">Investor</button><button data-role="creator">Creator + Owner</button><button data-fwd>Skip 7 days</button>`;
+  document.body.appendChild(bar);
+  bar.onclick = async (e) => { const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.fwd !== undefined) { DEMO.forward(7); await refresh(); route(); return toast("7 days later"); }
+    DEMO.setRole(b.dataset.role); bar.querySelectorAll("[data-role]").forEach((x) => x.classList.toggle("on", x === b)); await connect(); route(); };
+}
 async function main() {
+  if (CONFIG.demo) { try { if (!localStorage.getItem("hf-lang")) localStorage.setItem("hf-lang", "es"); } catch {} DEMO = createDemo({ CONFIG, ABI, ERC20: erc20Abi, ROUTER_ABI, QUOTER_ABI }); pub = DEMO.pub; window.ethereum = DEMO.eth; demoBar(); window.__demo = DEMO; }
   initI18n();
   $("#net span").textContent = CONFIG.chainName;
   $("#connect").onclick = () => connect().catch((x) => toast(x.shortMessage || x.message, true));
