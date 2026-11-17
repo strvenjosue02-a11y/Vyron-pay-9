@@ -661,15 +661,19 @@ function trendHtml(p) {
   const it = mkItems().filter((x) => x.id !== p.id).sort((x, y) => y.chg - x.chg).slice(0, 10);
   return `<span class="tr-l">Trending</span>` + it.map((x) => `<a href="${x.href}"><b>${esc(x.sym)}</b><em class="${x.chg >= 0 ? "u" : "d"}">${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(0)}%</em></a>`).join("");
 }
-function heatHtml(p) {
-  const tr = (p.trades || []).filter((t) => t.who), cur = p.mk.price; if (!tr.length) return `<p class="prose">No trades yet.</p>`;
-  const px = [...tr.map((t) => t.price), cur], lo = Math.min(...px), hi = Math.max(...px), N = 28, step = (hi - lo) / N || 1, bk = Array(N).fill(0);
+function heatData(p) {
+  const tr = (p.trades || []).filter((t) => t.who); if (!tr.length || !p.mk) return [];
+  const cur = p.mk.price, px = [...tr.map((t) => t.price), cur], lo = Math.min(...px), hi = Math.max(...px), N = 32, step = (hi - lo) / N || 1, bk = Array(N).fill(0);
   for (const t of tr) { const i = Math.min(N - 1, Math.floor((t.price - lo) / step)), q = Number(t.tok) / 1e18; bk[i] += t.buy ? q : -q; }
-  const w = bk.map((v) => Math.max(0, v)), mx = Math.max(...w, 1e-9), tot = w.reduce((x, y) => x + y, 0) || 1, ci = Math.min(N - 1, Math.floor((cur - lo) / step));
-  const inP = w.reduce((s2, v, i) => s2 + (i < ci ? v : 0), 0) / tot * 100;
-  const rows = w.map((v, i) => ({ v, i })).reverse().map(({ v, i }) => `<div class="ht-r${i === ci ? " now" : ""}"><span>${fmtP(lo + step * (i + 0.5))}</span><i><b class="${i < ci ? "g" : i > ci ? "r" : "n"}" style="width:${(v / mx) * 100}%"></b></i><em>${tot ? ((v / tot) * 100).toFixed(1) : 0}%</em></div>`).join("");
+  const w = bk.map((v) => Math.max(0, v)), mx = Math.max(...w, 1e-9), ci = Math.min(N - 1, Math.floor((cur - lo) / step));
+  return w.map((v, i) => ({ lo: lo + step * i, hi: lo + step * (i + 1), v: v / mx, win: i < ci, now: i === ci })).filter((h) => h.v > 0.02);
+}
+function heatHtml(p) {
+  const tr = (p.trades || []).filter((t) => t.who); if (!tr.length) return `<p class="prose">No trades yet.</p>`;
+  const hd = heatData(p), tot = hd.reduce((x, h) => x + h.v, 0) || 1, win = hd.filter((h) => h.win).reduce((x, h) => x + h.v, 0) / tot * 100;
   const wl = tr.filter((t) => isWhale(p, t)).slice(-6).reverse();
-  return `<div class="ht"><div class="ht-h"><div><b class="${inP >= 50 ? "u" : "d"}">${inP.toFixed(0)}%</b><small>of tokens are in profit</small></div><p>Each bar is a price; the longer, the more tokens were bought there. Green = bought below today's price (winning). Red = bought above (losing).</p></div>${rows}</div>
+  return `<div class="ht2"><div class="ht2-m"><svg viewBox="0 0 36 36" width="92" height="92"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#ff5d5d" stroke-opacity=".55" stroke-width="3.4"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#3ddc97" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="${win.toFixed(1)} 100" transform="rotate(-90 18 18)"/></svg><b>${win.toFixed(0)}%</b></div>
+  <p><b>of tokens are in profit</b><br>The glow inside the chart shows where people bought. Green zones: they are winning. Red zones: they are losing and might sell.</p></div>
   <div class="wr"><h4>Whale radar</h4>${wl.length ? wl.map((t) => `<div class="wr-i ${t.buy ? "b" : "s"}" data-trader="${t.who}">${avatar(t.who, 26)}<b>${esc(uname(t.who))}</b><span>${t.buy ? "bought" : "sold"} $${usd(t.usdc)}</span><small>${agoS((S.now || Date.now() / 1000) - t.ts)}</small></div>`).join("") : `<p class="fine">No whale has traded yet.</p>`}</div>`;
 }
 function vTerminal(p) {
@@ -761,9 +765,9 @@ function startTerminal(p) {
   bindTrade(p);
   const es = (localStorage.getItem("hf-lang") || "en") === "es";
   chartOff = mountChart($("#chartpro"), { id: p.id, fsTarget: document.querySelector(".term"), periods: Object.keys(PERIODS), period: S.period || "5m", onPeriod: (k) => (S.period = k),
-    getData: (per) => (p.mk ? { candles: (() => { const cs = buildCandles(p, per); return S.rp ? cs.slice(0, Math.max(5, S.rp)) : cs; })(), round: p.mk.round, supply: p.supply ? Number(p.supply) / 1e18 : 0, marks: S.me ? (p.trades || []).filter((t) => t.ts && t.who?.toLowerCase() === S.me.toLowerCase()).map((t) => ({ t: t.ts, buy: t.buy })) : [], faces: facesOf(p), lines: linesOf(p), trades: (p.trades || []).filter((t) => t.ts && t.who).slice(-400).map((t) => ({ t: t.ts, who: t.who, buy: t.buy, usd: Number(t.usdc) / 1e6, html: avatar(t.who, 22), name: esc(uname(t.who)) })) } : { candles: [], round: 0, supply: 0, marks: [] }),
+    getData: (per) => (p.mk ? { candles: (() => { const cs = buildCandles(p, per); return S.rp ? cs.slice(0, Math.max(5, S.rp)) : cs; })(), round: p.mk.round, supply: p.supply ? Number(p.supply) / 1e18 : 0, marks: S.me ? (p.trades || []).filter((t) => t.ts && t.who?.toLowerCase() === S.me.toLowerCase()).map((t) => ({ t: t.ts, buy: t.buy })) : [], heat: heatData(p), faces: facesOf(p), lines: linesOf(p), trades: (p.trades || []).filter((t) => t.ts && t.who).slice(-400).map((t) => ({ t: t.ts, who: t.who, buy: t.buy, usd: Number(t.usdc) / 1e6, html: avatar(t.who, 22), name: esc(uname(t.who)) })) } : { candles: [], round: 0, supply: 0, marks: [] }),
     onFace: (who) => traderCard(p, who), onLine: (id, price) => { const c = tpslGet(p); if (!c.ref) return; const pc = (price / c.ref - 1) * 100; tpslSet(p, id === "tp" ? { ...c, tp: Math.max(1, Math.round(pc)) } : { ...c, sl: Math.max(1, Math.min(99, Math.round(-pc))) }); const t = $("#tx-tpsl"); if (t) t.outerHTML = tpslHtml(p); chartOff?.update(); },
-    labels: es ? { faces: "Caras", tap: "Toca para ver el perfil", cap: "Valor total", price: "Precio", candles: "Velas", line: "Línea", ma: "Promedios", draw: "Dibujar", clear: "Borrar", full: "Pantalla completa", exit: "Salir", vol: "Vol" } : {} });
+    labels: es ? { heat: "Calor", faces: "Caras", tap: "Toca para ver el perfil", cap: "Valor total", price: "Precio", candles: "Velas", line: "Línea", ma: "Promedios", draw: "Dibujar", clear: "Borrar", full: "Pantalla completa", exit: "Salir", vol: "Vol" } : {} });
   const stats = () => { if (!p.mk) return; const x = stats24(p), d = $("#tt-delta"); if (!d) return; d.className = x.chg >= 0 ? "u" : "d"; d.textContent = `${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(2)}% 24h`;
     $("#tx-hi").textContent = fmtP(x.hi); $("#tx-lo").textContent = fmtP(x.lo); $("#tt-vol").textContent = "$" + usd(x.vol); if (x.cap) $("#tx-capbig").textContent = capFmt(x.cap); const pr = $("#tt-price"); if (pr) pr.textContent = fmtP(p.mk.price); const ch = $("#tx-chips"); if (ch) ch.innerHTML = chipsHtml(p); const fd = $("#tx-feed"); if (fd) fd.innerHTML = feedHtml(p); const rk = $("#tx-rank"); if (rk) rk.innerHTML = rankHtml(p); const pr2 = $("#tx-press"); if (pr2) pr2.innerHTML = pressHtml(p); const sf = $("#tx-safe"); if (sf) sf.innerHTML = safetyHtml(p) + linksHtml(p); const sf2 = $("#tx-safe2"); if (sf2) sf2.innerHTML = safetyHtml(p); tpslCheck(p); const hd = $("#tx-hold"); if (hd && p.holders) hd.textContent = p.holders.length; const sc = document.querySelector(".term.tx"); if (sc) { sc.classList.toggle("tx-up", x.chg >= 0); sc.classList.toggle("tx-dn", x.chg < 0); } };
   const reTerm = () => { if (!$("#term-tab")) return; chartOff?.update(); $("#term-tab").innerHTML = termTab(p); stats(); };

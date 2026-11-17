@@ -14,7 +14,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   const L = { candles: "Candles", line: "Line", ma: "MA", draw: "Line", clear: "Clear", full: "Full screen", exit: "Exit", vol: "Vol", price: "Price", cap: "Market cap", ...labels };
   const key = `hf-hl-${id}`;
   let hl = []; try { hl = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
-  const st = { faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: "candle", ma: !matchMedia("(max-width: 900px)").matches, draw: false, period, k: 1, last: null };
+  const st = { heat: (() => { try { return localStorage.getItem("hf-heat") !== "0"; } catch { return true; } })(), faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: "candle", ma: !matchMedia("(max-width: 900px)").matches, draw: false, period, k: 1, last: null };
   el.classList.add("cp");
   el.innerHTML = `<div class="cp-bar">
       <div class="cp-per" role="tablist">${periods.map((k) => `<button type="button" data-per="${k}" aria-selected="${k === period}">${k}</button>`).join("")}</div>
@@ -23,6 +23,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
         <button type="button" data-t="mode">${L.candles}</button>
         <button type="button" data-t="ma" aria-pressed="${st.ma}">${L.ma}</button>
         <button type="button" data-t="faces" aria-pressed="${st.faces}">${L.faces || "Faces"}</button>
+        <button type="button" data-t="heat" aria-pressed="${st.heat}">${L.heat || "Heat"}</button>
         <button type="button" data-t="draw" aria-pressed="false">${L.draw}</button>
         <button type="button" data-t="clear" title="${L.clear}">⌫</button>
         <button type="button" data-t="full" title="${L.full}" class="cp-full">⛶</button>
@@ -46,14 +47,20 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
   const mo = { lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: pf };
   const m7 = chart.addLineSeries({ ...mo, color: "#e9e9ee" }), m25 = chart.addLineSeries({ ...mo, color: "#8d8f95" });
-  let roundLine = null, hlRefs = [], first = true, data = [], lnRefs = [], faces = [], lines = [], allTr = [];
+  let roundLine = null, hlRefs = [], first = true, data = [], lnRefs = [], faces = [], lines = [], allTr = [], heat = [];
+  const fog = document.createElement("div"); fog.className = "cp-fog";
   const tip = document.createElement("div"); tip.className = "cp-tip"; box.appendChild(tip);
   const bucket = (time) => { if (!data.length || time == null) return []; const i = data.findIndex((c) => c.time === time), step = data.length > 1 ? data[Math.min(i + 1, data.length - 1)].time - data[Math.max(i, 0)].time || data[1].time - data[0].time : 300; const end = i >= 0 && i < data.length - 1 ? data[i + 1].time : time + Math.abs(step || 300); return allTr.filter((t) => t.t >= time && t.t < end); };
   box.style.position = "relative";
-  const ov = document.createElement("div"); ov.className = "cp-ov"; box.appendChild(ov);
+  box.appendChild(fog); const ov = document.createElement("div"); ov.className = "cp-ov"; box.appendChild(ov);
   candle.applyOptions({ autoscaleInfoProvider: (orig) => { const r = orig(); if (!r || !lines.length) return r; const ks = st.k || 1; lines.forEach((l) => { const v = l.price * ks; r.priceRange.minValue = Math.min(r.priceRange.minValue, v); r.priceRange.maxValue = Math.max(r.priceRange.maxValue, v); }); return r; } });
+  function placeFog() {
+    if (!st.heat || !heat.length) { fog.innerHTML = ""; return; } const k = st.k;
+    fog.innerHTML = heat.map((h) => { const y1 = candle.priceToCoordinate(h.hi * k), y2 = candle.priceToCoordinate(h.lo * k); if (y1 == null || y2 == null) return ""; const top = Math.min(y1, y2), ht = Math.max(2, Math.abs(y2 - y1) + 1);
+      return `<i class="${h.win ? "g" : h.now ? "n" : "r"}" style="top:${top}px;height:${ht}px;opacity:${(0.05 + h.v * 0.3).toFixed(2)}"></i>`; }).join("");
+  }
   function place() {
-    if (!data.length) return; const ts = chart.timeScale(), times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; }, k = st.k;
+    placeFog(); if (!data.length) return; const ts = chart.timeScale(), times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; }, k = st.k;
     const stack = {}; ov.querySelectorAll("[data-fi]").forEach((n) => { const f = faces[Number(n.dataset.fi)], x = ts.timeToCoordinate(snap(f.t)), y = candle.priceToCoordinate(f.price * k);
       if (x == null || y == null) { n.style.display = "none"; return; } const key = Math.round(x / 22) + (f.buy ? "b" : "s"), o = stack[key] || 0; stack[key] = o + 1; n.style.display = ""; n.style.left = x - 15 + "px"; const late = times.indexOf(snap(f.t)) >= times.length - 2 ? 22 : 0; n.style.top = y + (f.buy ? 12 + late + o * 30 : -42 - late - o * 30) + "px"; });
     ov.querySelectorAll("[data-li]").forEach((n) => { if (n.dataset.drag === "1" && n.classList.contains("drag")) return; const l = lines[Number(n.dataset.li)], y = candle.priceToCoordinate(l.price * k); if (y == null) { n.style.display = "none"; return; } n.style.display = ""; n.style.top = y - 13 + "px"; });
@@ -96,7 +103,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     const times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; };
     const marks = (d.marks || []).map((m) => ({ time: snap(m.t), position: m.buy ? "belowBar" : "aboveBar", color: m.buy ? UP : DN, shape: m.buy ? "arrowUp" : "arrowDown", text: m.buy ? "B" : "S" })).sort((a, b) => a.time - b.time);
     candle.setMarkers(marks);
-    allTr = d.trades || []; faces = d.faces || []; lines = d.lines || []; lnRefs.forEach((r) => candle.removePriceLine(r));
+    allTr = d.trades || []; heat = d.heat || []; faces = d.faces || []; lines = d.lines || []; lnRefs.forEach((r) => candle.removePriceLine(r));
     lnRefs = lines.map((l) => candle.createPriceLine({ price: l.price * k, color: l.color, lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "" }));
     drawOv();
     st.last = data[data.length - 1]; showInfo(st.last);
@@ -116,6 +123,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     if (t === "unit") { st.cap = !st.cap; b.textContent = st.cap ? L.cap : L.price; }
     if (t === "mode") { st.mode = st.mode === "candle" ? "line" : "candle"; b.textContent = st.mode === "candle" ? L.candles : L.line; }
     if (t === "ma") { st.ma = !st.ma; b.setAttribute("aria-pressed", st.ma); }
+    if (t === "heat") { st.heat = !st.heat; b.setAttribute("aria-pressed", st.heat); try { localStorage.setItem("hf-heat", st.heat ? "1" : "0"); } catch {} }
     if (t === "faces") { st.faces = !st.faces; b.setAttribute("aria-pressed", st.faces); try { localStorage.setItem("hf-faces", st.faces ? "1" : "0"); } catch {} }
     if (t === "draw") { st.draw = !st.draw; b.setAttribute("aria-pressed", st.draw); }
     if (t === "clear") { hl = []; save(); }
