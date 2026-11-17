@@ -1784,6 +1784,11 @@ function faces4(p) {
   (p.trades || []).forEach((t) => { if (t.ts && t.who && top.includes(t.who.toLowerCase())) (by[t.who.toLowerCase()] ||= []).push(t); });
   return Object.values(by).flatMap((l) => l.slice(-1)).map((t) => ({ t: t.ts, price: t.price, buy: t.buy, who: t.who, whale: isWhale(p, t), name: `${uname(t.who)} ${t.buy ? "bought" : "sold"} $${usd(t.usdc)}`, html: avatar(t.who, 32) }));
 }
+function recentHtml(p) {
+  const now = S.now || Date.now() / 1000, l = (p.trades || []).filter((t) => t.ts && t.who).slice(-5).reverse();
+  if (!l.length) return "";
+  return l.map((t) => `<div class="rc ${t.buy ? "b" : "s"}"><span class="rc-a">${avatar(t.who, 18)}</span><b>${esc(uname(t.who))}</b><span class="rc-k">${t.buy ? T2("bought", "compró") : T2("sold", "vendió")}</span><em>$${mny(Number(t.usdc) / 1e6)}</em><small>${agoS(now - t.ts)}</small></div>`).join("");
+}
 const holdN = (p) => (p.holders ? p.holders.filter((h) => !holderLabel(p, h.a) || holderLabel(p, h.a) === "Team").length : null);
 function communityHtml(p) {
   const x = stats24(p), up = x.chg >= 0, t = S.cmTab || "posts", fav = favs().includes(p.id), hn = holdN(p), lg = logoSrc(p) ? `<img src="${esc(logoSrc(p))}" alt="">` : mark(p, "lg");
@@ -1793,6 +1798,7 @@ function communityHtml(p) {
     <header class="cx-bar"><a class="cx-bk" href="#/" aria-label="Back">‹</a><span class="cx-av">${lg}</span><b class="cx-nm">${esc(p.q.symbol)}</b>${age ? `<span class="cx-pill">${age}</span>` : ""}<span class="cx-pill" id="cx-hn">${hn ?? "–"} holders</span><button type="button" class="cx-ic${fav ? " on" : ""}" data-cxfav aria-label="Favorite"><svg width="21" height="21" viewBox="0 0 24 24" fill="${fav ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></button><button type="button" class="cx-ic" data-cxsh aria-label="Share"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></header>
     <div class="cx-sum"><div class="cx-t"><h1>${esc(p.q.name)}</h1><small>${esc(p.q.symbol)}${by ? ` ${T2("by", "por")} ${esc(by)}` : ""}</small></div><div class="cx-px"><b id="cm-px">${fmtP(p.mk.price)}</b><em id="cm-ch" class="${up ? "u" : "d"}">${up ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%</em></div></div>
     <div class="cx-chart" id="cm-chart"></div>
+    <div class="cx-rc" id="cx-rc">${recentHtml(p)}</div>
     <div class="cx-tabs" role="tablist">${[["posts", T2("Posts", "Publicaciones")], ["holders", "Holders"], ["trades", T2("Trades", "Operaciones")]].map(([k, n]) => `<button type="button" data-cmt="${k}" aria-selected="${t === k}">${n}</button>`).join("")}</div>
     <div class="cx-b" id="cm-b">${cmBody(p)}</div>
     <div class="cx-cta"><a class="cx-buy" data-cxs="buy" href="#/trade/${p.id}?op=1">${T2("Buy", "Comprar")}</a><a class="cx-sell" data-cxs="sell" href="#/trade/${p.id}?op=1">${T2("Sell", "Vender")}</a></div></section>`;
@@ -1810,6 +1816,7 @@ function renderCommunity(p) {
     try { if (!p.trades) await loadTrades(p); await loadHolders(p); } catch {}
     const x = stats24(p), px = $("#cm-px"); if (px) { px.textContent = fmtP(p.mk.price); if (p.mk.price !== last) { px.classList.remove("fu", "fd"); void px.offsetWidth; px.classList.add(p.mk.price > last ? "fu" : "fd"); last = p.mk.price; } }
     const ch = $("#cm-ch"); if (ch) { ch.textContent = `${x.chg >= 0 ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%`; ch.className = x.chg >= 0 ? "u" : "d"; }
+    const rcEl = $("#cx-rc"); if (rcEl) rcEl.innerHTML = recentHtml(p);
     const hn = holdN(p); if ($("#cx-hn") && hn != null) $("#cx-hn").textContent = hn + " holders"; chartOff?.update();
     if ((S.cmTab || "posts") !== "posts" && $("#cm-b")) $("#cm-b").innerHTML = cmBody(p); };
   paint(); S.poll = setInterval(paint, 4000);

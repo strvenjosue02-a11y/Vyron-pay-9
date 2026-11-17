@@ -2326,3 +2326,29 @@ body:has(.demo-bar) .cx-cta { bottom: calc(110px + env(safe-area-inset-bottom));
 .cx-bar { gap: 8px !important; } .cx-pill { font-size: 12px !important; padding: 4px 8px !important; } .cx-ic { width: 32px !important; } .cx-nm { font-size: 16px !important; }
 .cx-chart .cp-face { display: block !important; width: 34px !important; height: 34px !important; opacity: 1 !important; box-shadow: 0 0 0 2px #050505, 0 0 0 3.5px rgba(255,255,255,.55), 0 8px 20px rgba(0,0,0,.6) !important; } .cx-chart .cp-face.b { box-shadow: 0 0 0 2px #050505, 0 0 0 3.5px var(--up), 0 8px 20px rgba(0,0,0,.6) !important; } .cx-chart .cp-face.s { box-shadow: 0 0 0 2px #050505, 0 0 0 3.5px var(--dn), 0 8px 20px rgba(0,0,0,.6) !important; } .cx-chart .cp-face .ava { width: 28px !important; height: 28px !important; margin: 3px !important; object-fit: cover; }
 .cx-chart .cp-face { width: 30px !important; height: 30px !important; } .cx-chart .cp-face .ava { width: 24px !important; height: 24px !important; margin: 3px !important; }
+
+/* ===== LIMPIEZA: gráfico grande que no se mueve (solo en pantalla completa), burbujas diminutas, historial mini ===== */
+.cx { overflow-x: visible !important; }
+.cx-chart { height: 54vh !important; min-height: 360px; max-height: 540px; width: calc(100% + 32px) !important; max-width: none !important; margin: 6px -16px 0 !important; border-radius: 0; background: transparent; }
+.cx-chart:not(.cp-fs) .cp-svg, .cx-chart:not(.cp-fs) .cp-svg *, .cx-chart:not(.cp-fs) .cp-ov, .cx-chart:not(.cp-fs) .cp-flow { pointer-events: none !important; touch-action: pan-y; }
+.cx-chart:not(.cp-fs) .cp-face { width: 15px !important; height: 15px !important; pointer-events: none !important; box-shadow: 0 0 0 1px #050505, 0 0 0 2px rgba(255,255,255,.5) !important; } .cx-chart:not(.cp-fs) .cp-face.b { box-shadow: 0 0 0 1px #050505, 0 0 0 2px var(--up) !important; } .cx-chart:not(.cp-fs) .cp-face.s { box-shadow: 0 0 0 1px #050505, 0 0 0 2px var(--dn) !important; }
+.cx-chart:not(.cp-fs) .cp-face .ava { width: 11px !important; height: 11px !important; margin: 2px !important; }
+.cx-chart:not(.cp-fs) .cp-face em, .cx-chart:not(.cp-fs) .cp-face b { display: none !important; }
+.cx-chart .cp-bar { padding: 0 16px 8px !important; } .cx-chart .cp-full { display: inline-grid !important; width: 34px; height: 30px; place-items: center; border-radius: 999px; background: rgba(255,255,255,.06); color: var(--ink-2); font-size: 15px; border: 0; }
+.cx-chart.cp-fs { position: fixed !important; inset: 0 !important; z-index: 9500; width: 100vw !important; height: 100vh !important; max-height: none !important; margin: 0 !important; background: #050505; padding-top: env(safe-area-inset-top); }
+.cx-chart.cp-fs .cp-svg { pointer-events: auto; }
+.cx-rc { display: grid; padding: 8px 2px 4px; }
+.rc { display: flex; align-items: center; gap: 8px; height: 30px; font-size: 13px; color: var(--ink-3); } .rc .rc-a .ava { width: 18px; height: 18px; border-radius: 50%; display: block; object-fit: cover; } .rc b { color: var(--ink-2); font-weight: 600; max-width: 34%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .rc em { font: 600 12.5px var(--mono); font-style: normal; margin-left: auto; } .rc.b em, .rc.b .rc-k { color: var(--up); } .rc.s em, .rc.s .rc-k { color: var(--dn); } .rc small { font: 11.5px var(--mono); width: 28px; text-align: right; }
+.cx-tabs { margin-top: 14px !important; }
+
+/* ===== PUBLICACIONES más limpias ===== */
+.th-x .th-f { border-radius: 999px !important; padding: 6px 8px 6px 8px !important; gap: 0 !important; background: rgba(255,255,255,.04) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1) !important; }
+.th-x .th-f:not(:focus-within) .th-em, .th-x .th-f:not(:focus-within) .th-gp { display: none !important; }
+.th-x .th-f:focus-within { border-radius: 22px !important; }
+.th-x .th-row .ava { box-shadow: none !important; }
+.xp { border-bottom: 0 !important; padding: 20px 2px 4px !important; }
+.xp + .xp { border-top: 1px solid rgba(255,255,255,.05); margin-top: 10px; }
+.xp-f { height: auto !important; padding: 0 !important; background: none !important; color: var(--ink-3) !important; font-weight: 600 !important; font-size: 13.5px !important; box-shadow: none !important; } .xp-f.on { color: #fff !important; }
+.xp-c { background: rgba(255,255,255,.03) !important; box-shadow: none !important; border-radius: 14px !important; padding: 12px 14px !important; }
+.xp-a button { color: var(--ink-3); opacity: .85; }
+.cx-chart { height: 46vh !important; min-height: 340px !important; } .cx-chart .cp-tools [data-t="mode"], .cx-chart .cp-tools [data-t="flow"] { display: none !important; } .cx-chart .cp-bar { flex-wrap: nowrap !important; } .cx-chart .cp-per button { padding: 6px 13px !important; }
