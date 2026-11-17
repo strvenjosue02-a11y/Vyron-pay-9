@@ -9,6 +9,7 @@ import { LAUNCH_ABI } from "../launch-abi.js";
 const RPC = process.env.RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com";
 const KEY = process.env.BOT_KEY;
 const registry = JSON.parse(readFileSync(new URL("../launches.json", import.meta.url), "utf8"));
+if (process.env.LAUNCHES_URL) { try { const r = await (await fetch(process.env.LAUNCHES_URL)).json(); for (const x of r.launches || []) if (!registry.launches.some((y) => y.address.toLowerCase() === x.address.toLowerCase())) registry.launches.push({ address: x.address, fromBlock: x.fromBlock || 0 }); } catch (e) { console.log("No pude leer la API:", e.message); } }
 if (!KEY) { console.log("Falta BOT_KEY: no hago nada."); process.exit(0); }
 const account = privateKeyToAccount(KEY);
 const pub = createPublicClient({ transport: http(RPC) });

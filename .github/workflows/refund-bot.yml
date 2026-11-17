@@ -3,6 +3,7 @@ name: Bot de devoluciones
 # Gratis (GitHub Actions). Necesita dos "secrets" que pones TÚ en GitHub (Settings > Secrets), nunca en un chat:
 #   BOT_KEY  = clave de una wallet pequeña que solo paga el gas (sin fondos importantes)
 #   RPC_URL  = (opcional) dirección RPC de la red
+#   LAUNCHES_URL = (opcional) https://TU-SITIO/api/launches  (lista de lanzamientos registrados)
 on:
   schedule:
     - cron: "17 * * * *"
@@ -24,3 +25,4 @@ jobs:
         env:
           BOT_KEY: ${{ secrets.BOT_KEY }}
           RPC_URL: ${{ secrets.RPC_URL }}
+          LAUNCHES_URL: ${{ secrets.LAUNCHES_URL }}

@@ -1,11 +1,12 @@
 // Configuración de la red. Hoy: Ethereum Sepolia (testnet, dinero de prueba).
 // Para el lanzamiento real se usa Base: chainId 8453, rpc https://mainnet.base.org,
 // explorer https://basescan.org, USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913.
+const Q = typeof location !== "undefined" ? new URLSearchParams(location.search) : new URLSearchParams();
 export const CONFIG = {
-  demo: new URLSearchParams(location.search).has("demo"), // ?demo=1 abre el modo demostración (cadena simulada)
+  demo: Q.has("demo"), // ?demo=1 abre el modo demostración (cadena simulada)
   chainId: 11155111,
   chainName: "Sepolia testnet",
-  rpc: new URLSearchParams(location.search).get("rpc") || "https://ethereum-sepolia-rpc.publicnode.com", // ?rpc=http://127.0.0.1:8545 para probar contra una copia local
+  rpc: Q.get("rpc") || "https://ethereum-sepolia-rpc.publicnode.com", // ?rpc=http://127.0.0.1:8545 para probar contra una copia local
   explorer: "https://sepolia.etherscan.io",
   // USDC de prueba de Circle en Sepolia (se pide gratis en faucet.circle.com)
   usdc: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
@@ -16,5 +17,5 @@ export const CONFIG = {
   swapRouter: "0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E",
   quoter: "0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3",
   // Wallet que recibe 1% USDC + 1,5% tokens
-  platform: new URLSearchParams(location.search).has("demo") ? "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" : "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
+  platform: Q.has("demo") ? "0x70997970C51812dc3A010C7d01b50e0d17dc79C8" : "0xCE461A95e9D07ed2D64B4187DC152F771f73E06D",
 };

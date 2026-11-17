@@ -9,7 +9,7 @@ import { initI18n } from "./i18n.js";
 import { mountCoin } from "./coin3d.js";
 import { mountChart } from "./pro.js";
 import { createDemo } from "./demo.js";
-import { setLaunchChain, showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote } from "./launch.js";
+import { setLaunchChain, loadChainLaunches, lcChainLive, showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote } from "./launch.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, msgProfile, validProfile, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
@@ -123,7 +123,7 @@ function holdersLc(p) {
   const big = (x) => BigInt(Math.round(Math.max(0, x) * 1e6)) * 10n ** 12n, list = Object.entries(bal).filter(([, v]) => v > 0).map(([a2, v]) => ({ a: a2, b: big(v) }));
   list.push({ a: p.s.pool, b: big(l.rT) }, { a: p.q.creator, b: big(50000) }); p.holders = list.sort((x, y) => (y.b > x.b ? 1 : -1)).slice(0, 12);
 }
-const findTok = (fn) => S.list.find(fn) || lcLive().map(lcP).find(fn);
+const findTok = (fn) => S.list.find(fn) || lcLive().map(lcP).find(fn) || lcChainLive().map(lcxP).find(fn);
 function lcQuoteUi(p) {
   const l = lcGet(p.lc), side = S.side || "buy", v = parseFloat($("#tamt")?.value || "0") || 0;
   if (v <= 0 || !l) { if ($("#tout")) $("#tout").textContent = "–"; if ($("#timp")) $("#timp").textContent = "–"; if ($("#tmin")) $("#tmin").textContent = "–"; S.quote = null; return; }
@@ -140,7 +140,26 @@ async function swapLc(p) {
   lcSwap(l, q.side, q.lc, S.me); syncLc(p, l); S.quote = null; toast("Trade done");
   const box = $(".cyber"); if (box) { box.outerHTML = tradePanel(p); bindTrade(p); } const h = posBox(p), el = $("#tx-pos"); if (el) el.outerHTML = h; chartOff?.update();
 }
+// ---- lanzamientos REALES (contrato Launch) llenos: misma terminal, leyendo el pool de Uniswap de verdad
+const lcxCache = new Map();
+function lcxP(l) {
+  let p = lcxCache.get(l.id);
+  if (!p) { const hh = [...l.name].reduce((x, c) => (x * 31 + c.charCodeAt(0)) % 360, 7);
+    p = { lcx: l.id, id: "lcx-" + l.id, address: l.chain, exists: true, q: { symbol: l.sym, name: l.name, creator: l.cs.creator, hardcap: BigInt(Math.round(l.goal * 1e6)), saleTokens: 500_000_000n * 10n ** 18n, milestones: 0 }, s: { ...blankS(), pool: l.cs.pool, lpUnlock: 4102444800n }, u: blankU(), meta: { color: `hsl(${hh} 55% 38%)`, links: "{}", logo: "" }, order: {}, holders: null }; lcxCache.set(l.id, p); }
+  return p;
+}
+async function loadLcx(p) {
+  const l = lcChainLive().find((x) => x.id === p.lcx); if (!l) return; p.s.pool = l.cs.pool;
+  const [slot, bu, bt] = await Promise.all([
+    pub.readContract({ address: p.s.pool, abi: POOL_ABI, functionName: "slot0" }),
+    pub.readContract({ address: CONFIG.usdc, abi: erc20Abi, functionName: "balanceOf", args: [p.s.pool] }),
+    pub.readContract({ address: p.address, abi: erc20Abi, functionName: "balanceOf", args: [p.s.pool] })]);
+  p.mk = { sqrt: slot[0], poolUsdc: bu, poolTok: bt, usdc0: CONFIG.usdc.toLowerCase() < p.address.toLowerCase() }; p.mk.price = usdcPerToken(p.mk.sqrt, p.mk.usdc0);
+  p.mk.round = Number(p.q.hardcap) / 1e6 / (Number(p.q.saleTokens) / 1e18);
+  if (S.me) p.u.balance = await pub.readContract({ address: p.address, abi: erc20Abi, functionName: "balanceOf", args: [S.me] });
+}
 async function loadChain(p) {
+  if (p.lcx) return loadLcx(p);
   if (p.lc) { syncLc(p); return; }
   const code = await pub.getCode({ address: p.address });
   p.exists = !!code && code !== "0x"; p.s = blankS(); p.u = blankU();
@@ -224,7 +243,9 @@ function usdcPerToken(sqrt, usdc0) {
   const tokPerUsdc = usdc0 ? raw1per0 * 1e6 / 1e18 : (1 / raw1per0) * 1e6 / 1e18;
   return 1 / tokPerUsdc;
 }
-const fmtP = (x) => x >= 0.01 ? `$${x.toLocaleString("en-US", { maximumFractionDigits: 4 })}` : `$${x.toPrecision(3)}`;
+const SUBN = (n) => String(n).replace(/\d/g, (d) => "\u2080\u2081\u2082\u2083\u2084\u2085\u2086\u2087\u2088\u2089"[d]);
+const tinyP = (x) => { if (!(x > 0)) return "0"; const z = Math.floor(-Math.log10(x)); const m = (x * Math.pow(10, z + 1)).toPrecision(3).replace(".", "").slice(0, 3); return z > 4 ? `0.0${SUBN(z)}${m}` : x.toFixed(z + 3); };
+const fmtP = (x) => x >= 0.01 ? `$${x.toLocaleString("en-US", { maximumFractionDigits: 4 })}` : x >= 1e-4 ? `$${x.toPrecision(3)}` : `$${tinyP(x)}`;
 async function loadTrades(p) {
   if (p.lc) { syncLc(p); return p.trades; }
   if (!p.mk) await loadChain(p).catch(() => {});
@@ -776,7 +797,8 @@ function mkItems() {
   const q = (S.mkQ || "").toLowerCase(), ch = (p) => (p.trades ? stats24(p).chg : ((p.mk.price - p.mk.round) / p.mk.round) * 100);
   const own = S.list.filter((p) => p.mk && (!q || p.q.name.toLowerCase().includes(q) || p.q.symbol.toLowerCase().includes(q))).map((p) => ({ id: p.id, href: `#/trade/${p.id}`, sym: p.q.symbol, name: p.q.name, mark: mark(p), price: p.mk.price, chg: ch(p), cap: stats24(p).cap, liq: Number(p.mk.poolUsdc) / 1e6, vol: Number(vol24(p)) / 1e6, spark: spark(p), isNew: false, idx: S.list.indexOf(p) }));
   const lcs = lcLive().filter((l) => !q || l.name.toLowerCase().includes(q) || l.sym.toLowerCase().includes(q)).map((l) => { const p = lcP(l); return { id: p.id, href: `#/trade/${p.id}`, sym: l.sym, name: l.name, mark: mark(p), price: p.mk.price, chg: ch(p), cap: stats24(p).cap, liq: l.rU, vol: Number(vol24(p)) / 1e6, spark: spark(p), isNew: true, idx: 1e6 + (l.liveAt || 0) }; });
-  return [...own, ...lcs];
+  const lcxs = lcChainLive().filter((l) => !q || l.name.toLowerCase().includes(q) || l.sym.toLowerCase().includes(q)).map((l) => { const p = lcxP(l); if (!p.mk) { loadChain(p).then(() => loadTrades(p)).then(() => { if (location.hash.startsWith("#/market") && document.activeElement?.id !== "mk-q") { $("#app").innerHTML = vMarket(); bindMarket(); } }).catch(() => {}); return null; } return { id: p.id, href: `#/trade/${p.id}`, sym: l.sym, name: l.name, mark: mark(p), price: p.mk.price, chg: ch(p), cap: stats24(p).cap, liq: Number(p.mk.poolUsdc) / 1e6, vol: Number(vol24(p)) / 1e6, spark: spark(p), isNew: true, idx: 2e6 + (l.liveAt || 0) }; }).filter(Boolean);
+  return [...own, ...lcs, ...lcxs];
 }
 function vMarket() {
   const sort = S.mkSort || "volume", fv = favs(), col = S.mkCol, dir = S.mkDir || -1;
@@ -1611,6 +1633,7 @@ function route() {
   $("#nav-owner").classList.toggle("d-none", !isOwner()); $("#tab-owner").classList.toggle("d-none", !isOwner());
   if (key === "launch" && $("#form")) return; // no borrar lo que el creador está escribiendo
   const keep = $("#amt")?.value;
+  if (tp?.lcx && !tp.mk) { if (!tp._ld) { tp._ld = true; Promise.all([loadChain(tp)]).then(() => loadTrades(tp)).then(() => { tp._ld = false; route(); }).catch(() => { tp._ld = false; }); } $("#app").innerHTML = `<div class="page-h"><h1>${esc(tp.q.symbol)}</h1><p>Loading the market…</p></div>`; return; }
   if (tp) { const kv = $("#tamt")?.value; $("#app").innerHTML = vTerminal(tp); if (kv && $("#tamt")) $("#tamt").value = kv; startTerminal(tp); return; }
   if (key === "market") { $("#app").innerHTML = vMarket(); bindMarket(); S.list.filter((x) => x.mk && !x.supply).forEach((x) => { try { pub.readContract({ address: x.address, abi: erc20Abi, functionName: "totalSupply" }).then((v) => { x.supply = v; if (location.hash.startsWith("#/market") && document.activeElement?.id !== "mk-q") { $("#app").innerHTML = vMarket(); bindMarket(); } }).catch(() => {}); } catch {} });
   S.list.filter((x) => x.mk && !x.trades).forEach((x) => loadTrades(x).then(() => { if (location.hash.startsWith("#/market") && document.activeElement?.id !== "mk-q") { $("#app").innerHTML = vMarket(); bindMarket(); } })); return; }
@@ -1809,6 +1832,7 @@ async function main() {
   if (CONFIG.demo) { try { if (!localStorage.getItem("hf-lang")) localStorage.setItem("hf-lang", "es"); } catch {} DEMO = createDemo({ CONFIG, ABI, ERC20: erc20Abi, ROUTER_ABI, QUOTER_ABI }); pub = DEMO.pub; window.ethereum = DEMO.eth; demoBar(); window.__demo = DEMO; }
   initI18n();
   $("#net span").textContent = CONFIG.chainName;
+  setLaunchChain({ CONFIG, pub, wallet: null, account: null }); if (!CONFIG.demo) loadChainLaunches().catch(() => {});
   $("#connect").onclick = () => { if (S.me) { const o = document.getElementById("acct-ov"); if (o) { o.remove(); return; } const ov = document.createElement("div"); ov.id = "acct-ov"; ov.innerHTML = acctHtml(); document.body.appendChild(ov); ov.onclick = (e) => { if (e.target === ov || e.target.closest("[data-acx]")) ov.remove(); }; return; } connect().catch((x) => toast(x.shortMessage || x.message, true)); };
   window.addEventListener("hashchange", () => { S.tab = "overview"; clearInterval(S.poll); if (!location.hash.startsWith("#/launch")) $("#app").innerHTML = ""; route(); scrollTo(0, 0); });
   await loadCatalog();

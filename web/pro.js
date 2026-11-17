@@ -6,7 +6,11 @@ import { createChart, CrosshairMode } from "https://cdn.jsdelivr.net/npm/lightwe
 const UP = "#3ddc97", DN = "#ff5d5d";
 const fmtN = (x, cap) => {
   if (cap && x >= 1000) return x >= 1e9 ? (x / 1e9).toFixed(2) + "B" : x >= 1e6 ? (x / 1e6).toFixed(2) + "M" : (x / 1e3).toFixed(1) + "K";
-  return x >= 0.01 ? x.toLocaleString("en-US", { maximumFractionDigits: 4 }) : x.toPrecision(3);
+  if (x >= 0.01) return x.toLocaleString("en-US", { maximumFractionDigits: 4 });
+  if (x >= 1e-4) return x.toPrecision(3);
+  if (!(x > 0)) return "0";
+  const z = Math.floor(-Math.log10(x)), m = (x * Math.pow(10, z + 1)).toPrecision(3).replace(".", "").slice(0, 3);
+  return z > 4 ? `0.0${String(z).replace(/\d/g, (d) => "\u2080\u2081\u2082\u2083\u2084\u2085\u2086\u2087\u2088\u2089"[d])}${m}` : x.toFixed(z + 3);
 };
 const maOf = (cs, n) => cs.map((c, i) => (i + 1 < n ? null : { time: c.time, value: cs.slice(i + 1 - n, i + 1).reduce((a, k) => a + k.close, 0) / n })).filter(Boolean);
 

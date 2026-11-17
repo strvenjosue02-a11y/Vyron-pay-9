@@ -163,6 +163,84 @@ contract LaunchTest is Test {
         vm.prank(trader); vm.expectRevert(); l.refundFor(alice); // no se devuelve dos veces
     }
 
+
+    // ================= REVISIÓN COMO ATACANTE =================
+
+    // ATAQUE 1: iniciar el pool ANTES al precio CORRECTO no rompe nada (el contrato sigue su camino)
+    function test_attack_preinitPoolAtCorrectPrice_stillFills() public {
+        Launch.Params memory p = _params(100e6, "AT1");
+        address pred = _predict(p);
+        (address t0, address t1) = address(USDC) < pred ? (address(USDC), pred) : (pred, address(USDC));
+        // precio correcto: 99 USDC por 495M tokens
+        uint256 a0 = t0 == address(USDC) ? 99e6 : 495_000_000 ether; uint256 a1 = t0 == address(USDC) ? 495_000_000 ether : 99e6;
+        uint160 target = uint160(_sqrt(a1 * (1 << 96) / a0) << 48);
+        INPM(NPM).createAndInitializePoolIfNecessary(t0, t1, 3000, target);
+        Launch l = _deploy(p);
+        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+        assertEq(uint8(l.state()), uint8(Launch.State.Live), "con el precio correcto la ronda se llena igual");
+    }
+    function _sqrt(uint256 x) internal pure returns (uint256 y) { if (x == 0) return 0; uint256 z = (x + 1) / 2; y = x; while (z < y) { y = z; z = (x / z + z) / 2; } }
+
+    // ATAQUE 2: donar USDC directo al contrato no cambia las cuentas ni da ventaja
+    function test_attack_donationDoesNotBreakAccounting() public {
+        Launch l = _deploy(_params(100e6, "AT2"));
+        vm.prank(trader); USDC.transfer(address(l), 50e6); // donación
+        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+        assertEq(uint8(l.state()), uint8(Launch.State.Live));
+        assertEq(USDC.balanceOf(platform), 1e6, "la plataforma sigue cobrando solo 1%");
+        vm.prank(alice); l.claim(); assertEq(l.balanceOf(alice), 500_000_000 ether);
+    }
+
+    // ATAQUE 3: nadie puede sacar ni reclamar lo de otro
+    function test_attack_cannotTouchOthersFunds() public {
+        Launch l = _deploy(_params(500e6, "AT3"));
+        vm.startPrank(alice); USDC.approve(address(l), 200e6); l.deposit(200e6, alice); vm.stopPrank();
+        vm.prank(trader); vm.expectRevert(); l.withdraw();     // el atacante no tiene saldo en la ronda
+        vm.prank(trader); vm.expectRevert(); l.claim();        // y antes de llenarse nadie reclama
+        vm.prank(trader); vm.expectRevert(); l.collectFees();  // ni cobra comisiones sin pool
+        vm.prank(trader); vm.expectRevert(); l.refundFor(alice); // ni "devuelve" antes de tiempo
+    }
+
+    // ATAQUE 4: depositar "a nombre de otro" solo le regala una posición; él puede sacarla
+    function test_attack_depositOnBehalfIsAGift() public {
+        Launch l = _deploy(_params(500e6, "AT4"));
+        vm.startPrank(trader); USDC.approve(address(l), 10e6); l.deposit(10e6, bob); vm.stopPrank();
+        assertEq(l.contributed(bob), 10e6); assertEq(l.contributed(trader), 0);
+        vm.prank(bob); l.withdraw(); assertEq(USDC.balanceOf(bob), 5_010e6);
+    }
+
+    // ATAQUE 5: llenar la ronda con una sola persona no da ventaja de precio
+    function test_attack_whaleGetsSamePrice() public {
+        Launch l = _deploy(_params(100e6, "AT5"));
+        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); l.claim(); vm.stopPrank();
+        assertEq(l.balanceOf(alice), 500_000_000 ether, "100 USDC compran exactamente los 500M del tramo");
+    }
+
+    // ATAQUE 6: tras llenarse no hay forma de sacar el NFT del pool: el contrato no tiene ninguna función que lo mueva
+    function test_attack_nftCannotLeave() public {
+        Launch l = _deploy(_params(100e6, "AT6"));
+        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+        uint256 id = l.lpTokenId();
+        vm.prank(creator); (bool ok,) = NPM.call(abi.encodeWithSignature("transferFrom(address,address,uint256)", address(l), creator, id));
+        assertTrue(!ok, "ni el creador puede mover el NFT");
+        vm.prank(platform); (ok,) = NPM.call(abi.encodeWithSignature("transferFrom(address,address,uint256)", address(l), platform, id));
+        assertTrue(!ok, "ni la plataforma");
+    }
+
+    // ATAQUE 7: un pool mal inicializado deja la ronda en reembolso para siempre, pero nadie pierde dinero
+    function test_attack_griefingKillsLaunchButNotFunds() public {
+        Launch.Params memory p = _params(100e6, "AT7");
+        address pred = _predict(p);
+        (address t0, address t1) = address(USDC) < pred ? (address(USDC), pred) : (pred, address(USDC));
+        INPM(NPM).createAndInitializePoolIfNecessary(t0, t1, 3000, uint160(1 << 96));
+        Launch l = _deploy(p);
+        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+        assertEq(uint8(l.state()), uint8(Launch.State.Refund));
+        vm.prank(trader); l.refundFor(alice);
+        assertEq(USDC.balanceOf(alice), 5_000e6, "no se pierde dinero");
+        vm.prank(bob); USDC.approve(address(l), 1e6); vm.prank(bob); vm.expectRevert(); l.deposit(1e6, bob); // pero la ronda queda muerta
+    }
+
     // --- no se puede pasar de la meta ni mintear a voluntad
     function test_cannotExceedGoal() public {
         Launch l = _deploy(_params(100e6, "BR5"));

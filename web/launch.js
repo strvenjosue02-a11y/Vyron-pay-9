@@ -9,17 +9,27 @@ const lang = () => { try { return localStorage.getItem("hf-lang") === "es" ? "es
 const T = (en, es) => (lang() === "es" ? es : en);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const usd = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2) + "M" : v >= 1e4 ? (v / 1e3).toFixed(1) + "K" : v.toLocaleString("en-US", { maximumFractionDigits: 2 }));
-const fmtP = (x) => (x >= 0.01 ? "$" + x.toLocaleString("en-US", { maximumFractionDigits: 4 }) : "$" + x.toPrecision(3));
+const SUBN = (n) => String(n).replace(/\d/g, (d) => "\u2080\u2081\u2082\u2083\u2084\u2085\u2086\u2087\u2088\u2089"[d]);
+const tinyP = (x) => { if (!(x > 0)) return "0"; const z = Math.floor(-Math.log10(x)); const m = (x * Math.pow(10, z + 1)).toPrecision(3).replace(".", "").slice(0, 3); return z > 4 ? `0.0${SUBN(z)}${m}` : x.toFixed(z + 3); };
+const fmtP = (x) => (x >= 0.01 ? "$" + x.toLocaleString("en-US", { maximumFractionDigits: 4 }) : x >= 1e-4 ? "$" + x.toPrecision(3) : "$" + tinyP(x));
 const ago = (t) => { const s = Math.max(1, Math.round(now() - t)); return s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)}m` : `${Math.round(s / 3600)}h`; };
 const hue = (s) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
 
 const me = { usdc: 500, dep: {}, tok: {} };
+export const lcChainLive = () => L.filter((x) => x.chain && x.cs?.state === "live");
+const saveRec = (r) => { try { const a = JSON.parse(localStorage.getItem("hf-lcs") || "[]"); if (!a.some((x) => x.address === r.address)) { a.push(r); localStorage.setItem("hf-lcs", JSON.stringify(a)); } } catch {} };
+function addChainRec(r) { if (L.some((x) => x.chain === r.address)) return null; const l = mk(r.name, r.symbol, r.goal, 0, ""); l.chain = r.address; l.creator = 0; l.comments = []; return l; }
+export async function loadChainLaunches() {
+  let recs = []; try { recs = JSON.parse(localStorage.getItem("hf-lcs") || "[]"); } catch {}
+  try { const r = await fetch("/api/launches"); if (r.ok) recs = [...recs, ...((await r.json()).launches || [])]; } catch {}
+  const added = recs.map(addChainRec).filter(Boolean); await Promise.all(added.map((l) => syncChain(l).catch(() => {})));
+}
 const clock = (s) => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h ? `${h}h ${m}m` : `${m}m ${s % 60}s`; };
 const isExp = (l) => l.status === "open" && l.dl && now() > l.dl;
 const mineOf = (l) => (l.chain ? Number(l.cs?.mine ?? 0n) / 1e6 : me.dep[l.id] || 0);
 async function syncChain(l) {
   if (!l.chain || !CTX) return;
-  const C = await import("./lcchain.js"), s = await C.readLaunch(CTX.pub, l.chain, CTX.account); l.cs = s; l.raised = Number(s.raised) / 1e6; l.dl = s.deadline; l.goal = Number(s.goal) / 1e6;
+  const C = await import("./lcchain.js"), s = await C.readLaunch(CTX.pub, l.chain, CTX.account || undefined); l.cs = s; l.raised = Number(s.raised) / 1e6; l.dl = s.deadline; l.goal = Number(s.goal) / 1e6;
   if (CTX.account) { const { erc20Abi } = await import("viem"); l.cbal = Number(await CTX.pub.readContract({ address: CTX.CONFIG.usdc, abi: erc20Abi, functionName: "balanceOf", args: [CTX.account] })) / 1e6; }
 }
 let CTX = null; // { CONFIG, pub, wallet, account } cuando hay wallet real conectada: entonces Lanzar despliega el contrato de verdad
@@ -76,9 +86,9 @@ mk("Moon Bread", "BREAD", 500, 0, "", true);
 let timer = null, chart = null, cur = "";
 function tick() {
   if (!location.hash.startsWith("#/lc") && !location.hash.startsWith("#/trade/lc-") && !location.hash.startsWith("#/market") && !["", "#", "#/"].includes(location.hash)) { if (cur) stopLaunches(); return; }
-  const open = L.filter((l) => l.status === "open");
+  const open = L.filter((l) => l.status === "open" && !l.chain);
   if (open.length) { const l = open[Math.floor(Math.random() * open.length)], add = Math.min(l.goal - l.raised, rnd(4, 30) * (l.goal / 500 + 0.4)); l.raised += add; l.last = now(); if (l.raised >= l.goal - 0.01) goLive(l); }
-  const live = L.filter((l) => l.status === "live"); if (live.length) { const l = live[Math.floor(Math.random() * live.length)]; if (Math.random() < 0.55) trade(l, "buy", rnd(1, 9) * (l.goal / 500)); else trade(l, "sell", (l.rT * rnd(0.002, 0.012))); l.last = now(); }
+  const live = L.filter((l) => l.status === "live" && !l.chain); if (live.length) { const l = live[Math.floor(Math.random() * live.length)]; if (Math.random() < 0.55) trade(l, "buy", rnd(1, 9) * (l.goal / 500)); else trade(l, "sell", (l.rT * rnd(0.002, 0.012))); l.last = now(); }
   if (Math.random() < 0.06 && L.length < 14) { const n = ["Dog Wif Hat", "Taco Moon", "Pixel Ghost", "Sad Duck", "Neon Frog"][Math.floor(Math.random() * 5)] + " " + Math.floor(rnd(1, 99)); mk(n, n.replace(/[^A-Z]/gi, "").slice(0, 5).toUpperCase(), GOALS[Math.floor(Math.random() * 3)], 0, ""); }
   if (cur === "list") view(); else if (cur && cur !== "new") { const cl = L.find((x) => x.id === cur); if (cl?.chain) syncChain(cl).then(liveUpdate).catch(() => {}); else liveUpdate(); }
 }
@@ -120,7 +130,7 @@ function liveChainHtml(l) {
   const s = l.cs, mine = mineOf(l), C = CTX?.CONFIG;
   return `<div class="lc-big"><b>${T("Market open", "Mercado abierto")}</b></div><p class="lc-left">${T("The round filled. The pool is locked forever.", "La ronda se llenó. El pool queda bloqueado para siempre.")}</p>
   <p class="lc-addr"><button type="button" data-copy="${l.chain}">${l.chain.slice(0, 6)}…${l.chain.slice(-4)}</button><span>${T("token", "token")}</span></p>
-  ${C ? `<a class="btn btn-line btn-block" href="${C.explorer}/address/${s.pool}" target="_blank" rel="noopener">${T("See the pool", "Ver el pool")}</a>` : ""}
+  ${C ? `<a class="btn btn-ember btn-block" href="#/trade/lcx-${l.id}">${T("Trade it", "Operarlo")}</a><a class="btn btn-line btn-block" style="margin-top:10px" href="${C.explorer}/address/${s.pool}" target="_blank" rel="noopener">${T("See the pool", "Ver el pool")}</a>` : ""}
   ${mine > 0 ? `<button class="btn btn-ember btn-block" id="lc-claim" style="margin-top:12px">${T("Claim my tokens", "Reclamar mis tokens")}</button>` : `<p class="lc-bal">${T("Nothing left to claim.", "No tienes tokens por reclamar.")}</p>`}`;
 }
 function liveHtml(l, tk) {
@@ -196,7 +206,7 @@ function bindNew() {
     if (name.length < 2 || sym.length < 2) return alert(T("Add a name and a ticker.", "Agrega un nombre y un símbolo.")); if (L.some((x) => x.sym === sym)) return alert(T("That ticker already exists.", "Ese símbolo ya existe."));
     const goal = Number(f.querySelector('[name="lc-g"]:checked').value), first = Number(f.querySelector('[name="lc-c"]:checked').value), pct = Number(f.querySelector('[name="lc-p"]:checked').value), wks = Number(f.querySelector('[name="lc-w"]:checked').value);
     if (CTX && CTX.wallet && CTX.account) { const btn = f.querySelector('button[type="submit"]'); btn.disabled = true; btn.textContent = T("Creating on the network…", "Creando en la red…");
-      import("./lcchain.js").then(async (C) => { const p = C.launchParams(CTX.CONFIG, { name, symbol: sym, creator: CTX.account, goal, creatorPct: pct, vestingWeeks: wks }), addr = await C.ensureDeployed(CTX.CONFIG, CTX.pub, CTX.wallet, CTX.account, p);
+      import("./lcchain.js").then(async (C) => { const p = C.launchParams(CTX.CONFIG, { name, symbol: sym, creator: CTX.account, goal, creatorPct: pct, vestingWeeks: wks }), fromBlock = Number(await CTX.pub.getBlockNumber()), addr = await C.ensureDeployed(CTX.CONFIG, CTX.pub, CTX.wallet, CTX.account, p); const rec = { address: addr, name, symbol: sym, creator: CTX.account, goal, creatorPct: pct, vestingWeeks: wks, fromBlock }; saveRec(rec); fetch("/api/launches", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(rec) }).catch(() => {});
         if (first > 0) await C.deposit(CTX.CONFIG, CTX.pub, CTX.wallet, CTX.account, addr, Math.min(first, goal));
         const l = mk(name, sym, goal, Math.min(first, goal), img); l.chain = addr; l.dl = now() + 48 * 3600; l.creator = Math.round((first / goal) * 100); location.hash = "#/lc/" + l.id; }).catch((e) => { btn.disabled = false; btn.textContent = T("Launch", "Lanzar"); alert(e.shortMessage || e.message); });
       return; }
