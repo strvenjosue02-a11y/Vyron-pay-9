@@ -16,6 +16,7 @@ const maOf = (cs, n) => cs.map((c, i) => (i + 1 < n ? null : { time: c.time, val
 
 const emaOf = (v, n) => { const k = 2 / (n + 1), out = []; let e = null; v.forEach((x, i) => { e = e == null ? x : x * k + e * (1 - k); out.push(e); }); return out; };
 const rsiOf = (c, n = 14) => { const out = []; let g = 0, l = 0; for (let i = 1; i < c.length; i++) { const d = c[i] - c[i - 1]; const up = Math.max(d, 0), dn = Math.max(-d, 0); if (i <= n) { g += up / n; l += dn / n; } else { g = (g * (n - 1) + up) / n; l = (l * (n - 1) + dn) / n; } if (i >= n) out.push([i, l === 0 ? 100 : 100 - 100 / (1 + g / l)]); } return out; };
+const PHONE = () => matchMedia("(max-width: 900px)").matches;
 export function mountChart(el, { id, getData, periods, period, onPeriod, labels = {}, fsTarget, onFace, onLine }) {
   const L = { candles: "Candles", line: "Line", ma: "MA", draw: "Line", clear: "Clear", full: "Full screen", exit: "Exit", vol: "Vol", price: "Price", cap: "Market cap", ...labels };
   const key = `hf-hl-${id}`;
@@ -45,12 +46,12 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     layout: { background: { type: "solid", color: "transparent" }, textColor: "#8d8f95", fontSize: 12, fontFamily: "JetBrains Mono, ui-monospace, monospace" },
     grid: { vertLines: { visible: false }, horzLines: { color: "rgba(255,255,255,.035)" } },
     watermark: { visible: false, text: "", fontSize: 120, horzAlign: "center", vertAlign: "center", color: "rgba(255,255,255,.035)", fontFamily: "Space Grotesk, sans-serif", fontStyle: "bold" },
-    crosshair: { mode: CrosshairMode.Normal, vertLine: { color: "rgba(255,255,255,.28)", style: 2, width: 1, labelBackgroundColor: "#1c1c20" }, horzLine: { color: "rgba(255,255,255,.28)", style: 2, width: 1, labelBackgroundColor: "#1c1c20" } },
+    crosshair: { mode: PHONE() ? CrosshairMode.Magnet : CrosshairMode.Normal, vertLine: { visible: !PHONE(), labelVisible: !PHONE(), color: "rgba(255,255,255,.28)", style: 2, width: 1, labelBackgroundColor: "#1c1c20" }, horzLine: { visible: !PHONE(), labelVisible: !PHONE(), color: "rgba(255,255,255,.28)", style: 2, width: 1, labelBackgroundColor: "#1c1c20" } },
     rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.1, bottom: 0.26 } },
     timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false, rightOffset: 10, barSpacing: 11, minBarSpacing: 2 },
     localization: { priceFormatter: (p) => fmtN(p, st.cap) },
   });
-  const candle = chart.addCandlestickSeries({ upColor: UP, downColor: DN, borderVisible: false, wickUpColor: UP + "cc", wickDownColor: DN + "cc", priceFormat: pf });
+  const candle = chart.addCandlestickSeries({ priceLineStyle: PHONE() ? 0 : 2, priceLineColor: "rgba(61,220,151,.45)", upColor: UP, downColor: DN, borderVisible: false, wickUpColor: UP + "cc", wickDownColor: DN + "cc", priceFormat: pf });
   const line = chart.addAreaSeries({ lineColor: UP, topColor: "rgba(61,220,151,.22)", bottomColor: "rgba(61,220,151,0)", lineWidth: 2, visible: false, priceFormat: pf });
   const vol = chart.addHistogramSeries({ priceFormat: { type: "volume" }, priceScaleId: "vol", lastValueVisible: false, priceLineVisible: false });
   chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
@@ -147,14 +148,14 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     const ma7 = maOf(data, 7), ma25 = maOf(data, 25); m7.setData(st.ma ? ma7 : []); m25.setData(st.ma ? ma25 : []);
     candle.applyOptions({ visible: st.mode === "candle" }); line.applyOptions({ visible: st.mode === "line" || (st.mode === "candle" && !st.flow), lineVisible: st.mode === "line", topColor: st.mode === "line" ? "rgba(61,220,151,.22)" : (data.length && data[data.length - 1].close >= data[0].open ? "rgba(61,220,151,.20)" : "rgba(255,93,93,.20)"), bottomColor: "rgba(0,0,0,0)" });
     if (roundLine) candle.removePriceLine(roundLine);
-    roundLine = d.round ? candle.createPriceLine({ price: d.round * k, color: "rgba(255,255,255,.35)", lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "" }) : null;
+    roundLine = d.round && !PHONE() ? candle.createPriceLine({ price: d.round * k, color: "rgba(255,255,255,.35)", lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "" }) : null;
     hlRefs.forEach((r) => candle.removePriceLine(r));
     hlRefs = hl.map((p) => candle.createPriceLine({ price: p * k, color: "#f4f4f1", lineWidth: 1, lineStyle: 0, axisLabelVisible: true, title: "" }));
     const times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; };
     const marks = (d.marks || []).map((m) => ({ time: snap(m.t), position: m.buy ? "belowBar" : "aboveBar", color: m.buy ? UP : DN, shape: "circle", size: 2, text: m.buy ? "+" : "−" })).sort((a, b) => a.time - b.time);
     candle.setMarkers(marks);
     allTr = d.trades || []; heat = d.heat || []; faces = d.faces || []; lines = d.lines || []; lnRefs.forEach((r) => candle.removePriceLine(r));
-    lnRefs = lines.map((l) => candle.createPriceLine({ price: l.price * k, color: l.color, lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "" }));
+    lnRefs = lines.filter(() => !PHONE()).map((l) => candle.createPriceLine({ price: l.price * k, color: l.color, lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "" }));
     drawOv();
     st.last = data[data.length - 1]; showInfo(st.last);
     if (first) { chart.timeScale().fitContent(); first = false; }

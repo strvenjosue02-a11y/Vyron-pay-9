@@ -133,7 +133,14 @@ function lcQuoteUi(p) {
   const mn = r.out * (1 - (S.slip || 1) / 100); if ($("#tmin")) $("#tmin").textContent = side === "buy" ? `${fT(mn)} ${p.q.symbol}` : `${fU(mn)} USDC`;
   $("#timp").textContent = `${r.imp.toFixed(2)}%`; $("#timp").classList.toggle("warn", r.imp > 5);
 }
+function showDone(kind, usdAmt, sym) {
+  document.querySelectorAll(".done-ov").forEach((x) => x.remove());
+  const d = document.createElement("div"); d.className = "done-ov " + kind;
+  d.innerHTML = `<div class="dn-c"><svg viewBox="0 0 52 52" width="64" height="64" aria-hidden="true"><circle cx="26" cy="26" r="23" fill="none" stroke="currentColor" stroke-width="3"/><path d="M15 27l8 8 14-16" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><b>${kind === "buy" ? "Purchase done" : "Sale done"}</b><span>$${usdAmt} · ${esc(sym)}</span></div>`;
+  document.body.appendChild(d); setTimeout(() => d.classList.add("out"), 1500); setTimeout(() => d.remove(), 1900);
+}
 function offerShare(p, kind, usdAmt) {
+  showDone(kind, usdAmt, p.q.symbol);
   document.querySelectorAll(".share-pop").forEach((x) => x.remove()); if (!S.me) return;
   const d = document.createElement("div"); d.className = "share-pop"; d.innerHTML = `<span>${kind === "buy" ? "Bought" : "Sold"} <b>$${usdAmt}</b> of ${esc(p.q.symbol)}</span><button type="button">Share card</button><i aria-label="Close">✕</i>`;
   d.querySelector("button").onclick = () => { d.remove(); traderCard(p, S.me, { last: { buy: kind === "buy", usd: usdAmt } }); }; d.querySelector("i").onclick = () => d.remove();
@@ -710,7 +717,7 @@ function burst(buy) { const h = $("#chartpro"); if (!h) return; const d = docume
 const RX = { rocket: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15c0-5 4-9 9-10 1 5-3 9-8 9M5 15l-2 4 4-2M9 12l3 3"/></svg>', fire: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/></svg>' };
 function react(kind) { const h = $("#chartpro"); if (!h) return; const e = document.createElement("div"); e.className = "cp-rx"; e.style.left = 20 + Math.random() * 60 + "%"; e.innerHTML = RX[kind]; h.appendChild(e); setTimeout(() => e.remove(), 2200); }
 const proOn = () => true; // un solo modo: todo visible
-const oneTap = () => { try { return localStorage.getItem("hf-1tap") !== "0"; } catch { return true; } };
+const oneTap = () => { try { return localStorage.getItem("hf-1tap") === "1"; } catch { return false; } }; // por defecto apagado: los montos solo rellenan, compras al tocar Comprar
 function notify(t) { try { if ("Notification" in window && Notification.permission === "granted") new Notification("Holdfast", { body: t }); } catch {} }
 function creatorHtml(p) {
   const c = p.q.creator, k = parseInt(c.slice(2, 6), 16), filled = 2 + (k % 6), failed = k % 3, trades = (p.trades || []).filter((t) => t.who && t.who.toLowerCase() === c.toLowerCase()), sold = trades.some((t) => !t.buy);
@@ -1836,7 +1843,7 @@ document.addEventListener("click", async (e) => {
     else if (act === "openPanel") return await openPanel();
     else if (act === "postUpdate") return await postUpdate(b.dataset.id);
     else if (act === "card") return await backerCard(p);
-    else if (act === "swap") { await swap(p); if (!p.lc) p.trades = null; }
+    else if (act === "swap") { const sb = document.querySelector("[data-act=swap]"); sb?.classList.add("loading"); try { await swap(p); } finally { document.querySelector("[data-act=swap]")?.classList.remove("loading"); } if (!p.lc) p.trades = null; }
     else if (act === "ask" || act === "answer") return await qaPost(p, act, b.dataset.qts);
     await refresh();
   } catch (x) { console.error(x); toast(x.shortMessage || x.message, true); }

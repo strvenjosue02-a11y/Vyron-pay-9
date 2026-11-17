@@ -1766,3 +1766,15 @@ a.mk-row:hover { box-shadow: inset 2px 0 0 #fff; } .tx-feed span.fol, .tx-ca but
   .cy-trades { padding: 0 4px; } .cy-trades li { padding: 12px 2px !important; }
 }
 h1, h2, h3, .tx-px b, .tx-px #tx-capbig, .page-h h1 { text-shadow: none !important; }
+
+/* ===== Compra realizada: animación pequeña ===== */
+.done-ov { position: fixed; inset: 0; z-index: 6000; display: grid; place-items: center; pointer-events: none; background: radial-gradient(40% 30% at 50% 50%, rgba(0,0,0,.55), transparent 70%); animation: dfade .25s ease-out; } .done-ov.out { animation: dout .4s ease-in forwards; }
+.dn-c { display: grid; justify-items: center; gap: 6px; padding: 26px 34px; border-radius: 26px; background: rgba(12,12,14,.94); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1), 0 30px 90px rgba(0,0,0,.7); animation: dpop .45s cubic-bezier(.2,1.4,.3,1); } .done-ov.buy .dn-c { color: var(--up); } .done-ov.sell .dn-c { color: var(--dn); }
+.dn-c svg circle { stroke-dasharray: 145; stroke-dashoffset: 145; animation: dring .5s ease-out .1s forwards; } .dn-c svg path { stroke-dasharray: 40; stroke-dashoffset: 40; animation: dring .35s ease-out .45s forwards; }
+.dn-c b { color: var(--ink); font-size: 20px; letter-spacing: -0.03em; } .dn-c span { color: var(--ink-2); font: 500 15px var(--mono); }
+@keyframes dring { to { stroke-dashoffset: 0; } } @keyframes dpop { from { transform: scale(.7); opacity: 0; } } @keyframes dfade { from { opacity: 0; } } @keyframes dout { to { opacity: 0; transform: translateY(-10px); } }
+/* botón mientras compra */
+.btn.loading { position: relative; color: transparent !important; pointer-events: none; } .btn.loading::after { content: ""; position: absolute; inset: 0; margin: auto; width: 24px; height: 24px; border-radius: 50%; border: 3px solid rgba(0,0,0,.25); border-top-color: #000; animation: spin .7s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+.term-side .panel.cyber .btn.tp-buy:active, .term-side .panel.cyber .btn.tp-sell:active { transform: scale(.97); transition: transform .08s; }
+/* celular: sin líneas blancas raras en el gráfico */
+@media (max-width: 900px) { .cp-svg .tv-lightweight-charts table tr td canvas { } .term.tx .cp-svg { --x: 0; } }
