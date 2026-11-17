@@ -525,6 +525,7 @@ async function traderPng(p, r, rank) {
   g.textAlign = "left"; g.fillStyle = "#050506"; g.font = `700 76px ${F}`; g.fillText("Holdfast", 70, 1190); g.textAlign = "right"; g.fillStyle = "#6a6a72"; g.font = `500 34px ${F}`; g.fillText(`#${rank} on ${p.q.symbol}`, W - 70, 1190);
   return new Promise((ok2) => c.toBlob(ok2, "image/png"));
 }
+if (CONFIG.demo) window.__hf = { traderPng, traderBoard, S };
 async function traderCard(p, addr) {
   const lc = String(addr).toLowerCase(), r = traderBoard(p, "all").find((x) => x.a.toLowerCase() === lc) || { a: lc, spent: 0, got: 0, buys: 0, sells: 0, tok: 0, best: 0, val: 0, pnl: 0, pct: 0 }, rank = traderBoard(p, "all").findIndex((x) => x.a.toLowerCase() === lc) + 1; 
   const ov = document.createElement("div"); ov.className = "pnl-ov";
