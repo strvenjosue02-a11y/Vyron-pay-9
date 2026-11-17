@@ -14,6 +14,9 @@ export default async function handler(req, res) {
     const err = validProfile(name, photo);
     if (err) return send(res, 400, { error: err });
     if (!(await signedBy(address, msgProfile(address, name, hashText(photo)), signature))) return send(res, 401, { error: "The signature doesn't match your wallet." });
+    const taken = (await readAll("profiles/")).some((x) => x.data.address !== address.toLowerCase() && String(x.data.name).toLowerCase() === String(name).toLowerCase());
+    if (taken) return send(res, 409, { error: "That username is taken." });
+    if (!photo) return send(res, 400, { error: "A profile photo is required." });
     await save(`profiles/${address.toLowerCase()}.json`, { address: address.toLowerCase(), name, photo, signature }, { overwrite: true });
     send(res, 200, { ok: true });
   } catch (e) {
