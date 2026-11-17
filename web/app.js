@@ -524,7 +524,7 @@ function safetyHtml(p) {
   const top10 = hs.filter((h) => !holderLabel(p, h.a)).slice(0, 10).reduce((s, h) => s + pct(h.b), 0), now = S.now || Date.now() / 1000, locked = Number(p.s.lpUnlock) > now;
   const sold = (p.trades || []).some((t) => !t.buy && t.who && t.who.toLowerCase() === p.q.creator.toLowerCase());
   const L = (lv) => (lv === 0 ? "ok" : lv === 1 ? "mid" : "bad");
-  const items = [[`Team holds ${tp.toFixed(1)}%`, tp < 10 ? 0 : tp < 20 ? 1 : 2], [`Top 10 hold ${top10.toFixed(0)}%`, top10 < 30 ? 0 : top10 < 50 ? 1 : 2], [locked ? `Liquidity locked until ${day(p.s.lpUnlock)}` : "Liquidity unlocked", locked ? 0 : 2], [sold ? "Team has sold" : "Team hasn't sold", sold ? 2 : 0]];
+  const items = [[`Team holds ${tp.toFixed(1)}%`, tp < 10 ? 0 : tp < 20 ? 1 : 2], [`Top 10 hold ${top10.toFixed(0)}%`, top10 < 30 ? 0 : top10 < 50 ? 1 : 2], [locked ? "Liquidity locked forever" : "Liquidity unlocked", locked ? 0 : 2], [sold ? "Team has sold" : "Team hasn't sold", sold ? 2 : 0]];
   return items.map(([t, lv]) => `<span class="sf ${L(lv)}"><i></i>${t}</span>`).join("");
 }
 const linksHtml = (p) => { let l = {}; try { l = JSON.parse(p.meta?.links || "{}"); } catch {} return Object.entries(l).filter(([, v]) => /^https?:\/\//.test(v)).map(([k, v]) => `<a class="tx-ln" href="${esc(v)}" target="_blank" rel="noopener">${esc(k)}</a>`).join(""); };
@@ -640,7 +640,7 @@ function vTerminal(p) {
       <aside class="term-side"><button type="button" class="tx-sheet-x" data-sheet-x aria-label="Close">✕</button><div class="tx-safe tx-safe2" id="tx-safe2">${safetyHtml(p)}</div>${tradePanel(p)}${posBox(p)}${tpslHtml(p)}
         <div class="panel tx-alert"><h3>Price alert</h3><div class="tx-al"><span>$</span><input id="alert" type="number" step="any" placeholder="${fmtP(m.price).slice(1)}" value="${esc(alert)}" aria-label="Alert price"><button type="button" class="btn btn-line btn-sm" id="alert-set">${alert ? "Update" : "Set"}</button></div><small>We'll show a notice here when the price crosses it.</small></div>
         <div class="panel tx-trust"><h3>Safety</h3>
-          <div><span>${ICO.lock} Liquidity locked until</span><b>${day(p.s.lpUnlock)}</b></div>
+          <div><span>${ICO.lock} Liquidity</span><b>Locked forever</b></div>
           <div><span>Pool health</span><b class="hl-${health(p)[1]}">${health(p)[0]}</b></div>
           <div><span>Team tokens</span><b>Unlock only with approved releases (${p.s.milestonesDone}/${p.q.milestones})</b></div>
           <a href="#/p/${p.id}">See the project, its releases and votes →</a>
@@ -662,7 +662,7 @@ function vMarket() {
   const by = col ? (x, y) => dir * ((x[col] ?? 0) - (y[col] ?? 0)) : sort === "gainers" ? (x, y) => y.chg - x.chg : sort === "losers" ? (x, y) => x.chg - y.chg : sort === "new" ? (x, y) => y.idx - x.idx : (x, y) => y.vol - x.vol;
   it.sort(by);
   const H = (k, t) => `<button type="button" data-mkcol="${k}" class="${col === k ? "on" : ""}">${t}${col === k ? (dir < 0 ? " ↓" : " ↑") : ""}</button>`, usdS = (v) => !v ? "–" : "$" + (v >= 1e6 ? (v / 1e6).toFixed(2) + "M" : v >= 1e3 ? (v / 1e3).toFixed(1) + "K" : v.toFixed(0));
-  return `<div class="page-h mk-h"><h1>Market</h1><p>Every Holdfast token with an open Uniswap pool. Anyone can buy with USDC; liquidity is locked for 12 months.</p></div>
+  return `<div class="page-h mk-h"><h1>Market</h1><p>Every Holdfast token with an open Uniswap pool. Anyone can buy with USDC; liquidity is locked forever: nobody can take it out.</p></div>
   <div class="cat-bar"><div class="cat-tabs">${[["volume", "Top volume"], ["gainers", "Gainers"], ["losers", "Losers"], ["new", "New"], ["favorites", "★ Favorites"]].map(([k, t]) => `<button type="button" data-mks="${k}" aria-selected="${sort === k && !col}">${t}</button>`).join("")}</div>
     <label class="cat-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="mk-q" type="search" placeholder="Search name or token" value="${esc(S.mkQ || "")}" aria-label="Search markets"></label></div>
   <div class="mk-filters"><span>Filter</span>${[["new", "New launches"], ["liq", "Liquidity over $1K"], ["up", "Going up"]].map(([k, t]) => `<button type="button" data-mkf="${k}" aria-pressed="${!!F[k]}">${t}</button>`).join("")}<em>${it.length} tokens</em></div>
@@ -975,11 +975,11 @@ function tabBody(p) {
     return `<div class="cy-wrap">
       <a class="btn btn-cyber" href="#/trade/${p.id}" style="margin-bottom:24px">Open trading terminal</a>
       <div class="cy-stats"><div><span>Price</span><b>${fmtP(m.price)}</b></div><div><span>Round price</span><b>${fmtP(m.round)}</b></div>
-        <div><span>Pool liquidity</span><b>$${usd(m.poolUsdc)}</b></div><div><span>Liquidity unlocks</span><b>${day(p.s.lpUnlock)}</b></div></div>
+        <div><span>Pool liquidity</span><b>$${usd(m.poolUsdc)}</b></div><div><span>Liquidity</span><b>Locked forever</b></div></div>
       <div class="cy-chart-box"><div class="cy-legend"><span class="l1">Price</span><span class="l2">Round price</span></div>${chartSvg(p)}</div>
       <h3 class="cy-h">Recent trades</h3>
       ${tr.length ? `<ul class="cy-trades">${tr.map((t) => `<li><span class="${t.buy ? "b" : "s"}">${t.buy ? "Buy" : "Sell"}</span><span>${tok(t.tok)} ${esc(p.q.symbol)}</span><span>$${usd(t.usdc)}</span><span>${fmtP(t.price)}</span><span class="faint">${ago((p.tHead || 0n) - t.block)}</span></li>`).join("")}</ul>` : `<p class="prose">No trades yet. Be the first.</p>`}
-      <p class="fine">The pool was created by the project's contract at the round price. Its liquidity is locked in the contract until ${day(p.s.lpUnlock)}. <a href="https://app.uniswap.org/explore/pools/ethereum_sepolia/${p.s.pool}" target="_blank" rel="noopener">View on Uniswap</a></p>
+      <p class="fine">The pool was created by the project's contract at the round price. Its liquidity is locked in the contract forever: nobody can take it out. <a href="https://app.uniswap.org/explore/pools/ethereum_sepolia/${p.s.pool}" target="_blank" rel="noopener">View on Uniswap</a></p>
     </div>`;
   }
   if (S.tab === "releases") return stages(p);
@@ -1229,7 +1229,7 @@ function vLaunch() {
         <div class="f"><label>Upfront when the raise closes</label>${chip("initial", [0, 5, 10, 20], 10, (v) => `${v}%`)}</div>
         <div class="f"><label>Number of voted releases</label>${chip("ms", [2, 3, 4, 5, 6], 3)}</div>
         <div class="f"><label>Window to request each release</label>${chip("period", [30, 60, 90], 60, (v) => `${v} days`)}<small>If you don't request it in time, the rest goes back to backers.</small></div>
-        <div class="f"><label>Liquidity for the Uniswap market</label>${chip("liq", [5, 10, 15, 20, 25], 10, (v) => `${v}%`)}<small>Opens a pool at the round price, locked 12 months.</small></div>
+        <div class="f"><label>Liquidity for the Uniswap market</label>${chip("liq", [5, 10, 15, 20, 25], 10, (v) => `${v}%`)}<small>Opens a pool at the round price, locked forever.</small></div>
       </details>
       <div class="f"><label>What you deliver in each release</label><div id="plan-box"></div><small>Backers vote on each release against this promise.</small></div>
     </section>
