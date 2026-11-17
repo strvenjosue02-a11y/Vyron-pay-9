@@ -3,14 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2A0E14">
+<meta name="theme-color" content="#0F271F">
 <title>Carta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500&family=Instrument+Sans:wght@400..600&display=swap" rel="stylesheet">
 <style>
 /* ================= Paletas ================= */
-:root, [data-paleta="bordeaux"] {
+:root, [data-paleta="bouteille"] {
+  --bg: #0F271F; --raise: #143128; --ink: #EFE9DB; --muted: #AFBDB2; --metal: #D3AF68;
+  --line: rgba(211, 175, 104, .26); --plate-ink: #0F271F; --ok: #B5D69A;
+}
+[data-paleta="bordeaux"] {
   --bg: #2A0E14; --raise: #341219; --ink: #F3EAE1; --muted: #C4ABA3; --metal: #DCC291;
   --line: rgba(220, 194, 145, .26); --plate-ink: #2A0E14; --ok: #A9C99A;
 }
@@ -18,9 +22,9 @@
   --bg: #0F1729; --raise: #152034; --ink: #EEE8DC; --muted: #AEB4C2; --metal: #D2B47A;
   --line: rgba(210, 180, 122, .26); --plate-ink: #0F1729; --ok: #9FC7A2;
 }
-[data-paleta="bouteille"] {
-  --bg: #0F271F; --raise: #143128; --ink: #EFE9DB; --muted: #AFBDB2; --metal: #D3AF68;
-  --line: rgba(211, 175, 104, .26); --plate-ink: #0F271F; --ok: #B5D69A;
+[data-paleta="ambre"] {
+  --bg: #33201A; --raise: #3D2820; --ink: #F6EBDD; --muted: #D0B6A0; --metal: #E6BA70;
+  --line: rgba(230, 186, 112, .28); --plate-ink: #33201A; --ok: #C9D99A;
 }
 [data-paleta="porcelaine"] {
   --bg: #DCD8D0; --raise: #E6E3DC; --ink: #1F1A17; --muted: #574F49; --metal: #7A1E2B;
@@ -29,18 +33,18 @@
 
 /* ================= Base ================= */
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: 72px; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
   font-family: "Instrument Sans", system-ui, sans-serif; font-size: 16.5px; line-height: 1.6;
-  transition: background-color .6s ease, color .6s ease; -webkit-font-smoothing: antialiased;
+  transition: background-color .8s ease, color .8s ease; -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { background: none; border: 0; cursor: pointer; }
 :focus-visible { outline: 2px solid var(--metal); outline-offset: 3px; }
-.serif, h1, h2, h3 { font-family: "Newsreader", Georgia, serif; font-optical-sizing: auto; font-weight: 400; }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+h1, h2, h3, h4 { font-family: "Newsreader", Georgia, serif; font-optical-sizing: auto; font-weight: 400; }
 .wrap { max-width: 640px; margin: 0 auto; padding: 0 20px; }
 .center { text-align: center; }
 
@@ -57,15 +61,24 @@ button { background: none; border: 0; cursor: pointer; }
 .btn:hover { background: color-mix(in srgb, var(--metal) 14%, transparent); }
 .btn.solid { background: var(--metal); color: var(--bg); }
 .btn.solid:hover { background: color-mix(in srgb, var(--metal) 86%, var(--ink)); }
+.btn[disabled] { opacity: .4; pointer-events: none; }
 .link { color: var(--metal); font-weight: 500; text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 1px; padding: 6px 0; display: inline-block; }
 
 .heading { font-size: clamp(36px, 9.5vw, 52px); line-height: 1.05; margin: 0; letter-spacing: -.015em; }
 .heading::after { content: ""; display: block; width: 32px; height: 1px; background: var(--metal); margin: 24px auto 0; }
 .lead { color: var(--muted); margin: 18px auto 0; max-width: 40ch; }
 
+/* Números que ruedan */
+.roll { display: inline-flex; align-items: flex-start; height: 1.25em; line-height: 1.25em; overflow: hidden; vertical-align: bottom; font-variant-numeric: tabular-nums lining-nums; }
+.roll .c { display: inline-block; height: 1.25em; overflow: hidden; }
+.roll .s { display: flex; flex-direction: column; transition: transform .75s cubic-bezier(.2,.8,.2,1); }
+.roll .s span, .roll .t { display: block; height: 1.25em; }
+.roll .sp { width: .22em; }
+
 /* ================= Portada ================= */
 .cover { min-height: 100svh; display: flex; flex-direction: column; align-items: center; padding: 0 16px 36px; overflow: hidden; }
-.cover-top { width: 100%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center; padding-top: env(safe-area-inset-top); }
+.cover-top { width: 100%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center; padding-top: env(safe-area-inset-top); gap: 8px; }
+.chip-top { font-size: 14px; font-weight: 500; color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 0 14px; min-height: 36px; display: inline-flex; align-items: center; gap: 8px; }
 .place { font-size: 14px; color: var(--muted); margin: 8px 0 0; text-align: center; letter-spacing: .02em; }
 .stage { position: relative; width: min(116vw, 66svh, 820px); aspect-ratio: 1; margin-top: -1svh; will-change: transform; }
 .stage img {
@@ -75,79 +88,88 @@ button { background: none; border: 0; cursor: pointer; }
 }
 .monogram {
   position: absolute; left: 50%; top: 59.4%; width: 40%; transform: translate(-50%, -50%); margin: 0; text-align: center;
-  color: var(--plate-ink); font-weight: 500; line-height: 1; letter-spacing: -.02em;
-  font-size: clamp(30px, calc(min(116vw, 66svh, 820px) * .085), 72px); transition: color .6s;
+  font-weight: 500; line-height: 1.05; letter-spacing: -.02em; font-size: clamp(30px, calc(min(116vw, 66svh, 820px) * .085), 72px);
+  /* brillo dorado que recorre el nombre una vez */
+  color: transparent; -webkit-background-clip: text; background-clip: text;
+  background-image: linear-gradient(105deg, var(--plate-ink) 0 40%, #C9A257 46%, #FFF0C2 50%, #C9A257 54%, var(--plate-ink) 60% 100%);
+  background-size: 300% 100%; background-position: 0 0;
 }
 .lema { font-family: "Newsreader", Georgia, serif; font-style: italic; font-size: clamp(22px, 5.6vw, 30px); line-height: 1.25; margin: -1svh 0 0; text-align: center; text-wrap: balance; }
-.status { display: inline-flex; align-items: center; gap: 9px; margin: 14px 0 0; font-size: 14.5px; color: var(--muted); }
+.status { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 16px; margin: 14px 0 0; font-size: 14.5px; color: var(--muted); }
+.status span { display: inline-flex; align-items: center; gap: 9px; }
 .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
-.status.open i { background: var(--ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 22%, transparent); }
-.cover-cta { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; justify-content: center; }
+.status .open i { background: var(--ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 22%, transparent); }
+.status .tables { color: var(--metal); font-weight: 500; }
+.cover-cta { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; justify-content: center; }
 
 /* ================= Barra fija ================= */
 .bar {
   position: fixed; inset: 0 0 auto 0; z-index: 20; background: color-mix(in srgb, var(--bg) 90%, transparent);
   -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line);
-  transform: translateY(-100%); transition: transform .45s cubic-bezier(.2,.7,.2,1), background-color .6s; visibility: hidden;
+  transform: translateY(-100%); transition: transform .45s cubic-bezier(.2,.7,.2,1), background-color .8s; visibility: hidden;
 }
 .bar.show { transform: none; visibility: visible; }
 .bar-in { max-width: 1100px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 18px; height: 60px; }
 .bar .nm { font-family: "Newsreader", Georgia, serif; font-size: 24px; font-weight: 500; text-decoration: none; flex: none; }
-.bar nav { flex: 1; display: flex; gap: 24px; justify-content: center; }
+.bar nav { flex: 1; display: flex; gap: 22px; justify-content: center; }
 .bar nav a { font-size: 15px; color: var(--muted); text-decoration: none; padding: 8px 0; border-bottom: 1px solid transparent; white-space: nowrap; }
 .bar nav a.on { color: var(--ink); border-color: var(--metal); }
-@media (max-width: 760px) { .bar nav { display: none; } .bar-in { justify-content: space-between; } }
+@media (max-width: 860px) { .bar nav { display: none; } .bar-in { justify-content: space-between; } }
 
 /* ================= Nota del chef ================= */
 .note { padding: 80px 0 16px; text-align: center; }
 .note p { font-family: "Newsreader", Georgia, serif; font-style: italic; font-size: clamp(24px, 6vw, 32px); line-height: 1.3; margin: 0 auto; max-width: 24ch; text-wrap: balance; }
 .note cite { display: block; font-style: normal; font-size: 15px; color: var(--muted); margin-top: 18px; }
 
+/* ================= El cielo de hoy: sol y luna ================= */
+.sky { margin: 72px 0 0; text-align: center; }
+.arc { position: relative; width: 100%; max-width: 420px; margin: 0 auto; aspect-ratio: 2 / 1.05; }
+.arc svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.arc .orb { position: absolute; width: 17%; aspect-ratio: 1; transform: translate(-50%, -50%); transition: left 1s, top 1s; }
+.arc .orb img { width: 100%; height: 100%; display: block; }
+.arc .moon { border-radius: 50%; overflow: hidden; filter: drop-shadow(0 0 14px rgba(240, 232, 214, .25)); }
+.arc .moon .shade { position: absolute; inset: -1px; border-radius: 50%; background: color-mix(in srgb, var(--bg) 88%, #000); transition: transform 1s; }
+.arc .ends { position: absolute; left: 0; right: 0; bottom: -30px; display: flex; justify-content: space-between; font-size: 13.5px; color: var(--muted); }
+.sky h3 { font-size: clamp(26px, 7vw, 34px); line-height: 1.15; margin: 48px 0 6px; text-wrap: balance; }
+.sky .when { color: var(--muted); margin: 0; }
+.wx { display: flex; justify-content: center; margin: 22px auto 0; max-width: 420px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.wx div { flex: 1; padding: 14px 6px; }
+.wx div + div { border-left: 1px solid var(--line); }
+.wx b { display: block; font-family: "Newsreader", Georgia, serif; font-weight: 400; font-size: 24px; line-height: 1.1; }
+.wx small { font-size: 13px; color: var(--muted); }
+.sky .btn { margin-top: 24px; }
+
 /* ================= Carta ================= */
-#carta { padding-top: 72px; }
-.filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 32px 0 0; padding: 0; }
-.chip {
-  border: 1px solid var(--line); border-radius: 999px; padding: 0 16px; min-height: 40px; font-size: 14.5px; color: var(--muted);
-  transition: border-color .2s, color .2s, background-color .2s;
-}
+#carta { padding-top: 88px; }
+.filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 32px 0 0; }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 0 16px; min-height: 40px; font-size: 14.5px; color: var(--muted); transition: border-color .2s, color .2s, background-color .2s; }
 .chip[aria-pressed="true"] { border-color: var(--metal); color: var(--ink); background: color-mix(in srgb, var(--metal) 14%, transparent); }
 .filter-note { text-align: center; color: var(--muted); font-size: 14px; margin: 12px 0 0; min-height: 22px; }
 
 .course { padding: 56px 0 0; text-align: center; }
-/* Foto de sección, de borde a borde en el celular */
-.ph { position: relative; margin: 0 -20px 40px; aspect-ratio: 4 / 5; overflow: hidden; background: #0E0E0F; }
+.ph { position: relative; margin: 0 -20px 40px; aspect-ratio: 4 / 5; overflow: hidden; background: #111; }
 .ph img { position: absolute; left: 0; top: -8%; width: 100%; height: 116%; object-fit: cover; display: block; will-change: transform; }
-.ph .ref { position: absolute; left: 12px; top: 12px; font-size: 12.5px; font-weight: 500; color: #F3EAE1; background: rgba(0,0,0,.45); padding: 3px 10px; border-radius: 999px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.ref { position: absolute; z-index: 2; left: 12px; top: 12px; font-size: 12.5px; font-weight: 500; color: #F3EAE1; background: rgba(0,0,0,.45); padding: 3px 10px; border-radius: 999px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 @media (min-width: 680px) { .ph { margin: 0 0 44px; aspect-ratio: 16 / 11; } }
 .course h3 { font-style: italic; font-size: clamp(30px, 8vw, 40px); line-height: 1.1; margin: 0 0 6px; }
 .dishes { list-style: none; margin: 0; padding: 0; }
 .dish { padding: 24px 0; border-bottom: 1px solid var(--line); }
 .dish:last-child { border-bottom: 0; }
-.dish h4 { font-family: "Newsreader", Georgia, serif; font-weight: 500; font-size: 23px; line-height: 1.25; margin: 0; }
+.dish h4 { font-weight: 500; font-size: 23px; line-height: 1.25; margin: 0; }
 .dish .mk { font-family: "Instrument Sans", sans-serif; font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 8px; vertical-align: 3px; letter-spacing: .04em; }
 .dish p { margin: 6px auto 0; color: var(--muted); max-width: 36ch; }
-.dish .pair { display: block; margin-top: 8px; font-family: "Newsreader", Georgia, serif; font-style: italic; font-size: 16.5px; color: var(--ink); opacity: .85; }
-.dish .pr { display: inline-block; margin-top: 10px; font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--metal); }
+.dish .pair { display: block; margin-top: 8px; font-family: "Newsreader", Georgia, serif; font-style: italic; font-size: 16.5px; opacity: .85; }
+.dish .foot { display: flex; justify-content: center; align-items: center; gap: 18px; margin-top: 10px; flex-wrap: wrap; }
+.dish .pr { font-size: 16px; font-weight: 500; color: var(--metal); }
+.dish .add { font-size: 14px; font-weight: 500; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; min-height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; transition: color .2s, border-color .2s; }
+.dish .add b { font-weight: 600; font-size: 17px; line-height: 1; }
+.dish .add.in { color: var(--ink); border-color: var(--metal); }
 .dish.out h4, .dish.out p, .dish.out .pair { opacity: .45; }
-.dish .sold { display: inline-block; margin-top: 10px; font-size: 13.5px; font-weight: 500; color: var(--muted); border: 1px solid var(--line); padding: 2px 10px; border-radius: 999px; }
-.dish[hidden], .course[hidden] { display: none; }
+.dish .sold { font-size: 13.5px; font-weight: 500; color: var(--muted); border: 1px solid var(--line); padding: 2px 10px; border-radius: 999px; }
 .empty { text-align: center; color: var(--muted); padding: 40px 0 0; }
 
 /* ================= Degustación ================= */
 .tasting { margin: 88px 0 0; padding: 48px 26px; border: 1px solid var(--line); outline: 1px solid var(--line); outline-offset: -8px; text-align: center; }
-/* Con foto: la degustación se monta sobre la imagen, siempre en tonos claros sobre oscuro */
-.tasting.photo {
-  --ink: #F3EAE1; --muted: #D2C6BC; --line: rgba(220, 194, 145, .45);
-  position: relative; overflow: hidden; color: var(--ink); border: 0; outline: 0; padding: 0;
-  margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); min-height: 120svh; display: flex; align-items: flex-end; justify-content: center;
-}
-.tasting.photo > img { position: absolute; inset: -8% 0; width: 100%; height: 116%; object-fit: cover; object-position: 50% 40%; will-change: transform; }
-.tasting.photo::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(8,6,6,0) 20%, rgba(8,6,6,.55) 55%, rgba(8,6,6,.92) 100%); }
-.tasting.photo .box { position: relative; z-index: 2; margin: 0 20px 48px; max-width: 520px; width: 100%; padding: 44px 24px; border: 1px solid var(--line); outline: 1px solid var(--line); outline-offset: -8px;
-  background: rgba(10, 8, 8, .38); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-.tasting.photo .ref { position: absolute; z-index: 2; left: 12px; top: 12px; font-size: 12.5px; font-weight: 500; background: rgba(0,0,0,.45); padding: 3px 10px; border-radius: 999px; }
-[data-paleta="porcelaine"] .tasting.photo { --metal: #DCC291; }
-.tasting.photo .btn.solid, .tasting.photo .btn { color: var(--ink); border-color: #DCC291; }
 .tasting h2 { font-size: clamp(32px, 8.5vw, 44px); margin: 0 0 12px; line-height: 1.1; }
 .tasting p { margin: 0 auto; color: var(--muted); max-width: 30ch; }
 .tasting .big { font-family: "Newsreader", Georgia, serif; font-size: 46px; margin: 22px 0 0; line-height: 1; }
@@ -155,6 +177,15 @@ button { background: none; border: 0; cursor: pointer; }
 .tasting .pairing { margin-top: 18px; }
 .tasting .pairing b { font-weight: 500; color: var(--metal); margin-left: 6px; }
 .tasting .btn { margin-top: 28px; }
+.tasting.photo {
+  --ink: #F3EAE1; --muted: #D2C6BC; --line: rgba(220, 194, 145, .45); --metal: #DCC291;
+  position: relative; overflow: hidden; color: var(--ink); border: 0; outline: 0; padding: 0;
+  margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); min-height: 120svh; display: flex; align-items: flex-end; justify-content: center;
+}
+.tasting.photo > img { position: absolute; inset: -8% 0; width: 100%; height: 116%; object-fit: cover; object-position: 50% 40%; will-change: transform; }
+.tasting.photo::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(8,6,6,0) 25%, rgba(8,6,6,.45) 55%, rgba(8,6,6,.85) 100%); }
+.tasting.photo .box { position: relative; z-index: 2; margin: 0 20px 48px; max-width: 520px; width: 100%; padding: 44px 24px; border: 1px solid var(--line); outline: 1px solid var(--line); outline-offset: -8px;
+  background: rgba(10, 8, 8, .38); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 
 /* ================= Experiencias ================= */
 .exps { padding-top: 104px; text-align: center; }
@@ -165,9 +196,8 @@ button { background: none; border: 0; cursor: pointer; }
 .exp p { grid-column: 1 / -1; margin: 0; color: var(--muted); max-width: 46ch; }
 .exp .link { grid-row: 1; grid-column: 2; font-size: 15px; }
 .exp.has-ph .link { grid-row: 2; }
-.exp-ph { grid-column: 1 / -1; position: relative; aspect-ratio: 3 / 2; overflow: hidden; margin: 0 0 16px; background: #0E0E0F; }
+.exp-ph { grid-column: 1 / -1; position: relative; aspect-ratio: 3 / 2; overflow: hidden; margin: 0 0 16px; background: #111; }
 .exp-ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.exp-ph .ref { position: absolute; left: 10px; top: 10px; font-size: 12.5px; font-weight: 500; color: #F3EAE1; background: rgba(0,0,0,.45); padding: 3px 10px; border-radius: 999px; }
 
 /* ================= Reseñas ================= */
 .reviews { padding-top: 104px; text-align: center; }
@@ -177,7 +207,7 @@ button { background: none; border: 0; cursor: pointer; }
 .count { color: var(--muted); font-size: 14.5px; margin: 8px 0 0; }
 .quotes { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 32px -20px 0; padding: 0 20px 8px; scrollbar-width: none; }
 .quotes::-webkit-scrollbar { display: none; }
-.quote { flex: 0 0 86%; scroll-snap-align: center; margin: 0; padding: 28px 24px; background: var(--raise); border: 1px solid var(--line); text-align: left; transition: background-color .6s; }
+.quote { flex: 0 0 86%; scroll-snap-align: center; margin: 0; padding: 28px 24px; background: var(--raise); border: 1px solid var(--line); text-align: left; transition: background-color .8s; }
 .quote p { font-family: "Newsreader", Georgia, serif; font-size: 20px; line-height: 1.4; margin: 0; }
 .quote cite { display: block; font-style: normal; color: var(--muted); font-size: 14.5px; margin-top: 16px; }
 @media (min-width: 760px) { .quotes { flex-direction: column; overflow: visible; margin: 32px 0 0; padding: 0; } .quote { flex: none; } }
@@ -185,21 +215,28 @@ button { background: none; border: 0; cursor: pointer; }
 
 /* ================= Reservar ================= */
 .reserve { padding-top: 104px; text-align: center; }
+.reserve .tables-note { color: var(--metal); font-weight: 500; margin: 10px 0 0; min-height: 1px; }
 form.book { margin: 32px 0 0; text-align: left; display: grid; gap: 18px; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .field label, .field .lbl { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
 .field input, .field select, .field textarea {
   width: 100%; min-height: 52px; padding: 12px 14px; background: var(--raise); border: 1px solid var(--line); border-radius: 2px;
-  font-size: 16px; color-scheme: dark; transition: border-color .2s, background-color .6s;
+  font-size: 16px; color-scheme: dark; transition: border-color .2s, background-color .8s;
 }
 [data-paleta="porcelaine"] .field input, [data-paleta="porcelaine"] .field select, [data-paleta="porcelaine"] .field textarea { color-scheme: light; }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--metal); outline: none; }
 .field textarea { min-height: 88px; resize: vertical; }
+.check { display: flex; gap: 12px; align-items: flex-start; font-size: 15.5px; cursor: pointer; }
+.check input { width: 22px; height: 22px; accent-color: var(--metal); flex: none; margin-top: 1px; }
+.bday { display: grid; gap: 14px; padding: 18px; border: 1px dashed var(--line); }
+.bday[hidden] { display: none; }
 .stepper { display: flex; align-items: center; border: 1px solid var(--line); background: var(--raise); min-height: 52px; border-radius: 2px; }
 .stepper button { width: 52px; height: 52px; font-size: 22px; color: var(--metal); flex: none; }
 .stepper output { flex: 1; text-align: center; font-size: 17px; font-weight: 500; }
 .hint { font-size: 14px; min-height: 20px; margin: 6px 0 0; color: var(--muted); }
 .hint.bad { color: var(--metal); }
+.order-note { font-size: 14.5px; color: var(--muted); border-left: 2px solid var(--metal); padding: 4px 0 4px 12px; margin: 0; }
+.order-note[hidden] { display: none; }
 form.book .btn { width: 100%; margin-top: 6px; }
 .fine { font-size: 13.5px; color: var(--muted); text-align: center; margin: 4px 0 0; }
 
@@ -210,45 +247,46 @@ form.book .btn { width: 100%; margin-top: 6px; }
 .week li { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--line); color: var(--muted); font-variant-numeric: tabular-nums; }
 .week li.today { color: var(--ink); font-weight: 500; }
 .info p { margin: 0; }
+.wifi { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 18px; background: var(--raise); border: 1px solid var(--line); }
+.wifi small { display: block; color: var(--muted); font-size: 13.5px; }
+.wifi .btn { min-height: 44px; padding: 0 18px; font-size: 14.5px; flex: none; }
 footer { margin-top: 80px; border-top: 1px solid var(--line); padding: 32px 20px 128px; text-align: center; color: var(--muted); font-size: 14px; }
 footer p { margin: 0 auto 6px; max-width: 52ch; }
+footer button { color: var(--metal); text-decoration: underline; text-underline-offset: 4px; font-weight: 500; padding: 8px; margin-bottom: 10px; font-size: 15.5px; }
 
-/* ================= Reservar fijo (móvil) ================= */
-.dock {
-  position: fixed; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 25;
-  transform: translateY(160%); transition: transform .4s cubic-bezier(.2,.7,.2,1);
-}
+/* ================= Botones flotantes ================= */
+.dock { position: fixed; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 25; transform: translateY(160%); transition: transform .4s cubic-bezier(.2,.7,.2,1); }
 .dock.show { transform: none; }
 .dock .btn { box-shadow: 0 12px 36px rgba(0,0,0,.35); min-height: 50px; }
-
-/* ================= Panel de demo ================= */
 .demo-btn {
   position: fixed; left: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 30;
   display: flex; align-items: center; gap: 10px; padding: 0 16px 0 12px; min-height: 50px;
   background: var(--ink); color: var(--bg); border-radius: 999px; font-size: 14.5px; font-weight: 500;
-  box-shadow: 0 12px 36px rgba(0,0,0,.35); transition: background-color .6s, color .6s;
+  box-shadow: 0 12px 36px rgba(0,0,0,.35); transform: translateY(160%); transition: transform .4s cubic-bezier(.2,.7,.2,1), background-color .8s, color .8s;
 }
-.demo-btn .dots { display: flex; }
-.demo-btn .dots i { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--ink); margin-left: -4px; }
-.demo-btn .dots i:first-child { margin-left: 0; }
-.demo-btn { transform: translateY(160%); transition: transform .4s cubic-bezier(.2,.7,.2,1), background-color .6s, color .6s; }
 .demo-btn.show { transform: none; }
-.demo-top { font-size: 14px; font-weight: 500; color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 0 14px; min-height: 36px; }
+.dots { display: flex; }
+.dots i { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--ink); margin-left: -4px; }
+.dots i:first-child { margin-left: 0; }
+
+/* ================= Hojas (paneles que suben) ================= */
 .scrim { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .3s; }
+.scrim.on { opacity: 1; pointer-events: auto; }
 .sheet {
-  position: fixed; z-index: 50; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto; background: var(--bg); color: var(--ink);
+  position: fixed; z-index: 50; left: 0; right: 0; bottom: 0; max-width: 540px; margin: 0 auto; background: var(--bg); color: var(--ink);
   border: 1px solid var(--line); border-bottom: 0; padding: 28px 22px calc(26px + env(safe-area-inset-bottom));
-  transform: translateY(105%); transition: transform .4s cubic-bezier(.2,.8,.2,1), background-color .6s; max-height: 90svh; overflow-y: auto;
+  transform: translateY(105%); transition: transform .4s cubic-bezier(.2,.8,.2,1), background-color .8s, visibility 0s .4s; max-height: 90svh; overflow-y: auto; visibility: hidden;
 }
-.open .scrim { opacity: 1; pointer-events: auto; }
-.open .sheet { transform: none; }
-.sheet h2 { font-size: 30px; margin: 0 0 4px; }
+.sheet.on { transform: none; visibility: visible; transition: transform .4s cubic-bezier(.2,.8,.2,1), background-color .8s; }
+.sheet h2 { font-size: 30px; margin: 0 0 4px; padding-right: 40px; line-height: 1.15; }
 .sheet .sub { color: var(--muted); font-size: 15px; margin: 0 0 22px; }
 .sheet h3 { font-family: "Instrument Sans", sans-serif; font-weight: 500; font-size: 14.5px; color: var(--muted); margin: 26px 0 12px; }
-.pals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.pal { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0; font-size: 14px; }
+.x { position: absolute; top: 14px; right: 14px; width: 44px; height: 44px; font-size: 24px; color: var(--muted); }
+.pals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pal { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0; font-size: 14px; text-align: center; }
 .pal .sw { width: 56px; height: 56px; border-radius: 50%; position: relative; box-shadow: 0 0 0 1px var(--line); }
 .pal .sw::after { content: ""; position: absolute; inset: 15px; border-radius: 50%; background: #EEEBE5; box-shadow: 0 0 0 2px var(--rim); }
+.pal .sw.auto { background: conic-gradient(#DCD8D0 0 33%, #33201A 0 66%, #0F271F 0); }
 .pal[aria-pressed="true"] .sw { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--ink); }
 .metals { display: flex; gap: 14px; }
 .metal { width: 38px; height: 38px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); }
@@ -258,15 +296,60 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
 .qr .code { background: #fff; padding: 8px; width: 100%; max-width: 150px; aspect-ratio: 1; margin: 0 auto 8px; }
 .qr .code img, .qr .code canvas { width: 100% !important; height: auto !important; display: block; }
 .qr button { color: var(--metal); font-weight: 500; text-decoration: underline; text-underline-offset: 4px; padding: 6px; }
-.x { position: absolute; top: 14px; right: 14px; width: 44px; height: 44px; font-size: 24px; color: var(--muted); }
+
+/* Tu cena: pedido y cuenta dividida */
+.lines { list-style: none; margin: 0; padding: 0; }
+.line { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.line .n { font-family: "Newsreader", Georgia, serif; font-size: 18px; line-height: 1.25; }
+.line .p { color: var(--metal); font-weight: 500; font-size: 15px; }
+.line .who { min-width: 40px; height: 34px; border-radius: 999px; border: 1px solid var(--metal); font-size: 13.5px; font-weight: 600; padding: 0 10px; color: var(--metal); }
+.line .rm { width: 34px; height: 34px; color: var(--muted); font-size: 20px; }
+.split-mode { display: flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; margin: 18px 0 14px; }
+.split-mode button { flex: 1; min-height: 40px; border-radius: 999px; font-size: 14.5px; color: var(--muted); }
+.split-mode button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.people { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.people .stepper { min-height: 44px; width: 150px; }
+.people .stepper button { width: 44px; height: 44px; }
+.per-list { list-style: none; margin: 0; padding: 0; }
+.per-list li { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.per-list li b { font-weight: 500; color: var(--metal); }
+.total { display: flex; justify-content: space-between; align-items: baseline; margin: 18px 0 4px; font-size: 15px; color: var(--muted); }
+.total b { font-family: "Newsreader", Georgia, serif; font-weight: 400; font-size: 32px; color: var(--ink); }
+.cart-actions { display: grid; gap: 10px; margin-top: 18px; }
+.cart-actions .btn { width: 100%; }
+.cart-empty { color: var(--muted); padding: 20px 0; }
+
+/* Encuesta post-cena */
+.rate { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.rate .lbl { font-family: "Newsreader", Georgia, serif; font-size: 20px; margin-bottom: 8px; }
+.rate .st { display: flex; gap: 6px; }
+.rate .st button { width: 46px; height: 46px; color: var(--line); transition: color .15s, transform .15s; }
+.rate .st button svg { width: 34px; height: 34px; fill: currentColor; }
+.rate .st button.on { color: var(--metal); }
+.rate .st button:active { transform: scale(.9); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 16px; }
+.step[hidden] { display: none; }
+.step .btn { width: 100%; margin-top: 18px; }
+.thanks { text-align: center; padding: 20px 0 0; }
+.thanks h2 { padding: 0; }
+
+/* Aviso breve */
+.toast { position: fixed; left: 50%; bottom: 90px; z-index: 60; transform: translate(-50%, 20px); opacity: 0; background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-size: 14.5px; font-weight: 500; transition: opacity .25s, transform .25s; pointer-events: none; white-space: nowrap; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+/* Brillo de vela de noche, donde toca el dedo */
+.glow { position: fixed; z-index: 15; left: 0; top: 0; width: 260px; height: 260px; margin: -130px 0 0 -130px; border-radius: 50%; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle, rgba(255, 196, 120, .22) 0%, rgba(255, 170, 90, .08) 38%, transparent 70%); transition: opacity .6s ease; mix-blend-mode: screen; }
+.glow.on { opacity: 1; transition: opacity .15s ease; }
 
 /* ================= Un solo momento de entrada ================= */
 @media (prefers-reduced-motion: no-preference) {
   .stage img { animation: plate 2.2s cubic-bezier(.2,.7,.2,1) both; }
-  .monogram { animation: ink 1.4s ease .9s both; }
+  .monogram { animation: ink 1.4s ease .9s both, shine 2.4s cubic-bezier(.4,0,.2,1) 2.2s both; }
   .lema, .status, .cover-cta, .place { animation: fade 1.1s ease 1.4s both; }
   @keyframes plate { from { opacity: 0; transform: scale(1.08) rotate(-8deg); } to { opacity: 1; transform: none; } }
   @keyframes ink { from { opacity: 0; filter: blur(6px); } to { opacity: 1; filter: none; } }
+  @keyframes shine { from { background-position: 100% 0; } to { background-position: 0 0; } }
   @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 }
 </style>
@@ -289,7 +372,7 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
     <div class="switch" role="group" aria-label="Idioma / Language">
       <button type="button" data-lang="es">ES</button><button type="button" data-lang="en">EN</button>
     </div>
-    <button type="button" class="demo-top" id="demoTop" hidden>Paleta</button>
+    <button type="button" class="chip-top" id="topChip" hidden></button>
     <div class="switch" role="group" aria-label="Moneda / Currency">
       <button type="button" data-cur="crc" aria-label="Colones">₡</button><button type="button" data-cur="usd" aria-label="Dólares">$</button>
     </div>
@@ -300,7 +383,7 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
     <h1 class="monogram" id="mono"></h1>
   </div>
   <p class="lema" id="lema"></p>
-  <p class="status" id="status"><i></i><span></span></p>
+  <div class="status" id="status"><span id="openState"><i></i><em style="font-style:normal"></em></span><span class="tables" id="tablesTop"></span></div>
   <div class="cover-cta">
     <a class="btn solid" href="#reservar" data-t="reserveBtn"></a>
     <a class="btn" href="#carta" data-t="menuBtn"></a>
@@ -309,6 +392,22 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
 
 <main class="wrap">
   <section class="note"><p id="noteTxt"></p><cite id="noteSig"></cite></section>
+
+  <section class="sky" id="cielo">
+    <div class="arc" id="arc">
+      <svg viewBox="0 0 200 105" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M6 100 A94 94 0 0 1 194 100" fill="none" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 4" vector-effect="non-scaling-stroke"/>
+        <line x1="0" y1="100" x2="200" y2="100" stroke="var(--line)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+      </svg>
+      <div class="orb" id="sun" hidden><img src="img/sol.png" alt=""></div>
+      <div class="orb moon" id="moon" hidden><img src="img/luna.png" alt=""><span class="shade" id="shade"></span></div>
+      <div class="ends"><span id="endL"></span><span id="endR"></span></div>
+    </div>
+    <h3 id="skyTitle"></h3>
+    <p class="when" id="skyWhen"></p>
+    <div class="wx" id="wx" hidden></div>
+    <a class="btn" href="#reservar" id="skyBtn" data-occ=""></a>
+  </section>
 
   <section id="carta" class="center">
     <h2 class="heading" data-t="menuTitle"></h2>
@@ -336,6 +435,7 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
   <section class="reserve" id="reservar">
     <h2 class="heading" data-t="resTitle"></h2>
     <p class="lead" data-t="resLead"></p>
+    <p class="tables-note" id="tablesRes"></p>
     <form class="book" id="book" novalidate>
       <div class="row2">
         <div class="field"><label for="fDate" data-t="fDate"></label><input type="date" id="fDate" required></div>
@@ -349,8 +449,13 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
           </div></div>
         <div class="field"><label for="fOcc" data-t="fOcc"></label><select id="fOcc"></select></div>
       </div>
+      <div class="bday" id="bday" hidden>
+        <div class="field"><label for="fBday" data-t="fBday"></label><input id="fBday"></div>
+        <label class="check"><input type="checkbox" id="fCake" checked><span data-t="fCake"></span></label>
+      </div>
       <div class="field"><label for="fName" data-t="fName"></label><input id="fName" autocomplete="name" required></div>
       <div class="field"><label for="fNotes" data-t="fNotes"></label><textarea id="fNotes"></textarea></div>
+      <p class="order-note" id="orderNote" hidden></p>
       <button class="btn solid" type="submit" data-t="send"></button>
       <p class="fine" data-t="fine"></p>
     </form>
@@ -358,32 +463,74 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
 
   <section class="info" id="info">
     <div><h3 data-t="hours"></h3><ul class="week" id="week"></ul></div>
+    <div id="wifiBox"><h3>Wi-Fi</h3><div class="wifi"><div><span id="wifiName"></span><small data-t="wifiHint"></small></div><button class="btn" type="button" id="wifiCopy" data-t="wifiCopy"></button></div></div>
     <div><h3 data-t="where"></h3><p id="addr"></p><a class="link" id="map" target="_blank" rel="noopener" data-t="directions"></a></div>
     <div><h3>Instagram</h3><a class="link" id="ig" target="_blank" rel="noopener"></a></div>
   </section>
 </main>
 
-<footer><p id="legend"></p><p id="taxes"></p></footer>
+<footer>
+  <button type="button" id="surveyOpen" data-t="surveyLink"></button>
+  <p id="legend"></p><p id="taxes"></p>
+</footer>
 
-<div class="dock" id="dock"><a class="btn solid" href="#reservar" data-t="reserveBtn"></a></div>
+<div class="dock" id="dock"><a class="btn solid" href="#reservar" id="dockBtn"></a></div>
+<div class="glow" id="glow" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status"></div>
+<div class="scrim" id="scrim"></div>
 
+<!-- Tu cena -->
+<div class="sheet" id="cartSheet" role="dialog" aria-modal="true" aria-labelledby="cartT">
+  <button class="x" type="button" data-close aria-label="Cerrar">×</button>
+  <h2 id="cartT" data-t="cartTitle"></h2>
+  <p class="sub" data-t="cartSub"></p>
+  <div id="cartBody"></div>
+</div>
+
+<!-- Encuesta post-cena -->
+<div class="sheet" id="surveySheet" role="dialog" aria-modal="true" aria-labelledby="survT">
+  <button class="x" type="button" data-close aria-label="Cerrar">×</button>
+  <div class="step" id="sv1">
+    <h2 id="survT" data-t="svTitle"></h2>
+    <p class="sub" data-t="svSub"></p>
+    <div id="rates"></div>
+    <button class="btn solid" type="button" id="svNext" data-t="svNext" disabled></button>
+  </div>
+  <div class="step" id="svGood" hidden>
+    <div class="thanks"><h2 data-t="svGoodT"></h2><p class="sub" data-t="svGoodS"></p></div>
+    <a class="btn solid" id="svGoogle" target="_blank" rel="noopener" data-t="svGoogle"></a>
+    <button class="btn" type="button" data-close data-t="svLater"></button>
+  </div>
+  <div class="step" id="svBad" hidden>
+    <h2 data-t="svBadT"></h2>
+    <p class="sub" data-t="svBadS"></p>
+    <div class="chips" id="svChips"></div>
+    <div class="field"><label for="svText" data-t="svText"></label><textarea id="svText"></textarea></div>
+    <button class="btn solid" type="button" id="svSend" data-t="svSend"></button>
+  </div>
+  <div class="step" id="svDone" hidden>
+    <div class="thanks"><h2 data-t="svDoneT"></h2><p class="sub" data-t="svDoneS"></p></div>
+    <button class="btn" type="button" data-close data-t="close"></button>
+  </div>
+</div>
+
+<!-- Panel de demo -->
 <div id="demo" hidden>
   <button class="demo-btn" id="demoOpen" type="button" aria-haspopup="dialog">
-    <span class="dots"><i style="background:#2A0E14"></i><i style="background:#0F1729"></i><i style="background:#0F271F"></i><i style="background:#DCD8D0"></i></span>
+    <span class="dots"><i style="background:#0F271F"></i><i style="background:#33201A"></i><i style="background:#2A0E14"></i><i style="background:#DCD8D0"></i></span>
     Paleta
   </button>
-  <div class="scrim" id="scrim"></div>
-  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT">
-    <button class="x" id="demoClose" type="button" aria-label="Cerrar">×</button>
+  <div class="sheet" id="demoSheet" role="dialog" aria-modal="true" aria-labelledby="sheetT">
+    <button class="x" type="button" data-close aria-label="Cerrar">×</button>
     <h2 id="sheetT">La identidad de tu casa</h2>
-    <p class="sub">Tocá una paleta y toda la web cambia. Tus platos y precios se quedan igual.</p>
+    <p class="sub">"Según la hora" cambia sola: clara de día, ámbar al atardecer y Bouteille de noche. O fijá una.</p>
     <div class="pals" id="pals"></div>
     <h3>Filo de la vajilla</h3>
     <div class="metals" id="metals"></div>
     <h3>Tus códigos QR</h3>
     <div class="qrs">
       <div class="qr"><div class="code" id="qrMenu"></div>Para las mesas<br><button type="button" data-dl="qrMenu">Descargar</button></div>
-      <div class="qr"><div class="code" id="qrRev"></div>Para la cuenta: reseñas en Google<br><button type="button" data-dl="qrRev">Descargar</button></div>
+      <div class="qr"><div class="code" id="qrRev"></div>Para la cuenta: encuesta y reseñas<br><button type="button" data-dl="qrRev">Descargar</button></div>
     </div>
   </div>
 </div>
@@ -402,11 +549,15 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
   const q = new URLSearchParams(location.search);
   const TZ = "America/Costa_Rica";
   const DEMO = q.get("cliente") !== "1" && R.modoDemo !== false;
+  const MESA = q.get("mesa");
+  const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
 
   const PALETAS = {
+    auto:       { nombre: "Según la hora" },
+    bouteille:  { nombre: "Bouteille",  bg: "#0F271F", rim: "#D3AF68" },
+    ambre:      { nombre: "Ambre",      bg: "#33201A", rim: "#E6BA70" },
     bordeaux:   { nombre: "Bordeaux",   bg: "#2A0E14", rim: "#DCC291" },
     nuit:       { nombre: "Nuit",       bg: "#0F1729", rim: "#D2B47A" },
-    bouteille:  { nombre: "Bouteille",  bg: "#0F271F", rim: "#D3AF68" },
     porcelaine: { nombre: "Porcelaine", bg: "#DCD8D0", rim: "#7A1E2B" }
   };
   const METALES = [{ n: "Oro", c: null }, { n: "Plata", c: "#C9CCD1" }, { n: "Cobre", c: "#C99068" }, { n: "Champán", c: "#E8D6B2" }];
@@ -416,67 +567,213 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
       menuBtn: "Ver la carta", reserveBtn: "Reservar mesa", menuTitle: "La carta", expTitle: "Experiencias", revTitle: "Lo que dicen",
       revWrite: "Escribir una reseña en Google", resTitle: "Reservar mesa", resLead: "Elegí el día y la hora. Te confirmamos por WhatsApp en minutos.",
       fDate: "Día", fTime: "Hora", fPeople: "Personas", fOcc: "Ocasión", fName: "Nombre", fNotes: "Alergias o pedidos especiales",
+      fBday: "¿Quién cumple años?", fCake: "Sí, quiero el postre sorpresa con vela (cortesía de la casa)",
       send: "Enviar reserva por WhatsApp", fine: "Se abre WhatsApp con tu reserva escrita. Solo tenés que enviarla.",
       hours: "Horario", where: "Dónde estamos", directions: "Abrir en el mapa", per: "por persona", ask: "Consultar",
       tastingBtn: "Reservar el menú degustación", closed: "Ese día estamos cerrados. Elegí otro, por favor.", pickDate: "Elegí un día para reservar.",
       nameMissing: "Escribí tu nombre para la reserva.",
       openNow: (c) => "Abierto ahora, cierra a las " + c, opensAt: (d, h) => "Cerrado, abre " + d + " a las " + h, today: "hoy", tomorrow: "mañana",
+      tablesLeft: (n) => n === 1 ? "Queda 1 mesa para esta noche" : "Quedan " + n + " mesas para esta noche", full: "Esta noche estamos llenos. Reservá para otro día.",
       filters: { sg: "Sin gluten", v: "Vegetariano", vg: "Vegano", mariscos: "Sin mariscos", nueces: "Sin nueces", lacteos: "Sin lácteos" },
       showing: (n) => n === 1 ? "1 plato para vos" : n + " platos para vos", clear: "Quitar filtros", none: "Ningún plato cumple todos esos filtros.",
-      sold: "Agotado hoy", with: "Con ", ref: "Foto de referencia", occ: { "": "Ninguna en especial", cumple: "Cumpleaños", aniversario: "Aniversario", negocios: "Cena de negocios", propuesta: "Propuesta de matrimonio", chef: "Mesa del chef", playa: "Cena privada en la terraza", jazz: "Jazz los viernes", degustacion: "Menú degustación" },
-      msg: { hi: "Hola, quisiera reservar en ", date: "Día", time: "Hora", people: "Personas", occ: "Ocasión", name: "Nombre", notes: "Notas" },
+      sold: "Agotado hoy", with: "Con ", ref: "Foto de referencia", add: "Agregar", inCart: (n) => "En tu cena (" + n + ")", added: " agregado a tu cena",
+      occ: { "": "Ninguna en especial", cumple: "Cumpleaños", aniversario: "Aniversario", negocios: "Cena de negocios", propuesta: "Propuesta de matrimonio", chef: "Mesa del chef", playa: "Cena privada en la terraza", jazz: "Jazz los viernes", degustacion: "Menú degustación", atardecer: "Ver el atardecer" },
+      msg: { hi: "Hola, quisiera reservar en ", date: "Día", time: "Hora", people: "Personas", occ: "Ocasión", name: "Nombre", notes: "Notas", bday: "Cumpleañero", cake: "Postre sorpresa con vela: sí", order: "Pedido adelantado", total: "Total" },
       days: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"], closedDay: "Cerrado",
       reviews: (n) => n.toLocaleString("es-CR") + " reseñas en Google",
       legend: "v vegetariano    vg vegano    sg sin gluten",
       taxes: "Precios en colones con impuestos y servicio incluidos. Lo que ves es lo que pagás.",
       taxesUsd: "Precios en dólares al tipo de cambio del día, con impuestos y servicio incluidos.",
-      mk: { v: "v", vg: "vg", sg: "sg" }
+      mk: { v: "v", vg: "vg", sg: "sg" },
+      sunrise: "Amanecer", sunset: "Atardecer", sunsetToday: (h) => "El sol se pone hoy a las " + h,
+      sunsetLeft: (t) => "Faltan " + t + ". Reservá tu mesa frente al mar para verlo.", sunsetNow: "El atardecer está pasando ahora mismo.",
+      afterSunset: (h) => "El sol ya se puso. Mañana sale a las " + h + ".", beforeSunrise: (h) => "Hoy el sol sale a las " + h + ".",
+      skyBtnDay: "Reservar para el atardecer", skyBtnNight: "Reservar mesa",
+      phases: ["Luna nueva", "Luna creciente", "Cuarto creciente", "Luna gibosa creciente", "Luna llena", "Luna gibosa menguante", "Cuarto menguante", "Luna menguante"],
+      moonTonight: (p) => p + " esta noche", temp: "Temperatura", waves: "Olas", wind: "Viento",
+      wifiHint: "Tocá para copiar la clave", wifiCopy: "Copiar clave", wifiCopied: "Clave del Wi-Fi copiada",
+      cartTitle: "Tu cena", cartSub: "Armá tu pedido para adelantarlo con la reserva, o dividí la cuenta en la mesa.",
+      cartEmpty: "Todavía no agregaste platos. Tocá \"Agregar\" en la carta.", total: "Total", equal: "Partes iguales", byPerson: "Por persona",
+      people: "Personas", person: (i) => "Persona " + i, each: "Cada uno paga", tapWho: "Tocá el número de cada plato para decir quién lo pidió.",
+      reserveWith: "Reservar con este pedido", clearCart: "Vaciar", dockCart: (n) => "Tu cena (" + n + ")",
+      orderAdded: (n) => "Tu pedido de " + n + (n === 1 ? " plato" : " platos") + " va con la reserva.",
+      surveyLink: "¿Cómo estuvo tu cena?", svTitle: "¿Cómo estuvo tu cena?", svSub: "Tres toques. Nos ayuda muchísimo.",
+      svItems: ["Comida", "Servicio", "Ambiente"], svNext: "Continuar",
+      svGoodT: "¡Qué alegría!", svGoodS: "¿Nos regalás 30 segundos para contarlo en Google? Así nos encuentran otros viajeros.",
+      svGoogle: "Dejar reseña en Google", svLater: "Ahora no",
+      svBadT: "Gracias por decirnos", svBadS: "¿Qué podemos mejorar? Esto le llega directo al gerente, no se publica.",
+      svChips: ["Tiempo de espera", "Temperatura del plato", "Atención", "Precio", "Ruido", "Otro"], svText: "Contanos un poco más (opcional)",
+      svSend: "Enviar al gerente", svDoneT: "Gracias", svDoneS: "El gerente ya tiene tu comentario.", close: "Cerrar",
+      svMsg: "Comentario de la encuesta de ", table: "Mesa "
     },
     en: {
       menuBtn: "See the menu", reserveBtn: "Book a table", menuTitle: "The menu", expTitle: "Experiences", revTitle: "What guests say",
       revWrite: "Write a Google review", resTitle: "Book a table", resLead: "Pick a day and time. We confirm on WhatsApp within minutes.",
       fDate: "Day", fTime: "Time", fPeople: "Guests", fOcc: "Occasion", fName: "Name", fNotes: "Allergies or special requests",
+      fBday: "Whose birthday is it?", fCake: "Yes, I'd like the surprise dessert with a candle (on the house)",
       send: "Send booking on WhatsApp", fine: "WhatsApp opens with your booking already written. Just hit send.",
       hours: "Hours", where: "Find us", directions: "Open in maps", per: "per person", ask: "Enquire",
       tastingBtn: "Book the tasting menu", closed: "We're closed that day. Please pick another.", pickDate: "Pick a day to book.",
       nameMissing: "Add your name for the booking.",
       openNow: (c) => "Open now, closes at " + c, opensAt: (d, h) => "Closed, opens " + d + " at " + h, today: "today", tomorrow: "tomorrow",
+      tablesLeft: (n) => n === 1 ? "1 table left for tonight" : n + " tables left for tonight", full: "We're full tonight. Book another day.",
       filters: { sg: "Gluten-free", v: "Vegetarian", vg: "Vegan", mariscos: "No shellfish", nueces: "No nuts", lacteos: "No dairy" },
       showing: (n) => n === 1 ? "1 dish for you" : n + " dishes for you", clear: "Clear filters", none: "No dish matches all those filters.",
-      sold: "Sold out today", with: "With ", ref: "Reference photo", occ: { "": "Nothing special", cumple: "Birthday", aniversario: "Anniversary", negocios: "Business dinner", propuesta: "Marriage proposal", chef: "Chef's table", playa: "Private terrace dinner", jazz: "Jazz Friday", degustacion: "Tasting menu" },
-      msg: { hi: "Hello, I'd like to book a table at ", date: "Day", time: "Time", people: "Guests", occ: "Occasion", name: "Name", notes: "Notes" },
+      sold: "Sold out today", with: "With ", ref: "Reference photo", add: "Add", inCart: (n) => "In your dinner (" + n + ")", added: " added to your dinner",
+      occ: { "": "Nothing special", cumple: "Birthday", aniversario: "Anniversary", negocios: "Business dinner", propuesta: "Marriage proposal", chef: "Chef's table", playa: "Private terrace dinner", jazz: "Jazz Friday", degustacion: "Tasting menu", atardecer: "Watch the sunset" },
+      msg: { hi: "Hello, I'd like to book a table at ", date: "Day", time: "Time", people: "Guests", occ: "Occasion", name: "Name", notes: "Notes", bday: "Birthday guest", cake: "Surprise dessert with candle: yes", order: "Pre-order", total: "Total" },
       days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], closedDay: "Closed",
       reviews: (n) => n.toLocaleString("en-US") + " Google reviews",
       legend: "v vegetarian    vg vegan    gf gluten-free",
       taxes: "Prices in colones, taxes and service included. What you see is what you pay.",
       taxesUsd: "Prices in US dollars at today's rate, taxes and service included.",
-      mk: { v: "v", vg: "vg", sg: "gf" }
+      mk: { v: "v", vg: "vg", sg: "gf" },
+      sunrise: "Sunrise", sunset: "Sunset", sunsetToday: (h) => "Today the sun sets at " + h,
+      sunsetLeft: (t) => t + " to go. Book a sea-view table to watch it.", sunsetNow: "The sunset is happening right now.",
+      afterSunset: (h) => "The sun has set. Tomorrow it rises at " + h + ".", beforeSunrise: (h) => "Today the sun rises at " + h + ".",
+      skyBtnDay: "Book for the sunset", skyBtnNight: "Book a table",
+      phases: ["New moon", "Waxing crescent", "First quarter", "Waxing gibbous", "Full moon", "Waning gibbous", "Last quarter", "Waning crescent"],
+      moonTonight: (p) => p + " tonight", temp: "Temperature", waves: "Waves", wind: "Wind",
+      wifiHint: "Tap to copy the password", wifiCopy: "Copy password", wifiCopied: "Wi-Fi password copied",
+      cartTitle: "Your dinner", cartSub: "Build your order to pre-order with your booking, or split the bill at the table.",
+      cartEmpty: "No dishes yet. Tap \"Add\" on the menu.", total: "Total", equal: "Split evenly", byPerson: "By person",
+      people: "Guests", person: (i) => "Guest " + i, each: "Each pays", tapWho: "Tap each dish's number to set who ordered it.",
+      reserveWith: "Book with this order", clearCart: "Clear", dockCart: (n) => "Your dinner (" + n + ")",
+      orderAdded: (n) => "Your order of " + n + (n === 1 ? " dish" : " dishes") + " goes with the booking.",
+      surveyLink: "How was your dinner?", svTitle: "How was your dinner?", svSub: "Three taps. It helps us a lot.",
+      svItems: ["Food", "Service", "Atmosphere"], svNext: "Continue",
+      svGoodT: "So glad you enjoyed it!", svGoodS: "Could you spare 30 seconds to share it on Google? It helps other travellers find us.",
+      svGoogle: "Leave a Google review", svLater: "Not now",
+      svBadT: "Thanks for telling us", svBadS: "What could we do better? This goes straight to the manager and is never published.",
+      svChips: ["Waiting time", "Food temperature", "Service", "Price", "Noise", "Other"], svText: "Tell us a bit more (optional)",
+      svSend: "Send to the manager", svDoneT: "Thank you", svDoneS: "The manager has your feedback.", close: "Close",
+      svMsg: "Survey feedback for ", table: "Table "
     }
   };
 
   let lang = store.get("carta-lang") || ((navigator.language || "es").slice(0, 2) === "es" ? "es" : "en");
   let cur = store.get("carta-cur") || (lang === "en" ? "usd" : "crc");
-  let paleta = PALETAS[q.get("paleta")] ? q.get("paleta") : (PALETAS[R.paleta] ? R.paleta : "bordeaux");
+  let paleta = PALETAS[q.get("paleta")] ? q.get("paleta") : (PALETAS[R.paleta] ? R.paleta : "auto");
   let metal = R.metal || null;
   let filters = new Set();
   let people = 2;
+  let cart = [];                 // una entrada por plato pedido: { id, p } (p = persona)
+  let splitMode = "equal", splitN = 2;
+  let attachOrder = false;
+  let rates = [0, 0, 0], badChips = new Set();
+  let mesas = typeof R.mesasHoy === "number" ? R.mesasHoy : null;
 
   const t = (o) => (o && (o[lang] || o.es)) || "";
   const L = () => T[lang];
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const price = (crc) => cur === "usd" ? "$" + Math.round(crc / R.tipoCambio) : String(crc).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  const DISH = {}; R.categorias.forEach((c) => c.platos.forEach((p) => { DISH[p.id] = p; }));
+  const priceTxt = (crc, c) => (c || cur) === "usd" ? "$" + Math.round(crc / R.tipoCambio) : String(crc).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   const toMin = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
-  const fmtTime = (min) => {
-    const h = Math.floor(min / 60) % 24, m = min % 60;
-    if (lang === "en") return ((h % 12) || 12) + (m ? ":" + String(m).padStart(2, "0") : "") + (h < 12 ? " am" : " pm");
-    return ((h % 12) || 12) + (m ? ":" + String(m).padStart(2, "0") : "") + (h < 12 ? " am" : " pm");
-  };
-  // Hora actual en Costa Rica, sin importar dónde esté el teléfono
+  const fmtTime = (min) => { min = ((Math.round(min) % 1440) + 1440) % 1440; const h = Math.floor(min / 60), m = min % 60; return ((h % 12) || 12) + (m ? ":" + String(m).padStart(2, "0") : "") + (h < 12 ? "\u00a0am" : "\u00a0pm"); };
   function nowCR() {
     const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit" })
       .formatToParts(new Date()).map((x) => [x.type, x.value]));
     const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(p.weekday);
     return { wd, min: Number(p.hour) * 60 + Number(p.minute), iso: p.year + "-" + p.month + "-" + p.day };
+  }
+  let toastT;
+  function toast(msg) { const el = $("#toast"); el.textContent = msg; el.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("on"), 1800); }
+
+  /* ---------- Números que ruedan ---------- */
+  function rollHTML(txt, from) {
+    const chars = [...txt], prev = from ? [...from] : null, off = prev ? prev.length - chars.length : 0;
+    return '<span class="roll" role="text" aria-label="' + esc(txt) + '">' + chars.map((ch, i) => {
+      if (!/\d/.test(ch)) return '<span class="t' + (ch === " " ? " sp" : "") + '" aria-hidden="true">' + (ch === " " ? "" : esc(ch)) + "</span>";
+      const p = prev ? prev[i + off] : null, old = prev ? (/\d/.test(p || "") ? p : "0") : ch;
+      return '<span class="c" aria-hidden="true"><span class="s" data-to="' + ch + '" style="transform:translateY(' + (-old * 1.25) + 'em)">' +
+        "0123456789".split("").map((d) => "<span>" + d + "</span>").join("") + "</span></span>";
+    }).join("") + "</span>";
+  }
+  function setPrice(el, crc, fromTxt) {
+    el.dataset.crc = crc;
+    el.innerHTML = rollHTML(priceTxt(crc), fromTxt);
+    if (fromTxt) requestAnimationFrame(() => requestAnimationFrame(() =>
+      el.querySelectorAll(".s").forEach((s) => { s.style.transform = "translateY(" + (-s.dataset.to * 1.25) + "em)"; })));
+  }
+  function rollAllPrices(prevCur) { $$("[data-crc]").forEach((el) => setPrice(el, Number(el.dataset.crc), priceTxt(Number(el.dataset.crc), prevCur))); }
+
+  /* ---------- Sol, luna y hora del día ---------- */
+  function sunTimes(dateISO) {
+    // Algoritmo NOAA simplificado: minutos del día en hora de Costa Rica (UTC-6, sin horario de verano)
+    const { lat, lng } = R.coordenadas, rad = Math.PI / 180;
+    const d = new Date(dateISO + "T12:00:00Z");
+    const n = Math.floor((d - Date.UTC(d.getUTCFullYear(), 0, 0)) / 864e5);
+    const g = 2 * Math.PI / 365 * (n - 1);
+    const eq = 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g) - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
+    const dec = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) - 0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g) - 0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g);
+    const ha = Math.acos(Math.cos(90.833 * rad) / (Math.cos(lat * rad) * Math.cos(dec)) - Math.tan(lat * rad) * Math.tan(dec)) / rad;
+    const noon = 720 - 4 * lng - eq - 360;
+    return { rise: noon - 4 * ha, set: noon + 4 * ha };
+  }
+  function moonPhase() { const syn = 29.530588853, ref = Date.UTC(2000, 0, 6, 18, 14); return (((Date.now() - ref) / 864e5) % syn + syn) % syn / syn; }
+  function dayState() {
+    const n = nowCR(), s = sunTimes(n.iso);
+    if (n.min >= s.set - 60 && n.min <= s.set + 30) return "dusk";
+    if (n.min > s.rise - 20 && n.min < s.set - 60) return "day";
+    return "night";
+  }
+  function effectivePaleta() {
+    if (paleta !== "auto") return paleta;
+    const st = dayState();
+    return st === "day" ? "porcelaine" : st === "dusk" ? "ambre" : (R.paletaNoche || "bouteille");
+  }
+  function placeOrb(el, f) {
+    const a = Math.PI * (1 - Math.min(1, Math.max(0, f)));
+    el.style.left = (50 + 47 * Math.cos(a)) + "%";
+    el.style.top = (95.2 - 89.5 * Math.sin(a)) + "%";
+  }
+  function renderSky() {
+    const n = nowCR(), s = sunTimes(n.iso);
+    const tmr = new Date(n.iso + "T12:00:00Z"); tmr.setUTCDate(tmr.getUTCDate() + 1);
+    const s2 = sunTimes(tmr.toISOString().slice(0, 10));
+    const isDay = n.min >= s.rise && n.min <= s.set;
+    $("#sun").hidden = !isDay; $("#moon").hidden = isDay;
+    let title, when, btn = L().skyBtnDay, occ = "atardecer";
+    if (isDay) {
+      placeOrb($("#sun"), (n.min - s.rise) / (s.set - s.rise));
+      $("#endL").textContent = L().sunrise + " " + fmtTime(s.rise); $("#endR").textContent = L().sunset + " " + fmtTime(s.set);
+      title = L().sunsetToday(fmtTime(s.set));
+      const left = Math.round(s.set - n.min);
+      when = left <= 15 ? L().sunsetNow : L().sunsetLeft(left >= 60 ? Math.floor(left / 60) + " h " + (left % 60) + " min" : left + " min");
+    } else {
+      const before = n.min < s.rise;
+      const prevSet = before ? sunTimes(new Date(Date.parse(n.iso + "T12:00:00Z") - 864e5).toISOString().slice(0, 10)).set - 1440 : s.set;
+      const nextRise = before ? s.rise : s2.rise + 1440;
+      placeOrb($("#moon"), (n.min - prevSet) / (nextRise - prevSet));
+      const ph = moonPhase();
+      // la sombra se retira hacia la izquierda mientras crece y vuelve desde la derecha al menguar
+      $("#shade").style.transform = ph < 0.5 ? "translateX(" + (-ph * 200) + "%)" : "translateX(" + ((1 - (ph - 0.5) * 2) * 100) + "%)";
+      $("#endL").textContent = L().sunset + " " + fmtTime(prevSet); $("#endR").textContent = L().sunrise + " " + fmtTime(nextRise);
+      title = L().moonTonight(L().phases[Math.round(ph * 8) % 8]);
+      when = before ? L().beforeSunrise(fmtTime(s.rise)) : L().afterSunset(fmtTime(s2.rise));
+      btn = L().skyBtnNight; occ = "";
+    }
+    $("#skyTitle").textContent = title; $("#skyWhen").textContent = when;
+    $("#skyBtn").textContent = btn; $("#skyBtn").dataset.occ = occ;
+  }
+  let wxData = null;
+  function loadWeather() {
+    const c = R.coordenadas, m = R.coordenadasMar || c;
+    if (!c) return;
+    const wx = fetch("https://api.open-meteo.com/v1/forecast?latitude=" + c.lat + "&longitude=" + c.lng + "&current=temperature_2m,wind_speed_10m&timezone=" + encodeURIComponent(TZ)).then((r) => r.json()).catch(() => null);
+    const sea = fetch("https://marine-api.open-meteo.com/v1/marine?latitude=" + m.lat + "&longitude=" + m.lng + "&current=wave_height").then((r) => r.json()).catch(() => null);
+    Promise.all([wx, sea]).then(([a, b]) => {
+      wxData = { temp: a && a.current ? a.current.temperature_2m : null, wind: a && a.current ? a.current.wind_speed_10m : null, wave: b && b.current ? b.current.wave_height : null };
+      renderWeather();
+    });
+  }
+  function renderWeather() {
+    if (!wxData) return;
+    const loc = lang === "es" ? "es-CR" : "en-US";
+    const f = (v, d) => v == null ? null : v.toLocaleString(loc, { maximumFractionDigits: d });
+    const items = [[f(wxData.temp, 0), "°", L().temp], [f(wxData.wave, 1), " m", L().waves], [f(wxData.wind, 0), " km/h", L().wind]].filter((x) => x[0] != null);
+    $("#wx").hidden = !items.length;
+    $("#wx").innerHTML = items.map(([v, u, l]) => "<div><b>" + v + u + "</b><small>" + l + "</small></div>").join("");
   }
 
   /* ---------- Hoja de Google opcional ---------- */
@@ -487,64 +784,64 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
       const rows = csv.trim().split(/\r?\n/).map((l) => l.split(",").map((c) => c.trim().replace(/^"|"$/g, "")));
       const head = rows.shift().map((h) => h.toLowerCase());
       const iId = head.indexOf("id"), iP = head.indexOf("precio"), iA = head.indexOf("agotado");
-      const map = {}; rows.forEach((r) => { map[r[iId]] = r; });
-      R.categorias.forEach((c) => c.platos.forEach((p) => {
-        const r = map[p.id]; if (!r) return;
+      rows.forEach((r) => {
+        if (r[iId] === "mesas" && iP > -1 && r[iP] !== "") { mesas = Number(r[iP]); return; }
+        const p = DISH[r[iId]]; if (!p) return;
         if (iP > -1 && Number(r[iP])) p.precio = Number(r[iP]);
         if (iA > -1) p.agotado = /^(si|sí|yes|x|1)$/i.test(r[iA]);
-      }));
-      renderMenu();
+      });
+      renderMenu(); renderStatus();
     }).catch(() => {});
   }
 
   /* ---------- Paleta ---------- */
+  let shownPal = null;
   function applyPaleta() {
-    const html = document.documentElement;
-    html.setAttribute("data-paleta", paleta);
+    const eff = effectivePaleta(), html = document.documentElement;
+    html.setAttribute("data-paleta", eff);
     if (metal) html.style.setProperty("--metal", metal); else html.style.removeProperty("--metal");
-    const img = $("#plate"), src = "img/" + paleta + ".jpg";
-    if (!img.getAttribute("src")) img.src = src;
-    else if (!img.src.endsWith(src)) {
-      img.style.transition = "opacity .3s"; img.style.opacity = 0;
-      const n = new Image(); n.onload = () => { img.src = src; img.style.opacity = 1; }; n.src = src;
+    if (eff !== shownPal) {
+      const img = $("#plate"), src = "img/" + eff + ".jpg";
+      if (!img.getAttribute("src")) img.src = src;
+      else { img.style.transition = "opacity .35s"; img.style.opacity = 0; const n = new Image(); n.onload = () => { img.src = src; img.style.opacity = 1; }; n.src = src; }
+      shownPal = eff;
     }
-    $('meta[name="theme-color"]').content = PALETAS[paleta].bg;
+    $('meta[name="theme-color"]').content = PALETAS[eff].bg;
     $$(".pal").forEach((b) => b.setAttribute("aria-pressed", b.dataset.p === paleta));
     $$(".metal").forEach((b) => b.setAttribute("aria-pressed", (b.dataset.m || null) === metal));
   }
 
-  /* ---------- Estado abierto / cerrado ---------- */
+  /* ---------- Abierto / cerrado y mesas libres ---------- */
   function renderStatus() {
     const H = R.horario, n = nowCR(), a = toMin(H.abre), c = toMin(H.cierra);
-    const open = H.dias.includes(n.wd) && n.min >= a && n.min < c;
+    const openToday = H.dias.includes(n.wd), open = openToday && n.min >= a && n.min < c;
     let txt;
     if (open) txt = L().openNow(fmtTime(c));
     else {
       let d = 0;
       while (d < 8 && !(H.dias.includes((n.wd + d) % 7) && (d > 0 || n.min < a))) d++;
-      const label = d === 0 ? L().today : d === 1 ? L().tomorrow : L().days[(n.wd + d) % 7].toLowerCase();
-      txt = L().opensAt(label, fmtTime(a));
+      txt = L().opensAt(d === 0 ? L().today : d === 1 ? L().tomorrow : L().days[(n.wd + d) % 7].toLowerCase(), fmtTime(a));
     }
-    $("#status").classList.toggle("open", open);
-    $("#status span").textContent = txt;
+    $("#openState").classList.toggle("open", open);
+    $("#openState em").textContent = txt;
+    const tablesTxt = mesas != null && openToday && n.min < c ? (mesas > 0 ? L().tablesLeft(mesas) : L().full) : "";
+    $("#tablesTop").textContent = tablesTxt; $("#tablesRes").textContent = tablesTxt;
   }
 
   /* ---------- Carta ---------- */
   function passes(p) {
     for (const f of filters) {
-      if (["sg", "v", "vg"].includes(f)) {
-        const m = p.marcas || [];
-        if (f === "v" ? !(m.includes("v") || m.includes("vg")) : !m.includes(f)) return false;
-      } else if ((p.contiene || []).includes(f)) return false;
+      if (["sg", "v", "vg"].includes(f)) { const m = p.marcas || []; if (f === "v" ? !(m.includes("v") || m.includes("vg")) : !m.includes(f)) return false; }
+      else if ((p.contiene || []).includes(f)) return false;
     }
     return true;
   }
+  const countIn = (id) => cart.filter((x) => x.id === id).length;
+  function addBtn(p) { const n = countIn(p.id); return '<button type="button" class="add' + (n ? " in" : "") + '" data-add="' + p.id + '"><b>+</b>' + (n ? L().inCart(n) : L().add) + "</button>"; }
   function renderMenu() {
     const F = L().filters;
     $("#filters").setAttribute("aria-label", lang === "es" ? "Filtrar por dieta o alergia" : "Filter by diet or allergy");
-    $("#filters").innerHTML = Object.keys(F).map((k) =>
-      '<button class="chip" type="button" data-f="' + k + '" aria-pressed="' + filters.has(k) + '">' + F[k] + "</button>").join("");
-
+    $("#filters").innerHTML = Object.keys(F).map((k) => '<button class="chip" type="button" data-f="' + k + '" aria-pressed="' + filters.has(k) + '">' + F[k] + "</button>").join("");
     let shown = 0;
     $("#courses").innerHTML = R.categorias.map((c) => {
       const items = c.platos.filter(passes); shown += items.length;
@@ -553,60 +850,79 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
       return '<section class="course" id="' + c.id + '">' + ph + "<h3>" + esc(t(c.nombre)) + '</h3><ul class="dishes">' + items.map((p) => {
         const mk = (p.marcas || []).map((k) => L().mk[k]).join(" ");
         return '<li class="dish' + (p.agotado ? " out" : "") + '"><h4>' + esc(t(p.nombre)) + (mk ? '<span class="mk">' + mk + "</span>" : "") + "</h4>" +
-          (p.desc ? "<p>" + esc(t(p.desc)) + "</p>" : "") +
-          (p.maridaje ? '<span class="pair">' + L().with + esc(t(p.maridaje)) + "</span>" : "") +
-          (p.agotado ? '<span class="sold">' + L().sold + "</span>" : '<span class="pr">' + price(p.precio) + "</span>") + "</li>";
+          (p.desc ? "<p>" + esc(t(p.desc)) + "</p>" : "") + (p.maridaje ? '<span class="pair">' + L().with + esc(t(p.maridaje)) + "</span>" : "") +
+          '<div class="foot">' + (p.agotado ? '<span class="sold">' + L().sold + "</span>" : '<span class="pr" data-crc="' + p.precio + '"></span>' + addBtn(p)) + "</div></li>";
       }).join("") + "</ul></section>";
     }).join("") + (shown ? "" : '<p class="empty">' + L().none + "</p>");
-
-    $("#filterNote").innerHTML = filters.size
-      ? L().showing(shown) + ' <button type="button" class="link" id="clearF" style="margin-left:8px;font-size:14px">' + L().clear + "</button>" : "";
-
+    $("#filterNote").innerHTML = filters.size ? L().showing(shown) + ' <button type="button" class="link" id="clearF" style="margin-left:8px;font-size:14px">' + L().clear + "</button>" : "";
     const d = R.degustacion;
     $("#degustacion").hidden = !d;
     if (d) {
-      const inner = "<h2>" + esc(t(d.nombre)) + "</h2><p>" + esc(t(d.desc)) + '</p><div class="big">' + price(d.precio) +
-        '</div><div class="per">' + L().per + '</div><div class="pairing">' + esc(t(d.maridaje)) + "<b>" + price(d.precioMaridaje) + "</b></div>" +
-        '<a class="btn" href="#reservar" data-occ="degustacion">' + L().tastingBtn + "</a>";
+      const inner = "<h2>" + esc(t(d.nombre)) + "</h2><p>" + esc(t(d.desc)) + '</p><div class="big" data-crc="' + d.precio + '"></div><div class="per">' + L().per +
+        '</div><div class="pairing">' + esc(t(d.maridaje)) + '<b data-crc="' + d.precioMaridaje + '"></b></div><a class="btn" href="#reservar" data-occ="degustacion">' + L().tastingBtn + "</a>";
       $("#degustacion").classList.toggle("photo", !!d.foto);
-      $("#degustacion").innerHTML = d.foto
-        ? '<img src="' + d.foto + '" alt="" loading="lazy" decoding="async">' + (DEMO ? '<span class="ref">' + L().ref + "</span>" : "") + '<div class="box">' + inner + "</div>"
-        : inner;
+      $("#degustacion").innerHTML = d.foto ? '<img src="' + d.foto + '" alt="" loading="lazy" decoding="async">' + (DEMO ? '<span class="ref">' + L().ref + "</span>" : "") + '<div class="box">' + inner + "</div>" : inner;
     }
+    $$("#courses [data-crc], #degustacion [data-crc]").forEach((el) => setPrice(el, Number(el.dataset.crc)));
+  }
+
+  /* ---------- Tu cena: pedido y cuenta dividida ---------- */
+  const cartTotal = () => cart.reduce((s, x) => s + DISH[x.id].precio, 0);
+  function renderCart() {
+    const body = $("#cartBody");
+    if (!cart.length) { body.innerHTML = '<p class="cart-empty">' + L().cartEmpty + "</p>"; updateDock(); return; }
+    const total = cartTotal();
+    let html = '<ul class="lines">' + cart.map((x, i) => '<li class="line"><span class="n">' + esc(t(DISH[x.id].nombre)) + "</span>" +
+      (splitMode === "person" ? '<button type="button" class="who" data-who="' + i + '" aria-label="' + L().person(x.p + 1) + '">' + (x.p + 1) + "</button>" : '<span class="p" data-crc="' + DISH[x.id].precio + '"></span>') +
+      '<button type="button" class="rm" data-rm="' + i + '" aria-label="Quitar">×</button></li>').join("") + "</ul>";
+    html += '<div class="total"><span>' + L().total + '</span><b data-crc="' + total + '"></b></div>';
+    html += '<div class="split-mode" role="group"><button type="button" data-split="equal" aria-pressed="' + (splitMode === "equal") + '">' + L().equal + '</button><button type="button" data-split="person" aria-pressed="' + (splitMode === "person") + '">' + L().byPerson + "</button></div>";
+    html += '<div class="people"><span>' + L().people + '</span><div class="stepper"><button type="button" data-n="-1" aria-label="−">−</button><output>' + splitN + '</output><button type="button" data-n="1" aria-label="+">+</button></div></div>';
+    if (splitMode === "equal") html += '<ul class="per-list"><li><span>' + L().each + '</span><b data-crc="' + Math.ceil(total / splitN / 10) * 10 + '"></b></li></ul>';
+    else {
+      const sums = Array(splitN).fill(0); cart.forEach((x) => { sums[Math.min(x.p, splitN - 1)] += DISH[x.id].precio; });
+      html += '<p class="fine" style="text-align:left;margin:0 0 6px">' + L().tapWho + '</p><ul class="per-list">' + sums.map((v, i) => "<li><span>" + L().person(i + 1) + '</span><b data-crc="' + v + '"></b></li>').join("") + "</ul>";
+    }
+    html += '<div class="cart-actions"><button type="button" class="btn solid" id="reserveWith">' + L().reserveWith + '</button><button type="button" class="btn" id="clearCart">' + L().clearCart + "</button></div>";
+    body.innerHTML = html;
+    body.querySelectorAll("[data-crc]").forEach((el) => setPrice(el, Number(el.dataset.crc)));
+    updateDock();
+  }
+  function updateDock() {
+    const btn = $("#dockBtn");
+    if (cart.length) { btn.textContent = L().dockCart(cart.length); btn.setAttribute("href", "#"); btn.dataset.cart = "1"; }
+    else { btn.textContent = L().reserveBtn; btn.setAttribute("href", "#reservar"); delete btn.dataset.cart; }
+    const note = $("#orderNote");
+    note.hidden = !(attachOrder && cart.length);
+    if (!note.hidden) note.textContent = L().orderAdded(cart.length);
+    onScroll();
   }
 
   /* ---------- Reserva ---------- */
-  function slots() {
-    const a = toMin(R.horario.abre), c = toMin(R.horario.cierra), out = [];
-    for (let m = a; m <= c - 60; m += 30) out.push(m);
-    return out;
-  }
+  function slots() { const a = toMin(R.horario.abre), c = toMin(R.horario.cierra), out = []; for (let m = a; m <= c - 60; m += 30) out.push(m); return out; }
   function renderForm() {
-    const n = nowCR();
-    const di = $("#fDate"); di.min = n.iso;
+    const n = nowCR(), di = $("#fDate"); di.min = n.iso;
     if (!di.value) {
       let d = 0; while (d < 8 && !R.horario.dias.includes((n.wd + d) % 7)) d++;
-      const dt = new Date(n.iso + "T12:00:00"); dt.setDate(dt.getDate() + d);
-      di.value = dt.toISOString().slice(0, 10);
+      const dt = new Date(n.iso + "T12:00:00"); dt.setDate(dt.getDate() + d); di.value = dt.toISOString().slice(0, 10);
     }
     const prevT = $("#fTime").value;
     $("#fTime").innerHTML = slots().map((m) => '<option value="' + m + '">' + fmtTime(m) + "</option>").join("");
-    if (prevT) $("#fTime").value = prevT; else $("#fTime").value = String(toMin(R.horario.abre) + 90);
+    $("#fTime").value = prevT || String(toMin(R.horario.abre) + 90);
     const prevO = $("#fOcc").value;
     $("#fOcc").innerHTML = Object.entries(L().occ).map(([k, v]) => '<option value="' + k + '">' + v + "</option>").join("");
     $("#fOcc").value = prevO || "";
+    $("#bday").hidden = $("#fOcc").value !== "cumple";
     checkDate();
   }
   function checkDate() {
     const v = $("#fDate").value, h = $("#dateHint");
     if (!v) { h.textContent = ""; return true; }
-    const wd = new Date(v + "T12:00:00").getDay();
-    const ok = R.horario.dias.includes(wd);
-    h.textContent = ok ? L().days[wd] : L().closed;
-    h.classList.toggle("bad", !ok);
-    return ok;
+    const wd = new Date(v + "T12:00:00").getDay(), ok = R.horario.dias.includes(wd);
+    h.textContent = ok ? L().days[wd] : L().closed; h.classList.toggle("bad", !ok); return ok;
   }
   $("#fDate").addEventListener("change", checkDate);
+  $("#fOcc").addEventListener("change", () => { $("#bday").hidden = $("#fOcc").value !== "cumple"; });
   $("#pMinus").onclick = () => { people = Math.max(1, people - 1); $("#people").textContent = people; };
   $("#pPlus").onclick = () => { people = Math.min(20, people + 1); $("#people").textContent = people; };
   $("#book").addEventListener("submit", (e) => {
@@ -620,127 +936,186 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
     const occ = $("#fOcc").value;
     const lines = [M.hi + R.nombre + ".", "", M.date + ": " + dateTxt, M.time + ": " + fmtTime(Number($("#fTime").value)), M.people + ": " + people];
     if (occ) lines.push(M.occ + ": " + L().occ[occ]);
+    if (occ === "cumple") { if ($("#fBday").value.trim()) lines.push(M.bday + ": " + $("#fBday").value.trim()); if ($("#fCake").checked) lines.push(M.cake); }
     lines.push(M.name + ": " + $("#fName").value.trim());
     if ($("#fNotes").value.trim()) lines.push(M.notes + ": " + $("#fNotes").value.trim());
+    if (attachOrder && cart.length) {
+      const counts = {}; cart.forEach((x) => { counts[x.id] = (counts[x.id] || 0) + 1; });
+      lines.push("", M.order + ":"); Object.entries(counts).forEach(([id, k]) => lines.push("- " + k + " x " + t(DISH[id].nombre)));
+      lines.push(M.total + ": " + (cur === "usd" ? priceTxt(cartTotal()) : "₡" + priceTxt(cartTotal())));
+    }
     window.open("https://wa.me/" + R.whatsapp + "?text=" + encodeURIComponent(lines.join("\n")), "_blank", "noopener");
   });
+
+  /* ---------- Encuesta post-cena ---------- */
+  function renderSurvey() {
+    $("#rates").innerHTML = L().svItems.map((n, i) => '<div class="rate"><div class="lbl">' + n + '</div><div class="st" role="group" aria-label="' + n + '">' +
+      [1, 2, 3, 4, 5].map((v) => '<button type="button" data-rate="' + i + '" data-v="' + v + '" class="' + (rates[i] >= v ? "on" : "") + '" aria-label="' + v + ' / 5">' + STAR + "</button>").join("") + "</div></div>").join("");
+    $("#svNext").disabled = rates.some((r) => !r);
+    $("#svChips").innerHTML = L().svChips.map((c, i) => '<button type="button" class="chip" data-svc="' + i + '" aria-pressed="' + badChips.has(i) + '">' + c + "</button>").join("");
+    $("#svGoogle").href = R.resenaGoogle;
+  }
+  function svStep(id) { ["sv1", "svGood", "svBad", "svDone"].forEach((s) => { $("#" + s).hidden = s !== id; }); }
+
+  /* ---------- Paneles ---------- */
+  let openSheet = null, lastFocus = null;
+  function open(id) {
+    close(true); openSheet = $(id); lastFocus = document.activeElement;
+    openSheet.classList.add("on"); $("#scrim").classList.add("on");
+    const x = openSheet.querySelector(".x"); if (x) x.focus({ preventScroll: true });
+  }
+  function close(silent) {
+    if (!openSheet) return;
+    openSheet.classList.remove("on"); $("#scrim").classList.remove("on"); openSheet = null;
+    if (!silent && lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+  }
+  $("#scrim").onclick = () => close();
+  addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
 
   /* ---------- Resto del contenido ---------- */
   function renderAll() {
     document.documentElement.lang = lang;
     document.title = R.nombre + (lang === "es" ? ", carta y reservas" : ", menu and bookings");
     $$("[data-t]").forEach((el) => { el.textContent = L()[el.dataset.t]; });
-    $("#mono").textContent = R.nombre;
-    $("#barName").textContent = R.nombre;
-    $("#place").textContent = t(R.lugar);
-    $("#lema").textContent = t(R.lema);
-    $("#noteTxt").textContent = t(R.nota.texto);
-    $("#noteSig").textContent = t(R.nota.firma);
+    $("#mono").textContent = R.nombre; $("#barName").textContent = R.nombre;
+    $("#place").textContent = t(R.lugar); $("#lema").textContent = t(R.lema);
+    $("#noteTxt").textContent = t(R.nota.texto); $("#noteSig").textContent = t(R.nota.firma);
     $("#barNav").innerHTML = [["carta", L().menuTitle], ["degustacion", t(R.degustacion.nombre)], ["experiencias", L().expTitle], ["resenas", L().revTitle], ["reservar", L().reserveBtn]]
       .map(([id, n]) => '<a href="#' + id + '" data-id="' + id + '">' + esc(n) + "</a>").join("");
-
     $("#exps").innerHTML = R.experiencias.map((x) => '<li class="exp' + (x.foto ? " has-ph" : "") + '">' +
       (x.foto ? '<figure class="exp-ph"><img src="' + x.foto + '" alt="" loading="lazy" decoding="async">' + (DEMO ? '<span class="ref">' + L().ref + "</span>" : "") + "</figure>" : "") +
-      "<h3>" + esc(t(x.nombre)) + '</h3><a class="link" href="#reservar" data-occ="' + x.ocasion + '">' + L().ask +
-      "</a><p>" + esc(t(x.desc)) + "</p></li>").join("");
-
+      "<h3>" + esc(t(x.nombre)) + '</h3><a class="link" href="#reservar" data-occ="' + x.ocasion + '">' + L().ask + "</a><p>" + esc(t(x.desc)) + "</p></li>").join("");
     const rv = R.resenas;
     $("#score").textContent = rv.nota.toLocaleString(lang === "es" ? "es-CR" : "en-US", { minimumFractionDigits: 1 });
-    $("#stars").innerHTML = Array(5).fill('<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>').join("");
+    $("#stars").innerHTML = Array(5).fill(STAR).join("");
     $("#count").textContent = L().reviews(rv.total);
     $("#quotes").innerHTML = rv.lista.map((r) => '<figure class="quote"><p>' + esc(t(r.texto)) + "</p><cite>" + esc(r.autor) + "</cite></figure>").join("");
     $("#revLink").href = R.resenaGoogle;
-
     const n = nowCR();
     $("#week").innerHTML = [1, 2, 3, 4, 5, 6, 0].map((d) => '<li class="' + (d === n.wd ? "today" : "") + '"><span>' + L().days[d] + "</span><span>" +
       (R.horario.dias.includes(d) ? fmtTime(toMin(R.horario.abre)) + " – " + fmtTime(toMin(R.horario.cierra)) : L().closedDay) + "</span></li>").join("");
+    $("#wifiBox").hidden = !R.wifi; if (R.wifi) $("#wifiName").textContent = R.wifi.red;
     $("#addr").textContent = t(R.direccion); $("#map").href = R.mapa;
     $("#ig").textContent = "@" + R.instagram; $("#ig").href = "https://instagram.com/" + R.instagram;
     $("#legend").textContent = L().legend;
     $("#taxes").textContent = cur === "usd" ? L().taxesUsd : L().taxes;
-
+    if (MESA && !DEMO && R.wifi) { const c = $("#topChip"); c.hidden = false; c.textContent = L().table + MESA + "   Wi-Fi"; }
     $$("[data-lang]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.lang === lang));
     $$("[data-cur]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.cur === cur));
-    renderStatus(); renderMenu(); renderForm(); observe();
+    renderStatus(); renderSky(); renderWeather(); renderMenu(); renderForm(); renderCart(); renderSurvey(); observe();
   }
 
   /* ---------- Scroll ---------- */
   let io;
   function observe() {
     if (io) io.disconnect();
-    io = new IntersectionObserver((es) => es.forEach((e) => {
-      if (e.isIntersecting) $$("#barNav a").forEach((a) => a.classList.toggle("on", a.dataset.id === e.target.id));
-    }), { rootMargin: "-45% 0px -50% 0px" });
+    io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) $$("#barNav a").forEach((a) => a.classList.toggle("on", a.dataset.id === e.target.id)); }), { rootMargin: "-45% 0px -50% 0px" });
     ["carta", "degustacion", "experiencias", "resenas", "reservar"].forEach((id) => io.observe(document.getElementById(id)));
   }
   const stage = $("#stage"), bar = $("#bar"), dock = $("#dock"), resv = $("#reservar"), demoBtn = $("#demoOpen");
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let ticking = false;
   function onScroll() {
-    const y = scrollY, h = innerHeight;
-    bar.classList.toggle("show", y > h * 0.8);
-    const r = resv.getBoundingClientRect();
-    dock.classList.toggle("show", y > h * 0.8 && innerWidth < 760 && (r.top > h || r.bottom < 0));
-    demoBtn.classList.toggle("show", y > h * 0.8);
+    const y = scrollY, h = innerHeight, past = y > h * 0.8;
+    bar.classList.toggle("show", past);
+    const r = resv.getBoundingClientRect(), inRes = r.top < h && r.bottom > 0;
+    dock.classList.toggle("show", past && (cart.length > 0 || (innerWidth < 760 && !inRes)));
+    if (DEMO) demoBtn.classList.toggle("show", past);
     if (!still && y < h * 1.3) {
       const k = Math.min(y / h, 1);
       stage.style.transform = "translateY(" + (k * h * 0.2) + "px) scale(" + (1 - k * 0.12) + ") rotate(" + (k * 16) + "deg)";
       stage.style.opacity = 1 - k * 0.9;
     }
     if (!still) $$(".ph img, .tasting.photo > img").forEach((img) => {
-      const r2 = img.parentElement.getBoundingClientRect();
-      if (r2.bottom < 0 || r2.top > h) return;
-      const k2 = (r2.top + r2.height / 2 - h / 2) / h;
-      img.style.transform = "translateY(" + (k2 * -6) + "%)";
+      const r2 = img.parentElement.getBoundingClientRect(); if (r2.bottom < 0 || r2.top > h) return;
+      img.style.transform = "translateY(" + ((r2.top + r2.height / 2 - h / 2) / h * -6) + "%)";
     });
     ticking = false;
   }
   addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
 
+  /* ---------- Brillo de vela (solo en paletas oscuras) ---------- */
+  const glow = $("#glow");
+  addEventListener("pointerdown", (e) => {
+    if (effectivePaleta() === "porcelaine" || openSheet) return;
+    glow.style.transform = "translate(" + e.clientX + "px," + e.clientY + "px)"; glow.classList.add("on");
+  }, { passive: true });
+  addEventListener("pointermove", (e) => { if (glow.classList.contains("on")) glow.style.transform = "translate(" + e.clientX + "px," + e.clientY + "px)"; }, { passive: true });
+  ["pointerup", "pointercancel"].forEach((ev) => addEventListener(ev, () => glow.classList.remove("on"), { passive: true }));
+
   /* ---------- Clics ---------- */
+  function copyWifi() { const done = () => toast(L().wifiCopied); if (navigator.clipboard && R.wifi) navigator.clipboard.writeText(R.wifi.clave).then(done, done); else done(); }
   document.addEventListener("click", (e) => {
     const occA = e.target.closest("[data-occ]");
-    if (occA) { $("#fOcc").value = occA.dataset.occ; }
+    if (occA) { $("#fOcc").value = occA.dataset.occ; $("#bday").hidden = $("#fOcc").value !== "cumple"; }
+    if (e.target.closest("[data-cart]")) { e.preventDefault(); open("#cartSheet"); return; }
     const b = e.target.closest("button"); if (!b) return;
+    if (b.hasAttribute("data-close")) { close(); return; }
     if (b.dataset.lang) { lang = b.dataset.lang; store.set("carta-lang", lang); renderAll(); }
-    else if (b.dataset.cur) { cur = b.dataset.cur; store.set("carta-cur", cur); renderAll(); }
+    else if (b.dataset.cur) {
+      if (b.dataset.cur === cur) return;
+      const prev = cur; cur = b.dataset.cur; store.set("carta-cur", cur);
+      $$("[data-cur]").forEach((x) => x.setAttribute("aria-pressed", x.dataset.cur === cur));
+      $("#taxes").textContent = cur === "usd" ? L().taxesUsd : L().taxes;
+      rollAllPrices(prev);
+    }
     else if (b.dataset.f) { filters.has(b.dataset.f) ? filters.delete(b.dataset.f) : filters.add(b.dataset.f); renderMenu(); }
     else if (b.id === "clearF") { filters.clear(); renderMenu(); }
+    else if (b.dataset.add) {
+      const id = b.dataset.add; cart.push({ id, p: 0 });
+      b.outerHTML = addBtn(DISH[id]); renderCart(); toast(t(DISH[id].nombre) + L().added);
+    }
+    else if (b.dataset.rm !== undefined) { cart.splice(Number(b.dataset.rm), 1); renderCart(); renderMenu(); }
+    else if (b.dataset.who !== undefined) { const x = cart[Number(b.dataset.who)]; x.p = (x.p + 1) % splitN; renderCart(); }
+    else if (b.dataset.split) { splitMode = b.dataset.split; renderCart(); }
+    else if (b.dataset.n) { splitN = Math.max(1, Math.min(12, splitN + Number(b.dataset.n))); cart.forEach((x) => { if (x.p >= splitN) x.p = 0; }); renderCart(); }
+    else if (b.id === "reserveWith") { attachOrder = true; updateDock(); close(true); resv.scrollIntoView({ behavior: still ? "auto" : "smooth" }); }
+    else if (b.id === "clearCart") { cart = []; attachOrder = false; renderCart(); renderMenu(); }
+    else if (b.id === "wifiCopy" || b.id === "topChip") copyWifi();
+    else if (b.id === "topPal") open("#demoSheet");
+    else if (b.id === "surveyOpen") { svStep("sv1"); open("#surveySheet"); }
+    else if (b.dataset.rate) { rates[Number(b.dataset.rate)] = Number(b.dataset.v); renderSurvey(); }
+    else if (b.id === "svNext") svStep(rates.reduce((a, c) => a + c, 0) / 3 >= 4 ? "svGood" : "svBad");
+    else if (b.dataset.svc) { const i = Number(b.dataset.svc); badChips.has(i) ? badChips.delete(i) : badChips.add(i); renderSurvey(); }
+    else if (b.id === "svSend") {
+      const msg = [L().svMsg + R.nombre + ":", L().svItems.map((n, i) => n + " " + rates[i] + "/5").join(", ")];
+      if (badChips.size) msg.push([...badChips].map((i) => L().svChips[i]).join(", "));
+      if ($("#svText").value.trim()) msg.push($("#svText").value.trim());
+      if (MESA) msg.push(L().table + MESA);
+      window.open("https://wa.me/" + R.whatsapp + "?text=" + encodeURIComponent(msg.join("\n")), "_blank", "noopener");
+      svStep("svDone");
+    }
     else if (b.dataset.p) { paleta = b.dataset.p; applyPaleta(); }
     else if (b.classList.contains("metal")) { metal = b.dataset.m || null; applyPaleta(); }
     else if (b.dataset.dl) {
       const c = document.querySelector("#" + b.dataset.dl + " canvas"); if (!c) return;
-      const a = document.createElement("a"); a.download = b.dataset.dl + "-" + R.nombre.toLowerCase().replace(/\s+/g, "-") + ".png";
-      a.href = c.toDataURL("image/png"); a.click();
+      const a = document.createElement("a"); a.download = b.dataset.dl + "-" + R.nombre.toLowerCase().replace(/\s+/g, "-") + ".png"; a.href = c.toDataURL("image/png"); a.click();
     }
   });
 
   /* ---------- Panel de demo ---------- */
   if (DEMO) {
     $("#demo").hidden = false;
-    $("#pals").innerHTML = Object.entries(PALETAS).map(([k, v]) =>
-      '<button class="pal" type="button" data-p="' + k + '"><span class="sw" style="background:' + v.bg + ";--rim:" + v.rim + '"></span>' + v.nombre + "</button>").join("");
+    const chip = $("#topChip"); chip.hidden = false; chip.textContent = "Paleta"; chip.id = "topPal";
+    $("#pals").innerHTML = Object.entries(PALETAS).map(([k, v]) => '<button class="pal" type="button" data-p="' + k + '"><span class="sw' + (k === "auto" ? " auto" : "") + '" style="' +
+      (v.bg ? "background:" + v.bg + ";" : "") + "--rim:" + (v.rim || "#D3AF68") + '"></span>' + v.nombre + "</button>").join("");
     $("#metals").innerHTML = METALES.map((m) => '<button class="metal" type="button" data-m="' + (m.c || "") + '" aria-label="' + m.n + '" title="' + m.n +
       '" style="background:' + (m.c || "linear-gradient(135deg,#ECD39A,#B98F45)") + '"></button>').join("");
-    const open = () => { document.body.classList.add("open"); $("#demoClose").focus(); };
-    const close = () => { document.body.classList.remove("open"); $("#demoOpen").focus(); };
-    $("#demoTop").hidden = false; $("#demoTop").onclick = open;
-    $("#demoOpen").onclick = open; $("#demoClose").onclick = close; $("#scrim").onclick = close;
-    addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+    demoBtn.onclick = () => open("#demoSheet");
     if (window.QRCode) {
+      const base = location.href.split("?")[0];
       const opt = (text) => ({ text, width: 280, height: 280, colorDark: "#111111", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
-      new QRCode($("#qrMenu"), opt(location.href.split("?")[0] + "?cliente=1"));
-      new QRCode($("#qrRev"), opt(R.resenaGoogle));
+      new QRCode($("#qrMenu"), opt(base + "?cliente=1"));
+      new QRCode($("#qrRev"), opt(base + "?cliente=1&encuesta=1"));
     }
   }
 
   /* ---------- Sin señal: guardar la carta en el teléfono ---------- */
-  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-    addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
-  }
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 
-  renderAll(); applyPaleta(); onScroll(); loadSheet();
-  setInterval(renderStatus, 60000);
+  renderAll(); applyPaleta(); onScroll(); loadSheet(); loadWeather();
+  if (q.get("encuesta") === "1") { svStep("sv1"); open("#surveySheet"); }
+  setInterval(() => { renderStatus(); renderSky(); if (paleta === "auto") applyPaleta(); }, 60000);
 })();
 </script>
 </body>

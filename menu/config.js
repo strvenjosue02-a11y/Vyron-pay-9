@@ -14,9 +14,17 @@ window.RESTAURANTE = {
   whatsapp: "50688888888",                 // con 506 adelante, sin espacios
   instagram: "salitre.cr",
   mapa: "https://maps.google.com/?q=Santa+Teresa+Costa+Rica",
+  // Coordenadas del restaurante (sol, luna y clima) y de un punto en el mar cercano (olas)
+  coordenadas: { lat: 9.6466, lng: -85.1690 },
+  coordenadasMar: { lat: 9.64, lng: -85.20 },
+  wifi: { red: "Salitre Invitados", clave: "pargo2026" },
+  mesasHoy: 3,                              // mesas libres esta noche; 0 = lleno. También se cambia desde la hoja (id "mesas", columna precio)
   resenaGoogle: "https://g.page/r/EJEMPLO/review",   // link "Escribir una reseña" de Google Business
 
-  paleta: "bordeaux",                      // bordeaux | nuit | bouteille | porcelaine
+  // "auto" = cambia sola con el sol: de día porcelaine, al atardecer ambre, de noche la paleta de "paletaNoche".
+  // También se puede fijar una: bordeaux | nuit | bouteille | porcelaine | ambre
+  paleta: "auto",
+  paletaNoche: "bouteille",
   metal: null,                             // ej. "#C9CCD1" para filos plateados
   tipoCambio: 505,                         // colones por dólar
   modoDemo: true,                          // false = oculta el panel de paletas y las etiquetas "Foto de referencia"
