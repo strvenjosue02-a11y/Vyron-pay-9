@@ -104,9 +104,9 @@ function listHtml() {
   <div class="cat-bar"><div class="cat-tabs">${[["new", T("Recent", "Recientes")], ["open", T("Filling", "Llenándose")], ["live", T("Live", "En vivo")]].map(([k, t]) => `<button type="button" data-lcf="${k}" aria-selected="${f === k}">${t}</button>`).join("")}</div></div>
   <label class="cat-search lc-sq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="lc-q" type="search" placeholder="${T("Search by name or ticker", "Buscar por nombre o ticker")}" value="${esc(window.__lcq || "")}" autocomplete="off"></label>
   ${f === "new" && !window.__lcq ? trendHtml() : ""}
-  <div class="deck">${rows.map((l) => { const live = l.status === "live", ch = live && l.ticks.length ? (price(l) / l.p0 - 1) * 100 : 0;
-    return `<a class="pcard" href="${live ? "#/trade/lc-" + l.id : "#/lc/" + l.id}"><div class="pc-img">${art(l)}<span class="pc-tick">${esc(l.sym)}</span>${now() - born(l) < 3600 ? `<span class="pc-new">${T("NEW", "NUEVO")}</span>` : ""}<span class="pc-age">${T("", "hace ")}${ago(born(l))}${T(" ago", "")}</span>${live ? `<span class="lc-live">${T("LIVE", "EN VIVO")}</span>` : ""}</div>
-      <div class="pc-body"><h3>${esc(l.name)}</h3>${live ? `<div class="lc-px"><b>${fmtP(price(l))}</b><em class="${ch >= 0 ? "u" : "d"}">${ch >= 0 ? "+" : ""}${ch.toFixed(0)}%</em></div>` : bar(l)}
+  <div class="deck">${rows.map((l, ix) => { const live = l.status === "live", ch = live && l.ticks.length ? (price(l) / l.p0 - 1) * 100 : 0, cover = ix === 0 && f === "new" && !window.__lcq;
+    return `<a class="pcard${cover ? " cover" : ""}" href="${live ? "#/trade/lc-" + l.id : "#/lc/" + l.id}"><div class="pc-img">${art(l)}<i class="hud tl"></i><i class="hud br"></i><span class="pc-no">Nº ${String(ix + 1).padStart(2, "0")}</span><span class="pc-tick">${esc(l.sym)}</span>${now() - born(l) < 3600 ? `<span class="pc-new">${T("NEW", "NUEVO")}</span>` : ""}<span class="pc-age">${T("", "hace ")}${ago(born(l))}${T(" ago", "")}</span>${live ? `<span class="lc-live">${T("LIVE", "EN VIVO")}</span>` : ""}</div>
+      <div class="pc-body"><span class="pc-k">// ${live ? T("LIVE MARKET", "MERCADO EN VIVO") : T("OPEN ROUND", "RONDA ABIERTA")}</span><h3>${esc(l.name)}</h3>${live ? `<div class="lc-px"><b>${fmtP(price(l))}</b><em class="${ch >= 0 ? "u" : "d"}">${ch >= 0 ? "+" : ""}${ch.toFixed(0)}%</em></div>` : bar(l)}
       <dl class="pc-stats"><div><dt>${live ? T("Pool", "Pool") : T("Raised", "Recaudado")}</dt><dd>$${usd(live ? l.rU : l.raised)}</dd></div><div><dt>${T("Goal", "Meta")}</dt><dd>$${usd(l.goal)}</dd></div><div><dt>${live ? T("Activity", "Actividad") : T("Time left", "Tiempo")}</dt><dd>${live ? ago(l.last) : isExp(l) ? T("Expired", "Expiró") : clock(l.dl - now())}</dd></div></dl></div></a>`; }).join("")}</div>`;
 }
 function pageHtml(l) {
@@ -244,4 +244,14 @@ function trendHtml() {
   const cards = live.map(({ l, ch }, i) => `<a class="tr-c" href="#/trade/lc-${l.id}"><span class="tr-r">${i + 1}</span><span class="tr-i">${art(l)}</span><span class="tr-n"><b>${esc(l.sym)}</b><small>${esc(l.name)}</small></span><span class="tr-v ${ch >= 0 ? "u" : "d"}">${ch >= 0 ? "+" : ""}${ch.toFixed(0)}%</span></a>`)
     .concat(near.map((l) => `<a class="tr-c" href="#/lc/${l.id}"><span class="tr-r">⏳</span><span class="tr-i">${art(l)}</span><span class="tr-n"><b>${esc(l.sym)}</b><small>${T("almost full", "casi llena")}</small></span><span class="tr-v">${Math.round((l.raised / l.goal) * 100)}%</span></a>`));
   return cards.length ? `<div class="tr"><h3 class="tr-h"><i></i>${T("Trending now", "En tendencia")}</h3><div class="tr-row">${cards.join("")}</div></div>` : "";
+}
+
+
+// Inclinación 3D suave de las tarjetas (solo con mouse)
+if (!window.__tiltInit) {
+  window.__tiltInit = 1;
+  const ok = () => matchMedia("(hover: hover) and (min-width: 901px)").matches;
+  document.addEventListener("pointermove", (e) => { if (!ok()) return; const c = e.target.closest?.(".pcard"); document.querySelectorAll(".pcard.tilt").forEach((x) => { if (x !== c) { x.classList.remove("tilt"); x.style.removeProperty("--rx"); x.style.removeProperty("--ry"); } });
+    if (!c) return; const r = c.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height; c.classList.add("tilt");
+    c.style.setProperty("--ry", ((px - 0.5) * 9).toFixed(2) + "deg"); c.style.setProperty("--rx", ((0.5 - py) * 7).toFixed(2) + "deg"); c.style.setProperty("--mx", (px * 100).toFixed(1) + "%"); c.style.setProperty("--my", (py * 100).toFixed(1) + "%"); });
 }

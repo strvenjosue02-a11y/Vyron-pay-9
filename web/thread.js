@@ -13,6 +13,11 @@ const LINES = {
   en: ["lfg 🚀", "bought more, this is going up", "who else is holding?", "chart looks clean", "just aped in", "liquidity is locked, I'm calm", "taking some profit here", "dip = gift", "🔥🔥🔥", "this one is different", "still early", "need a pullback first"],
   es: ["vamos 🚀", "compré más, esto va para arriba", "¿quién más está dentro?", "el gráfico se ve limpio", "acabo de entrar", "la liquidez está bloqueada, estoy tranquilo", "tomando algo de ganancia", "la caída es un regalo 🙌", "🔥🔥🔥", "este es distinto", "todavía es temprano", "falta un retroceso primero"],
 };
+const STK = {
+  gem: { img: "./assets/stk-gem.webp", n: "DEAL" }, coin: { img: "./assets/stk-coin.webp", n: "GOLD" },
+  lfg: { t: "LFG", c: "lfg" }, wagmi: { t: "WAGMI", c: "wagmi" }, gm: { t: "GM ☀", c: "gm" }, hodl: { t: "HODL 💎🙌", c: "hodl" }, rekt: { t: "REKT", c: "rekt" }, moon: { t: "🌙 MOON", c: "moon" }, rocket: { t: "🚀", c: "rocket" }, fire: { t: "🔥", c: "fire" },
+};
+const stkHtml = (k) => { const s = STK[k]; if (!s) return ""; return s.img ? `<img class="stk-i" src="${s.img}" alt="${s.n}" loading="lazy">` : `<span class="stk stk-${s.c}" data-t="${s.t}">${s.t}</span>`; };
 const load = (k) => { try { return JSON.parse(localStorage.getItem("hf-th-" + k) || "null"); } catch { return null; } };
 const save = (k, v) => { try { localStorage.setItem("hf-th-" + k, JSON.stringify(v.slice(-120))); } catch {} };
 const hue = (s) => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
@@ -22,13 +27,13 @@ const bot = (i) => { const n = BOTS[i % BOTS.length]; return { n, a: n }; };
 function seed(key) {
   let m = load(key); if (m) return m;
   const L = LINES[lang()], t0 = nowS(); m = [];
-  for (let i = 0; i < 6; i++) { const b = bot(Math.floor(Math.random() * 8)); m.push({ id: "s" + i + Math.random().toString(36).slice(2, 6), n: b.n, a: b.a, t: L[Math.floor(Math.random() * L.length)], ts: t0 - (6 - i) * 260 - Math.floor(Math.random() * 120), r: i % 2 ? { "🔥": 1 + Math.floor(Math.random() * 4) } : {} }); }
+  for (let i = 0; i < 6; i++) { const b = bot(Math.floor(Math.random() * 8)); m.push({ s: i === 3 ? "lfg" : i === 5 ? "gem" : undefined, id: "s" + i + Math.random().toString(36).slice(2, 6), n: b.n, a: b.a, t: L[Math.floor(Math.random() * L.length)], ts: t0 - (6 - i) * 260 - Math.floor(Math.random() * 120), r: i % 2 ? { "🔥": 1 + Math.floor(Math.random() * 4) } : {} }); }
   save(key, m); return m;
 }
 const msgHtml = (m, byId, ctx, me) => {
   const rep = m.re && byId[m.re], tag = ctx.tag?.(m) || "", mine = me && m.a && String(m.a).toLowerCase() === String(me.a).toLowerCase();
   const rx = Object.entries(m.r || {}).filter(([, n]) => n > 0).map(([e, n]) => `<button type="button" class="th-rx on" data-thr="${e}" data-id="${m.id}">${e} <b>${n}</b></button>`).join("");
-  return `<li class="th-m${mine ? " me" : ""}" data-id="${m.id}">${(ctx.avatar || dAva)(m.a || m.n, 34)}<div class="th-b"><div class="th-h"><b>${esc(m.n)}</b>${tag}<small>${ago(m.ts)}</small></div>${rep ? `<div class="th-q"><i>${esc(rep.n)}</i> ${esc(rep.t.slice(0, 70))}</div>` : ""}<p>${esc(m.t)}</p><div class="th-a">${rx}<button type="button" class="th-rx add" data-thr="🔥" data-id="${m.id}" aria-label="React">+🔥</button><button type="button" class="th-re" data-thre="${m.id}">${T("Reply", "Responder")}</button></div></div></li>`;
+  return `<li class="th-m${mine ? " me" : ""}" data-id="${m.id}">${(ctx.avatar || dAva)(m.a || m.n, 34)}<div class="th-b"><div class="th-h"><b>${esc(m.n)}</b>${tag}<small>${ago(m.ts)}</small></div>${rep ? `<div class="th-q"><i>${esc(rep.n)}</i> ${rep.s ? "GIF" : esc(rep.t.slice(0, 70))}</div>` : ""}${m.s ? `<div class="th-stk">${stkHtml(m.s)}</div>` : `<p>${esc(m.t)}</p>`}<div class="th-a">${rx}<button type="button" class="th-rx add" data-thr="🔥" data-id="${m.id}" aria-label="React">+🔥</button><button type="button" class="th-re" data-thre="${m.id}">${T("Reply", "Responder")}</button></div></div></li>`;
 };
 const evHtml = (e) => `<li class="th-e ${e.buy ? "b" : "s"}"><i></i><span><b>${esc(e.n)}</b> ${e.buy ? T("bought", "compró") : T("sold", "vendió")} <em>$${e.usd}</em></span><small>${ago(e.ts)}</small></li>`;
 function listHtml(key) {
@@ -39,11 +44,16 @@ function listHtml(key) {
 export function threadHtml(key, ctx) {
   REG.set(key, ctx); if (DEMO || ctx.seed) seed(key);
   const me = ctx.me?.(), n = (load(key) || []).length;
-  const comp = me ? `<form class="th-f" data-thf><div class="th-rp" hidden></div><div class="th-row">${(ctx.avatar || dAva)(me.a, 34)}<textarea rows="1" maxlength="200" placeholder="${T("Write something…", "Escribe algo…")}" aria-label="${T("Message", "Mensaje")}"></textarea><button class="th-s" type="submit" aria-label="${T("Send", "Enviar")}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div><div class="th-em">${EMOJI.map((e) => `<button type="button" data-the="${e}">${e}</button>`).join("")}<span class="th-c">0/200</span></div></form>`
+  const comp = me ? `<form class="th-f" data-thf><div class="th-rp" hidden></div><div class="th-row">${(ctx.avatar || dAva)(me.a, 34)}<textarea rows="1" maxlength="200" placeholder="${T("Write something…", "Escribe algo…")}" aria-label="${T("Message", "Mensaje")}"></textarea><button class="th-s" type="submit" aria-label="${T("Send", "Enviar")}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div><div class="th-em"><button type="button" class="th-gif" data-thg>GIF</button>${EMOJI.map((e) => `<button type="button" data-the="${e}">${e}</button>`).join("")}<span class="th-c">0/200</span></div><div class="th-sp" hidden>${Object.keys(STK).map((k) => `<button type="button" data-ths="${k}" aria-label="${k}">${stkHtml(k)}</button>`).join("")}</div></form>`
     : `<button type="button" class="th-con" data-thc>${T("Connect your wallet to join the thread", "Conecta tu wallet para escribir en el hilo")}</button>`;
   return `<div class="th" data-th="${esc(key)}"><div class="th-top"><b>${T("Thread", "Hilo")}</b><small>${n} ${T("messages", "mensajes")}</small></div>${comp}<div class="th-list">${listHtml(key)}</div></div>`;
 }
 const refresh = (root) => { const key = root.dataset.th; if (!REG.has(key)) return; root.querySelector(".th-list").innerHTML = listHtml(key); const s = root.querySelector(".th-top small"); if (s) s.textContent = `${(load(key) || []).length} ${T("messages", "mensajes")}`; };
+function postSticker(root, k) {
+  const key = root.dataset.th, ctx = REG.get(key), me = ctx.me?.(); if (!me || !STK[k]) return;
+  const m = load(key) || []; m.push({ id: "m" + nowS() + Math.random().toString(36).slice(2, 6), n: me.n, a: me.a, t: "[" + k + "]", s: k, ts: nowS(), r: {}, re: root.dataset.re || undefined }); save(key, m);
+  root.dataset.re = ""; const rp = root.querySelector(".th-rp"); if (rp) rp.hidden = true; const sp = root.querySelector(".th-sp"); if (sp) sp.hidden = true; refresh(root);
+}
 function post(root, text) {
   const key = root.dataset.th, ctx = REG.get(key), me = ctx.me?.(); if (!me || !text.trim()) return;
   const m = load(key) || []; m.push({ id: "m" + nowS() + Math.random().toString(36).slice(2, 6), n: me.n, a: me.a, t: text.trim().slice(0, 200), ts: nowS(), r: {}, re: root.dataset.re || undefined }); save(key, m);
@@ -73,6 +83,8 @@ if (!window.__thInit) {
   document.addEventListener("keydown", (e) => { const ta = e.target.closest?.(".th-f textarea"); if (ta && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ta.closest("form").requestSubmit(); } });
   document.addEventListener("click", (e) => {
     const root = e.target.closest(".th"); if (!root) return;
+    if (e.target.closest("[data-thg]")) { const sp = root.querySelector(".th-sp"); sp.hidden = !sp.hidden; return; }
+    const sk = e.target.closest("[data-ths]"); if (sk) { postSticker(root, sk.dataset.ths); return; }
     if (e.target.closest("[data-thc]")) { document.getElementById("connect")?.click(); return; }
     const em = e.target.closest("[data-the]"); if (em) { const ta = root.querySelector("textarea"); ta.value = (ta.value + em.dataset.the).slice(0, 200); ta.dispatchEvent(new Event("input", { bubbles: true })); ta.focus(); return; }
     const rx = e.target.closest("[data-thr]"); if (rx) { reactTo(root, rx.dataset.id, rx.dataset.thr); return; }
@@ -92,6 +104,6 @@ if (!window.__thInit) {
   document.addEventListener("contextmenu", (e) => { const li = e.target.closest(".th-m"); if (li) { e.preventDefault(); stop(); openMenu(li); } });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
   // en modo demo la conversación sigue viva
-  setInterval(() => { if (!DEMO) return; document.querySelectorAll(".th").forEach((root) => { const key = root.dataset.th; if (!REG.has(key) || !root.isConnected || MENU || Math.random() > 0.45) return; const L = LINES[lang()], b = bot(Math.floor(Math.random() * 8)), m = load(key) || [], me = REG.get(key).me?.(); m.push({ id: "b" + nowS() + Math.random().toString(36).slice(2, 5), n: b.n, a: b.a, t: L[Math.floor(Math.random() * L.length)], ts: nowS(), r: {} }); save(key, m); if (!root.querySelector("textarea:focus")) refresh(root); }); }, 7000);
+  setInterval(() => { if (!DEMO) return; document.querySelectorAll(".th").forEach((root) => { const key = root.dataset.th; if (!REG.has(key) || !root.isConnected || MENU || Math.random() > 0.45) return; const L = LINES[lang()], b = bot(Math.floor(Math.random() * 8)), m = load(key) || [], me = REG.get(key).me?.(); const sk = Math.random() < 0.28 ? Object.keys(STK)[Math.floor(Math.random() * Object.keys(STK).length)] : ""; m.push({ id: "b" + nowS() + Math.random().toString(36).slice(2, 5), n: b.n, a: b.a, t: sk ? "[" + sk + "]" : L[Math.floor(Math.random() * L.length)], s: sk || undefined, ts: nowS(), r: {} }); save(key, m); if (!root.querySelector("textarea:focus")) refresh(root); }); }, 7000);
   setInterval(() => document.querySelectorAll(".th").forEach((r) => { if (REG.has(r.dataset.th) && !MENU && !r.querySelector("textarea:focus")) refresh(r); }), 15000);
 }
