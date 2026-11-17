@@ -11,6 +11,13 @@ interface IRouter {
     function exactInputSingle(P calldata p) external payable returns (uint256);
 }
 interface INFT { function ownerOf(uint256 id) external view returns (address); }
+interface IPoolSlot0 { function slot0() external view returns (uint160 sqrtPriceX96, int24, uint16, uint16, uint16, uint8, bool); }
+interface IPoolSwap { function swap(address recipient, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96, bytes calldata data) external returns (int256, int256); }
+/// Atacante: mueve el precio de un pool vacío con un swap que no paga nada.
+contract Mover {
+    function go(address pool, bool zeroForOne, uint160 limit) external { IPoolSwap(pool).swap(address(this), zeroForOne, 1, limit, ""); }
+    function uniswapV3SwapCallback(int256, int256, bytes calldata) external {}
+}
 
 /// Pruebas del lanzamiento contra Uniswap v3 REAL (copia de Sepolia).
 /// Correr con: FORK_URL=https://ethereum-sepolia-rpc.publicnode.com forge test --match-contract LaunchTest -vv
@@ -227,18 +234,26 @@ contract LaunchTest is Test {
         assertTrue(!ok, "ni la plataforma");
     }
 
-    // ATAQUE 7: un pool mal inicializado deja la ronda en reembolso para siempre, pero nadie pierde dinero
-    function test_attack_griefingKillsLaunchButNotFunds() public {
-        Launch.Params memory p = _params(100e6, "AT7");
-        address pred = _predict(p);
-        (address t0, address t1) = address(USDC) < pred ? (address(USDC), pred) : (pred, address(USDC));
-        INPM(NPM).createAndInitializePoolIfNecessary(t0, t1, 3000, uint160(1 << 96));
-        Launch l = _deploy(p);
-        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
-        assertEq(uint8(l.state()), uint8(Launch.State.Refund));
-        vm.prank(trader); l.refundFor(alice);
-        assertEq(USDC.balanceOf(alice), 5_000e6, "no se pierde dinero");
-        vm.prank(bob); USDC.approve(address(l), 1e6); vm.prank(bob); vm.expectRevert(); l.deposit(1e6, bob); // pero la ronda queda muerta
+    // ATAQUE 7: mover el precio del pool vacío en CUALQUIER dirección ya no mata la ronda
+    function test_attack_freeSwapPriceMove_bothDirections_stillFills() public {
+        for (uint256 k = 0; k < 2; k++) {
+            Launch.Params memory p = _params(100e6, k == 0 ? "AT7" : "AT8");
+            address pred = _predict(p);
+            (address t0, address t1) = address(USDC) < pred ? (address(USDC), pred) : (pred, address(USDC));
+            address pl = INPM(NPM).createAndInitializePoolIfNecessary(t0, t1, 3000, uint160(1) << 96);
+            Launch l = _deploy(p);
+            Mover m = new Mover(); // el atacante mueve el precio con un swap sin liquidez (gratis)
+            (uint160 cur,,,,,,) = IPoolSlot0(pl).slot0();
+            m.go(pl, k == 1, k == 1 ? cur / 4 : cur * 4);
+            vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+            assertEq(uint8(l.state()), uint8(Launch.State.Live), "la ronda se llena aunque el pool haya sido movido");
+        }
+    }
+    // el callback del contrato nunca paga
+    function test_callbackNeverPays() public {
+        Launch l = _deploy(_params(100e6, "AT9"));
+        vm.expectRevert(); l.uniswapV3SwapCallback(1, 0, "");
+        vm.expectRevert(); l.uniswapV3SwapCallback(-1, 5, "");
     }
 
     // --- no se puede pasar de la meta ni mintear a voluntad
@@ -249,16 +264,20 @@ contract LaunchTest is Test {
         vm.stopPrank();
     }
 
-    // --- pool manipulado antes: todos recuperan su dinero
-    function test_manipulatedPool_refundsEveryone() public {
+    // --- pool inicializado a otro precio ANTES: el contrato lo corrige gratis y la ronda se llena igual, a su precio
+    function test_manipulatedPool_isCorrectedAndFills() public {
         Launch.Params memory p = _params(100e6, "BR6");
         address pred = _predict(p);
         (address t0, address t1) = address(USDC) < pred ? (address(USDC), pred) : (pred, address(USDC));
-        INPM(NPM).createAndInitializePoolIfNecessary(t0, t1, 3000, uint160(1 << 96)); // precio 1:1 distinto al de la ronda
+        address pl = INPM(NPM).createAndInitializePoolIfNecessary(t0, t1, 3000, uint160(1) << 96); // precio 1:1, muy distinto
         Launch l = _deploy(p);
-        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice);
-        assertEq(uint8(l.state()), uint8(Launch.State.Refund));
-        l.withdraw(); vm.stopPrank();
-        assertEq(USDC.balanceOf(alice), 5_000e6);
+        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+        assertEq(uint8(l.state()), uint8(Launch.State.Live), "se llena igual");
+        assertEq(l.pool(), pl);
+        (uint160 cur,,,,,,) = IPoolSlot0(pl).slot0();
+        (uint256 a0, uint256 a1) = t0 == address(USDC) ? (uint256(99e6), uint256(495_000_000 ether)) : (uint256(495_000_000 ether), uint256(99e6));
+        uint160 target = uint160(_sqrt(a1 * (1 << 96) / a0) << 48);
+        uint256 diff = cur > target ? cur - target : target - cur;
+        assertLt(diff * 1000, uint256(target), "el precio quedo en el de la ronda");
     }
 }

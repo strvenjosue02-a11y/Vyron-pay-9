@@ -20,7 +20,10 @@ interface INPM {
     function mint(MintParams calldata params) external payable returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
     function collect(CollectParams calldata params) external payable returns (uint256 amount0, uint256 amount1);
 }
-interface IPoolSlot0 { function slot0() external view returns (uint160 sqrtPriceX96, int24, uint16, uint16, uint16, uint8, bool); }
+interface IPoolSlot0 {
+    function slot0() external view returns (uint160 sqrtPriceX96, int24, uint16, uint16, uint16, uint8, bool);
+    function swap(address recipient, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96, bytes calldata data) external returns (int256 amount0, int256 amount1);
+}
 
 /// @title Launch - lanzamiento rápido, todo o nada, con pool bloqueado para siempre.
 /// @notice Este contrato es a la vez el token y la caja de la ronda.
@@ -168,6 +171,11 @@ contract Launch is ERC20, ReentrancyGuard {
         if (ft > 0) { _transfer(address(this), platform, ft / 2); _transfer(address(this), creator, ft - ft / 2); }
     }
 
+    /// @notice Callback de Uniswap para la corrección gratis del precio. NUNCA paga: solo acepta cantidades cero o negativas.
+    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external view {
+        if (msg.sender != pool || amount0Delta > 0 || amount1Delta > 0) revert BadParams();
+    }
+
     // ================================================================= internos
 
     function _fill() internal {
@@ -181,7 +189,15 @@ contract Launch is ERC20, ReentrancyGuard {
         pool = p;
         (uint160 current,,,,,,) = IPoolSlot0(p).slot0();
         uint256 diff = current > target ? current - target : target - current;
-        if (diff * 1000 > uint256(target)) { // alguien inicializó el pool a otro precio: todos recuperan su dinero
+        if (diff * 1000 > uint256(target)) {
+            // Alguien movió el precio de un pool VACÍO (es gratis hacerlo). Nadie puede tener tokens de esta ronda antes de que
+            // se llene, así que ese pool no tiene liquidez: un swap de 1 unidad con límite en el precio correcto lo devuelve
+            // sin costo. El contrato NUNCA paga en el callback; si algo le pidiera pagar, revierte y la ronda pasa a reembolso.
+            try IPoolSlot0(p).swap(address(this), current > target, 1, target, "") {} catch {}
+            (current,,,,,,) = IPoolSlot0(p).slot0();
+            diff = current > target ? current - target : target - current;
+        }
+        if (diff * 1000 > uint256(target)) { // no se pudo corregir: todos recuperan su dinero
             state = State.Refund;
             emit Refunding(p);
             return;
