@@ -20,7 +20,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   const L = { candles: "Candles", line: "Line", ma: "MA", draw: "Line", clear: "Clear", full: "Full screen", exit: "Exit", vol: "Vol", price: "Price", cap: "Market cap", ...labels };
   const key = `hf-hl-${id}`;
   let hl = []; try { hl = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
-  const st = { ind: null, heat: (() => { try { return localStorage.getItem("hf-heat") !== "0"; } catch { return true; } })(), faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: "candle", ma: !matchMedia("(max-width: 900px)").matches, draw: false, period, k: 1, last: null };
+  const st = { flow: (() => { try { return localStorage.getItem("hf-flow") === "1"; } catch { return false; } })(), ind: null, heat: (() => { try { return localStorage.getItem("hf-heat") !== "0"; } catch { return true; } })(), faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: "candle", ma: !matchMedia("(max-width: 900px)").matches, draw: false, period, k: 1, last: null };
   el.classList.add("cp");
   el.innerHTML = `<div class="cp-bar">
       <div class="cp-per" role="tablist">${periods.map((k) => `<button type="button" data-per="${k}" aria-selected="${k === period}">${k}</button>`).join("")}</div>
@@ -30,6 +30,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
         <button type="button" data-t="ma" aria-pressed="${st.ma}">${L.ma}</button>
         <button type="button" data-t="faces" aria-pressed="${st.faces}">${L.faces || "Faces"}</button>
         <button type="button" data-t="heat" aria-pressed="${st.heat}">${L.heat || "Heat"}</button>
+        <button type="button" data-t="flow" aria-pressed="${st.flow}">${L.flow || "Flow"}</button>
         <button type="button" data-t="rsi" aria-pressed="false">RSI</button><button type="button" data-t="macd" aria-pressed="false">MACD</button>
         <button type="button" data-t="draw" aria-pressed="false">${L.draw}</button>
         <button type="button" data-t="clear" title="${L.clear}">⌫</button>
@@ -76,6 +77,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   const tip = document.createElement("div"); tip.className = "cp-tip"; box.appendChild(tip);
   const bucket = (time) => { if (!data.length || time == null) return []; const i = data.findIndex((c) => c.time === time), step = data.length > 1 ? data[Math.min(i + 1, data.length - 1)].time - data[Math.max(i, 0)].time || data[1].time - data[0].time : 300; const end = i >= 0 && i < data.length - 1 ? data[i + 1].time : time + Math.abs(step || 300); return allTr.filter((t) => t.t >= time && t.t < end); };
   box.style.position = "relative";
+  const fl = document.createElement("canvas"); fl.className = "cp-flow"; box.appendChild(fl);
   box.appendChild(fog); const ov = document.createElement("div"); ov.className = "cp-ov"; box.appendChild(ov);
   candle.applyOptions({ autoscaleInfoProvider: (orig) => { const r = orig(); if (!r || !lines.length) return r; const ks = st.k || 1; lines.forEach((l) => { const v = l.price * ks; r.priceRange.minValue = Math.min(r.priceRange.minValue, v); r.priceRange.maxValue = Math.max(r.priceRange.maxValue, v); }); return r; } });
   function placeFog() {
@@ -83,8 +85,30 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     fog.innerHTML = heat.map((h) => { const y1 = candle.priceToCoordinate(h.hi * k), y2 = candle.priceToCoordinate(h.lo * k); if (y1 == null || y2 == null) return ""; const top = Math.min(y1, y2), ht = Math.max(2, Math.abs(y2 - y1) + 1);
       return `<i class="${h.win ? "g" : h.now ? "n" : "r"}" style="top:${top}px;height:${ht}px;opacity:${(0.05 + h.v * 0.3).toFixed(2)}"></i>`; }).join("");
   }
+  function drawFlow() {
+    const on = st.flow; fl.style.display = on ? "block" : "none"; candle.applyOptions({ visible: on ? false : st.mode === "candle" }); vol.applyOptions({ visible: !on });
+    if (!on) return; const W = box.clientWidth, H = box.clientHeight, dpr = Math.min(devicePixelRatio || 1, 2); if (!W || !H) return;
+    if (fl.width !== W * dpr || fl.height !== H * dpr) { fl.width = W * dpr; fl.height = H * dpr; fl.style.width = W + "px"; fl.style.height = H + "px"; }
+    const g = fl.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H); const ts = chart.timeScale(), k = st.k, times = data.map((c) => c.time);
+    const snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; }, rightEdge = W - 64;
+    const t0 = data.length ? data[0].time : 0, pts = allTr.filter((t) => t.price && t.t >= t0).map((t) => ({ x: ts.timeToCoordinate(snap(t.t)), y: candle.priceToCoordinate(t.price * k), t })).filter((p) => p.x != null && p.y != null && p.x > 0 && p.x < rightEdge);
+    // curva de dinero neto (abajo): cuánto dinero ha entrado menos el que salió
+    let cum = 0; const net = pts.map((p) => { cum += p.t.buy ? p.t.usd : -p.t.usd; return { x: p.x, v: cum }; });
+    if (net.length > 1) { const mn = Math.min(0, ...net.map((n) => n.v)), mx = Math.max(1e-9, ...net.map((n) => n.v)), y0 = H - 28, h = H * 0.22, Y = (v) => y0 - ((v - mn) / (mx - mn || 1)) * h, zero = Y(0), up = net[net.length - 1].v >= 0, col = up ? "61,220,151" : "255,93,93";
+      const gr = g.createLinearGradient(0, y0 - h, 0, y0); gr.addColorStop(0, `rgba(${col},.30)`); gr.addColorStop(1, `rgba(${col},0)`);
+      g.beginPath(); net.forEach((n, i) => (i ? g.lineTo(n.x, Y(n.v)) : g.moveTo(n.x, Y(n.v)))); g.lineTo(net[net.length - 1].x, zero); g.lineTo(net[0].x, zero); g.closePath(); g.fillStyle = gr; g.fill();
+      g.beginPath(); net.forEach((n, i) => (i ? g.lineTo(n.x, Y(n.v)) : g.moveTo(n.x, Y(n.v)))); g.strokeStyle = `rgb(${col})`; g.lineWidth = 2; g.stroke(); g.setLineDash([4, 6]); g.strokeStyle = "rgba(255,255,255,.18)"; g.beginPath(); g.moveTo(0, zero); g.lineTo(rightEdge, zero); g.stroke(); g.setLineDash([]);
+      g.fillStyle = "rgba(255,255,255,.55)"; g.font = "12px 'Space Grotesk', sans-serif"; g.fillText(L.net || "Net money in", rightEdge - 150, y0 - h - 8); }
+    // línea fina del precio
+    g.beginPath(); data.forEach((c, i) => { const x = ts.timeToCoordinate(c.time), y = candle.priceToCoordinate(c.close); if (x == null || y == null) return; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.strokeStyle = "rgba(255,255,255,.28)"; g.lineWidth = 1.5; g.stroke();
+    // burbujas: tamaño = dinero, verde = compra, rojo = venta
+    const mxUsd = Math.max(1e-9, ...pts.map((p) => p.t.usd)); const rad = (u) => 4 + Math.sqrt(u / mxUsd) * 24;
+    pts.sort((a, b) => b.t.usd - a.t.usd).forEach((p) => { const r = rad(p.t.usd), col = p.t.buy ? "61,220,151" : "255,93,93", gr = g.createRadialGradient(p.x, p.y, r * 0.1, p.x, p.y, r);
+      gr.addColorStop(0, `rgba(${col},.55)`); gr.addColorStop(1, `rgba(${col},.10)`); g.beginPath(); g.arc(p.x, p.y, r, 0, 7); g.fillStyle = gr; g.fill(); g.lineWidth = 1.5; g.strokeStyle = `rgba(${col},.9)`; g.stroke(); });
+    const last = data[data.length - 1]; if (last) { const x = ts.timeToCoordinate(last.time), y = candle.priceToCoordinate(last.close); if (x != null && y != null) { g.fillStyle = "#fff"; g.beginPath(); g.arc(x, y, 4, 0, 7); g.fill(); } }
+  }
   function place() {
-    placeFog(); if (!data.length) return; const ts = chart.timeScale(), times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; }, k = st.k;
+    placeFog(); drawFlow(); if (!data.length) return; const ts = chart.timeScale(), times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; }, k = st.k;
     const stack = {}; ov.querySelectorAll("[data-fi]").forEach((n) => { const f = faces[Number(n.dataset.fi)], x = ts.timeToCoordinate(snap(f.t)), y = candle.priceToCoordinate(f.price * k);
       if (x == null || y == null) { n.style.display = "none"; return; } const key = Math.round(x / 22) + (f.buy ? "b" : "s"), o = stack[key] || 0; stack[key] = o + 1; n.style.display = ""; n.style.left = x - 15 + "px"; const late = times.indexOf(snap(f.t)) >= times.length - 2 ? 22 : 0; n.style.top = y + (f.buy ? 12 + late + o * 30 : -42 - late - o * 30) + "px"; });
     ov.querySelectorAll("[data-li]").forEach((n) => { if (n.dataset.drag === "1" && n.classList.contains("drag")) return; const l = lines[Number(n.dataset.li)], y = candle.priceToCoordinate(l.price * k); if (y == null) { n.style.display = "none"; return; } n.style.display = ""; n.style.top = y - 13 + "px"; });
@@ -148,6 +172,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     if (t === "unit") { st.cap = !st.cap; b.textContent = st.cap ? L.cap : L.price; }
     if (t === "mode") { st.mode = st.mode === "candle" ? "line" : "candle"; b.textContent = st.mode === "candle" ? L.candles : L.line; }
     if (t === "ma") { st.ma = !st.ma; b.setAttribute("aria-pressed", st.ma); }
+    if (t === "flow") { st.flow = !st.flow; b.setAttribute("aria-pressed", st.flow); try { localStorage.setItem("hf-flow", st.flow ? "1" : "0"); } catch {} }
     if (t === "rsi" || t === "macd") { st.ind = st.ind === t ? null : t; el.querySelectorAll("[data-t=rsi],[data-t=macd]").forEach((x) => x.setAttribute("aria-pressed", x.dataset.t === st.ind)); applyInd(); }
     if (t === "heat") { st.heat = !st.heat; b.setAttribute("aria-pressed", st.heat); try { localStorage.setItem("hf-heat", st.heat ? "1" : "0"); } catch {} }
     if (t === "faces") { st.faces = !st.faces; b.setAttribute("aria-pressed", st.faces); try { localStorage.setItem("hf-faces", st.faces ? "1" : "0"); } catch {} }

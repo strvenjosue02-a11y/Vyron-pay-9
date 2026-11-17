@@ -1634,7 +1634,7 @@ a.mk-row:hover { box-shadow: inset 2px 0 0 #fff; } .tx-feed span.fol, .tx-ca but
 /* ===== Modo Simple (por defecto) y Modo Pro ===== */
 .tx-pro-b { height: 34px; padding: 0 14px; border-radius: 8px; border: 0; background: #f4f4f1; color: #09090b; font: 700 13.5px var(--font); cursor: pointer; margin-left: 8px; } .tx-pro-b[aria-pressed="true"] { background: #0a0a0b; color: #fff; box-shadow: inset 0 0 0 1px #fff; }
 .term.tx:not(.pro) .tx-trend, .term.tx:not(.pro) .tx-data, .term.tx:not(.pro) .tx-chips, .term.tx:not(.pro) .tx-strip, .term.tx:not(.pro) .term-side .tx-row2, .term.tx:not(.pro) .tx-tpsl, .term.tx:not(.pro) .tx-alert, .term.tx:not(.pro) .tx-trust, .term.tx:not(.pro) .cy-1tap, .term.tx:not(.pro) .cp-info, .term.tx:not(.pro) .cp-face, .term.tx:not(.pro) .cp-fog { display: none !important; }
-.term.tx:not(.pro) .cp-tools button:not([data-t="unit"]):not([data-t="full"]):not([data-t="mode"]) { display: none !important; }
+.term.tx:not(.pro) .cp-tools button:not([data-t="unit"]):not([data-t="full"]):not([data-t="mode"]):not([data-t="flow"]) { display: none !important; }
 .term.tx:not(.pro) [data-ttab="heat"], .term.tx:not(.pro) [data-ttab="whales"], .term.tx:not(.pro) [data-ttab="holders"], .term.tx:not(.pro) [data-ttab="depth"], .term.tx:not(.pro) [data-ttab="mine"] { display: none !important; }
 .term.tx:not(.pro) .cp-svg { height: clamp(560px, calc(100vh - 190px), 1040px) !important; }
 @media (max-width: 900px) { .term.tx:not(.pro) .cp-svg { height: clamp(440px, 66vh, 680px) !important; } .tx-pro-b { margin-left: 0; } }
@@ -1660,3 +1660,16 @@ a.mk-row:hover { box-shadow: inset 2px 0 0 #fff; } .tx-feed span.fol, .tx-ca but
   .tx-toks-b, .tx-info-b, .tx-pro-b, .term.tx .tx-share { height: 30px; padding: 0 10px; margin: 0 !important; font-size: 12.5px; } .tx-toks-b svg { display: none; }
   .term.tx .tx-top { grid-template-columns: 44px minmax(0, 1fr); }
 }
+
+/* ===== Modo Flujo (gráfico nuevo) y menú ⋯ del celular ===== */
+.cp-flow { position: absolute; inset: 0; z-index: 2; pointer-events: none; display: none; }
+.term.tx:not(.pro) .cp-tools button[data-t="flow"] { display: inline-flex !important; }
+.tx-menu-b { display: none; }
+@media (max-width: 900px) {
+  .tx-menu-b { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; border: 0; background: #0a0a0b; color: var(--ink); font: 700 18px var(--font); box-shadow: inset 0 0 0 1px #1f1f23; cursor: pointer; line-height: 1; }
+  .term.tx .tx-id:not(.menu) .tx-toks-b, .term.tx .tx-id:not(.menu) .tx-info-b, .term.tx .tx-id:not(.menu) .tx-pro-b, .term.tx .tx-id:not(.menu) .tx-share { display: none !important; }
+  .term.tx .tx-id.menu h1 { position: relative; } .term.tx .tx-id.menu .tx-toks-b, .term.tx .tx-id.menu .tx-info-b, .term.tx .tx-id.menu .tx-pro-b, .term.tx .tx-id.menu .tx-share { display: inline-flex !important; }
+  .term.tx .cp-tools [data-t="flow"] { display: inline-flex !important; }
+}
+.term.tx:not(.pro) .cp-tools button[data-t="flow"], .term.tx .cp-tools button[data-t="flow"] { display: inline-flex !important; visibility: visible !important; }
+.term.tx:not(.pro) .cp-tools { display: flex !important; }
