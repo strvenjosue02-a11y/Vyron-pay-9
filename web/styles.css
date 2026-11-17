@@ -1441,3 +1441,16 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 60; pointer-event
   .term.tx .cp-svg { height: clamp(540px, calc(100vh - 270px), 1000px) !important; }
 }
 @media (max-width: 1000px) { .tx-ca { margin-top: 2px; } .tx-ca a { display: none; } }
+
+/* ===== CELULAR simple: nombre + valor + gráfico enorme + Comprar/Vender. Lo demás, dentro de la hoja ===== */
+.tx-safe2 { display: none; }
+@media (max-width: 1000px) {
+  .term.tx .tx-top .tx-safe, .term.tx .tx-top .tx-chips, .term.tx .tx-top .tx-ca, .term.tx .tx-id > small, .term.tx .tx-share span { display: none !important; }
+  .term.tx .tx-strip { display: none; }
+  .term.tx .tx-top { grid-template-columns: 44px 1fr; align-items: center; column-gap: 12px; padding-top: 2px; } .term.tx .coin3d, .term.tx .tx-top > img { width: 44px !important; height: 44px !important; }
+  .term.tx .tx-id h1 { font-size: 24px; margin: 0; } .term.tx .tx-px { grid-column: 1 / -1; margin-top: 4px; } .term.tx .tx-px #tx-capbig { font-size: 38px; }
+  .term.tx .tx-row2 { grid-template-columns: 1fr 1.6fr; } .term.tx .rk, .term.tx .tx-press { min-height: 40px; }
+  .term.tx .cp-svg { height: clamp(460px, 68vh, 700px) !important; } .term.tx .tx-chart { margin: 8px -12px 0; border-radius: 0; }
+  .term.tx .tx-safe2 { display: flex; flex-wrap: wrap; margin: 0 0 6px; overflow: visible; }
+}
+@media (max-width: 1000px) { .term.tx .term-side > .tx-safe2 { order: 1 !important; } }
