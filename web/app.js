@@ -816,7 +816,7 @@ function vTerminal(p) {
   return `<section class="term tx ${up ? "tx-up" : "tx-dn"}${proOn() ? " pro" : ""}">
     <a class="back" href="#/market">All markets</a>
     <header class="tx-top">
-      <a class="tx-back" href="#/market" aria-label="Market">‹</a><div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
+      <a class="tx-back" href="#/trade/${p.id}" aria-label="Back">‹</a><div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
       <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-menu-b" data-menu aria-label="Menu">⋯</button><button type="button" class="tx-toks-b" data-toks><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Tokens</button><button type="button" class="tx-info-b" data-info>Info</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
       <div class="tx-px"><small class="tx-cl">Market cap</small><b id="tx-capbig">${capFmt(x.cap)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span><em class="tx-sub">Price <span id="tt-price">${fmtP(m.price)}</span></em></div>
       <div class="tx-chips" id="tx-chips">${chipsHtml(p)}</div>
@@ -1702,6 +1702,7 @@ function route() {
   if (key === "launch" && $("#form")) return; // no borrar lo que el creador está escribiendo
   const keep = $("#amt")?.value;
   if (tp?.lcx && !tp.mk) { if (!tp._ld) { tp._ld = true; Promise.all([loadChain(tp)]).then(() => loadTrades(tp)).then(() => { tp._ld = false; route(); }).catch(() => { tp._ld = false; }); } $("#app").innerHTML = `<div class="page-h"><h1>${esc(tp.q.symbol)}</h1><p>Loading the market…</p></div>`; return; }
+  if (tp && matchMedia("(max-width: 900px)").matches && !/[?&]op=1/.test(h)) { renderCommunity(tp); return; }
   if (tp) { const kv = $("#tamt")?.value; $("#app").innerHTML = vTerminal(tp); if (kv && $("#tamt")) $("#tamt").value = kv; startTerminal(tp); return; }
   if (key === "market") { $("#app").innerHTML = vMarket(); bindMarket(); S.list.filter((x) => x.mk && !x.supply).forEach((x) => { try { pub.readContract({ address: x.address, abi: erc20Abi, functionName: "totalSupply" }).then((v) => { x.supply = v; if (location.hash.startsWith("#/market") && document.activeElement?.id !== "mk-q") { $("#app").innerHTML = vMarket(); bindMarket(); } }).catch(() => {}); } catch {} });
   S.list.filter((x) => x.mk && !x.trades).forEach((x) => loadTrades(x).then(() => { if (location.hash.startsWith("#/market") && document.activeElement?.id !== "mk-q") { $("#app").innerHTML = vMarket(); bindMarket(); } })); return; }
@@ -1718,6 +1719,36 @@ function route() {
     document.querySelectorAll("[data-tmphoto]").forEach((inp) => inp.addEventListener("change", (e) => pickImage(e, 128, 40000, (url) => { (S.tmPhotos ||= [])[inp.dataset.tmphoto] = url; $(`#tmp-${inp.dataset.tmphoto}`).style.backgroundImage = `url("${url}")`; })));
     preview(); }
 }
+// ===== Comunidad de un token (celular): hilo, holders y operaciones. Operar lleva al trading.
+const cmBody = (p) => {
+  const t = S.cmTab || "thread";
+  if (t === "thread") return chatHtml(p);
+  const old = S.ttab; S.ttab = t === "holders" ? "holders" : "trades"; let h = ""; try { h = termTab(p); } finally { S.ttab = old; } return h;
+};
+function communityHtml(p) {
+  const x = stats24(p), up = x.chg >= 0, t = S.cmTab || "thread", fav = favs().includes(p.id);
+  return `<section class="cm" data-cm="${p.id}">
+    <header class="cm-h"><a class="cm-bk" href="#/lc" aria-label="Back">‹</a><span class="cm-av">${logoSrc(p) ? `<img src="${esc(logoSrc(p))}" alt="">` : mark(p, "lg")}</span>
+      <div class="cm-t"><h1>${esc(p.q.name)}</h1><small>${esc(p.q.symbol)} · ${short(p.q.creator)}</small></div>
+      <div class="cm-p"><b id="cm-px">${fmtP(p.mk.price)}</b><em id="cm-ch" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(1)}%</em></div></header>
+    <div class="cm-st"><div><small>${T2("Value", "Valor")}</small><b>$${usd(x.cap)}</b></div><div><small>${T2("Holders", "Holders")}</small><b id="cm-hn">${p.holders ? p.holders.filter((h) => !holderLabel(p, h.a) || holderLabel(p, h.a) === "Team").length : "–"}</b></div><div><small>${T2("Liquidity", "Liquidez")}</small><b>🔒 ${T2("Locked", "Bloqueada")}</b></div></div>
+    <div class="cm-tabs" role="tablist">${[["thread", T2("Thread", "Hilo")], ["holders", "Holders"], ["trades", T2("Trades", "Operaciones")]].map(([k, n]) => `<button type="button" data-cmt="${k}" aria-selected="${t === k}">${n}</button>`).join("")}</div>
+    <div class="cm-b" id="cm-b">${cmBody(p)}</div>
+    <div class="cm-op"><a class="btn btn-ember btn-block" href="#/trade/${p.id}?op=1">${T2("Trade", "Operar")} ${esc(p.q.symbol)}</a></div></section>`;
+}
+function renderCommunity(p) {
+  clearInterval(S.poll); if (chartOff) { chartOff.destroy(); chartOff = null; }
+  document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
+  $("#app").innerHTML = communityHtml(p); scrollTo(0, 0);
+  const paint = async () => { if (!location.hash.startsWith(`#/trade/${p.id}`) || /[?&]op=1/.test(location.hash)) { clearInterval(S.poll); return; }
+    try { await loadHolders(p); } catch {}
+    const x = stats24(p); if ($("#cm-px")) $("#cm-px").textContent = fmtP(p.mk.price); if ($("#cm-ch")) { $("#cm-ch").textContent = `${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(1)}%`; $("#cm-ch").className = x.chg >= 0 ? "u" : "d"; }
+    if ($("#cm-hn") && p.holders) $("#cm-hn").textContent = p.holders.filter((h) => !holderLabel(p, h.a) || holderLabel(p, h.a) === "Team").length;
+    if ((S.cmTab || "thread") !== "thread" && $("#cm-b")) $("#cm-b").innerHTML = cmBody(p); };
+  paint(); S.poll = setInterval(paint, 4000);
+  $("#app").querySelector(".cm-tabs").onclick = (e) => { const b = e.target.closest("[data-cmt]"); if (!b) return; S.cmTab = b.dataset.cmt; document.querySelectorAll("[data-cmt]").forEach((x) => x.setAttribute("aria-selected", x === b)); $("#cm-b").innerHTML = cmBody(p); };
+}
+
 function bindAmount(p) {
   const el = $("#amt"); if (!el) return;
   const upd = () => { let v = 0n; try { v = parseUnits(el.value || "0", 6); } catch {} $("#receive").textContent = `${tok((v * p.q.saleTokens) / p.q.hardcap)} ${p.q.symbol}`; if ($("#bb-amt")) $("#bb-amt").textContent = v > 0n ? `$${usd(v)} for ${tok((v * p.q.saleTokens) / p.q.hardcap)} ${p.q.symbol}` : "Enter an amount"; if ($("#refundline")) $("#refundline").textContent = v > 0n ? `$${usd(v)} back` : "100% back"; };
@@ -1903,6 +1934,7 @@ async function main() {
   initI18n();
   $("#net span").textContent = CONFIG.chainName;
   setLaunchChain({ CONFIG, pub, wallet: null, account: null }); if (!CONFIG.demo) loadChainLaunches().catch(() => {});
+  $("#tab-me").onclick = () => $("#connect").click();
   $("#bell").onclick = openNt; $("#bell").classList.toggle("on", "Notification" in window && Notification.permission === "granted");
   $("#connect").onclick = () => { if (S.me) { const o = document.getElementById("acct-ov"); if (o) { o.remove(); return; } const ov = document.createElement("div"); ov.id = "acct-ov"; ov.innerHTML = acctHtml(); document.body.appendChild(ov); ov.onclick = (e) => { if (e.target.closest("[data-edp]")) { ov.remove(); editProfile(); return; } if (e.target === ov || e.target.closest("[data-acx]")) ov.remove(); }; return; } connect().catch((x) => toast(x.shortMessage || x.message, true)); };
   window.addEventListener("hashchange", () => { S.tab = "overview"; clearInterval(S.poll); if (!location.hash.startsWith("#/launch")) $("#app").innerHTML = ""; route(); scrollTo(0, 0); });
