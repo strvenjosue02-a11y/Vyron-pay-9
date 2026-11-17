@@ -615,9 +615,12 @@ if (!window.__txKeys) {
     const qs = e.target.closest("[data-qsell]"); if (qs) { document.querySelector('[data-side="sell"]')?.click(); setTimeout(() => { document.querySelector(`.tx-q [data-pct="${qs.dataset.qsell}"]`)?.click(); }, 60); document.querySelector(".term")?.classList.add("sheet"); return; }
     const tb = e.target.closest("[data-tpsl]"); if (tb) { const p = curTok(); if (!p || !p.mk) return; const c = tpslGet(p); if (c.on) tpslSet(p, { ...c, on: false }); else tpslSet(p, { on: true, tp: Number($("#tp-v").value) || 50, sl: Number($("#sl-v").value) || 20, ref: p.mk.price }); $("#tx-tpsl").outerHTML = tpslHtml(p); chartOff?.update(); return; }
   });
+  document.addEventListener("input", (e) => { if (e.target.id !== "tp-q") return; const q = e.target.value.trim().toLowerCase(); document.querySelectorAll("#tp-list .tp-r").forEach((r) => (r.style.display = !q || r.dataset.q.includes(q) ? "" : "none")); });
   document.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id === "tamt") document.querySelector("[data-act=swap]")?.click(); });
   document.addEventListener("click", (e) => {
     const pb = e.target.closest("[data-pro]"); if (pb) { const on = !proOn(); try { localStorage.setItem("hf-pro", on ? "1" : "0"); } catch {} const t = document.querySelector(".term"); t?.classList.toggle("pro", on); pb.textContent = on ? "Simple" : "Pro"; pb.setAttribute("aria-pressed", on); setTimeout(() => chartOff?.update(), 50); return; }
+    if (e.target.closest("[data-toks]")) { const t = document.querySelector(".term"); t?.classList.toggle("toks"); if (t?.classList.contains("toks")) setTimeout(() => document.getElementById("tp-q")?.focus(), 40); return; }
+    if (document.querySelector(".term.toks") && !e.target.closest(".tp-box")) document.querySelector(".term")?.classList.remove("toks");
     if (e.target.closest("[data-info]")) { document.querySelector(".term")?.classList.toggle("info"); return; }
     if (document.querySelector(".term.info") && !e.target.closest(".ip-box") && !e.target.closest(".tx-info-b")) document.querySelector(".term")?.classList.remove("info");
     const cp = e.target.closest("[data-copy]"); if (cp) { navigator.clipboard?.writeText(cp.dataset.copy).then(() => toast("Address copied")).catch(() => toast("Could not copy", true)); return; }
@@ -716,6 +719,10 @@ function holderFlowHtml(p) {
   const nw = v.filter(([, r]) => r.first > now - 86400).length, all = v.filter(([, r]) => r.s >= r.b * 0.98).length, some = v.filter(([, r]) => r.s > 0 && r.s < r.b * 0.98).length;
   return `<div class="hf"><span><b>${nw}</b><small>new holders (24h)</small></span><span><b class="d">${all}</b><small>sold everything</small></span><span><b>${some}</b><small>sold some</small></span><span><b class="u">${v.length - all}</b><small>still holding</small></span></div>`;
 }
+function toksHtml(p) {
+  const it = mkItems().sort((x, y) => y.vol - x.vol);
+  return it.map((x) => `<a class="tp-r${x.id === p.id ? " on" : ""}" href="${x.href}" data-q="${esc((x.sym + " " + x.name).toLowerCase())}">${x.mark}<span><b>${esc(x.sym)}</b><small>${esc(x.name)}</small></span><em class="${x.chg >= 0 ? "u" : "d"}">${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(1)}%</em></a>`).join("");
+}
 function vTerminal(p) {
   if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
   const m = p.mk, x = stats24(p), up = x.chg >= 0, fav = favs().includes(p.id), alert = (() => { try { return localStorage.getItem(`hf-alert-${p.id}`) || ""; } catch { return ""; } })();
@@ -723,7 +730,7 @@ function vTerminal(p) {
     <a class="back" href="#/market">All markets</a>
     <header class="tx-top">
       <div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
-      <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-info-b" data-info>Info</button><button type="button" class="tx-pro-b" data-pro aria-pressed="${proOn()}">${proOn() ? "Simple" : "Pro"}</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
+      <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-toks-b" data-toks><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Tokens</button><button type="button" class="tx-info-b" data-info>Info</button><button type="button" class="tx-pro-b" data-pro aria-pressed="${proOn()}">${proOn() ? "Simple" : "Pro"}</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
       <div class="tx-px"><small class="tx-cl">Market cap</small><b id="tx-capbig">${capFmt(x.cap)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span><em class="tx-sub">Price <span id="tt-price">${fmtP(m.price)}</span></em></div>
       <div class="tx-chips" id="tx-chips">${chipsHtml(p)}</div>
       <dl class="tx-stats">
@@ -737,6 +744,7 @@ function vTerminal(p) {
       <h3>Creator</h3><div id="tx-creator">${creatorHtml(p)}</div>
       <h3>Contract</h3><div class="tx-ca"><button type="button" data-copy="${p.address}" title="Copy contract address"><span>${short(p.address)}</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button><a href="${CONFIG.explorer}/token/${p.address}" target="_blank" rel="noopener">Explorer</a><a href="${CONFIG.explorer}/address/${p.s.pool}" target="_blank" rel="noopener">Pool</a></div>
       <h3>Links</h3><div class="tx-safe">${linksHtml(p) || `<span class="sf">No links added</span>`}</div></div></div>
+    <div class="tx-toksp" id="tx-toksp"><div class="tp-box"><input id="tp-q" type="search" placeholder="Search token" autocomplete="off" aria-label="Search token"><div class="tp-list" id="tp-list">${toksHtml(p)}</div></div></div>
     <div class="tx-data" id="tx-data">${dataRowHtml(p)}</div>
     <div class="tx-trend" id="tx-trend">${trendHtml(p)}</div>
     

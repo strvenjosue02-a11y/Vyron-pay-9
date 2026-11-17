@@ -1,0 +1,26 @@
+name: Bot de devoluciones
+# Cada hora revisa los lanzamientos de web/launches.json y devuelve el dinero de las rondas expiradas.
+# Gratis (GitHub Actions). Necesita dos "secrets" que pones TÚ en GitHub (Settings > Secrets), nunca en un chat:
+#   BOT_KEY  = clave de una wallet pequeña que solo paga el gas (sin fondos importantes)
+#   RPC_URL  = (opcional) dirección RPC de la red
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  refunds:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: web
+      - run: node scripts/refund-bot.mjs
+        working-directory: web
+        env:
+          BOT_KEY: ${{ secrets.BOT_KEY }}
+          RPC_URL: ${{ secrets.RPC_URL }}

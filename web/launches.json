@@ -1,0 +1,4 @@
+{
+  "_nota": "Lista de lanzamientos que vigila el bot de devoluciones. Cada entrada: { \"address\": \"0x...\", \"fromBlock\": numero_de_bloque_del_despliegue }. Por ahora se llena a mano; luego la llenará la API al crear un lanzamiento.",
+  "launches": []
+}

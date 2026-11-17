@@ -14,12 +14,20 @@ const ago = (t) => { const s = Math.max(1, Math.round(now() - t)); return s < 60
 const hue = (s) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
 
 const me = { usdc: 500, dep: {}, tok: {} };
+const clock = (s) => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h ? `${h}h ${m}m` : `${m}m ${s % 60}s`; };
+const isExp = (l) => l.status === "open" && l.dl && now() > l.dl;
+const mineOf = (l) => (l.chain ? Number(l.cs?.mine ?? 0n) / 1e6 : me.dep[l.id] || 0);
+async function syncChain(l) {
+  if (!l.chain || !CTX) return;
+  const C = await import("./lcchain.js"), s = await C.readLaunch(CTX.pub, l.chain, CTX.account); l.cs = s; l.raised = Number(s.raised) / 1e6; l.dl = s.deadline; l.goal = Number(s.goal) / 1e6;
+  if (CTX.account) { const { erc20Abi } = await import("viem"); l.cbal = Number(await CTX.pub.readContract({ address: CTX.CONFIG.usdc, abi: erc20Abi, functionName: "balanceOf", args: [CTX.account] })) / 1e6; }
+}
 let CTX = null; // { CONFIG, pub, wallet, account } cuando hay wallet real conectada: entonces Lanzar despliega el contrato de verdad
 export const setLaunchChain = (c) => { CTX = c; };
 const L = [];
 let uid = 1;
 function mk(name, sym, goal, raised, img, live = false) {
-  const l = { id: "l" + uid++, name, sym, goal, raised: live ? goal : raised, img, status: live ? "live" : "open", last: now() - rnd(5, 600), creator: Math.round(rnd(0, 8)), comments: [], ticks: [], rU: 0, rT: 0, p0: goal / 1_000_000 };
+  const l = { dl: now() + 48 * 3600 - (live ? 0 : rnd(3600, 40 * 3600)), id: "l" + uid++, name, sym, goal, raised: live ? goal : raised, img, status: live ? "live" : "open", last: now() - rnd(5, 600), creator: Math.round(rnd(0, 8)), comments: [], ticks: [], rU: 0, rT: 0, p0: goal / 1_000_000 };
   l.comments = [["anon" + Math.floor(rnd(1000, 9999)), T("lfg", "vamos"), now() - rnd(60, 3000)], ["anon" + Math.floor(rnd(1000, 9999)), T("filling fast", "se está llenando"), now() - rnd(10, 500)]];
   if (live) goLive(l, true);
   L.push(l); return l;
@@ -72,7 +80,7 @@ function tick() {
   if (open.length) { const l = open[Math.floor(Math.random() * open.length)], add = Math.min(l.goal - l.raised, rnd(4, 30) * (l.goal / 500 + 0.4)); l.raised += add; l.last = now(); if (l.raised >= l.goal - 0.01) goLive(l); }
   const live = L.filter((l) => l.status === "live"); if (live.length) { const l = live[Math.floor(Math.random() * live.length)]; if (Math.random() < 0.55) trade(l, "buy", rnd(1, 9) * (l.goal / 500)); else trade(l, "sell", (l.rT * rnd(0.002, 0.012))); l.last = now(); }
   if (Math.random() < 0.06 && L.length < 14) { const n = ["Dog Wif Hat", "Taco Moon", "Pixel Ghost", "Sad Duck", "Neon Frog"][Math.floor(Math.random() * 5)] + " " + Math.floor(rnd(1, 99)); mk(n, n.replace(/[^A-Z]/gi, "").slice(0, 5).toUpperCase(), GOALS[Math.floor(Math.random() * 3)], 0, ""); }
-  if (cur === "list") view(); else if (cur) liveUpdate();
+  if (cur === "list") view(); else if (cur && cur !== "new") { const cl = L.find((x) => x.id === cur); if (cl?.chain) syncChain(cl).then(liveUpdate).catch(() => {}); else liveUpdate(); }
 }
 const art = (l, cls = "") => (l.img ? `<img class="${cls}" src="${esc(l.img)}" alt="">` : `<div class="lc-ph ${cls}" style="--h:${hue(l.name)}"><b>${esc(l.sym.slice(0, 2))}</b></div>`);
 const bar = (l) => `<div class="meter"><b style="width:${Math.min(100, (l.raised / l.goal) * 100)}%"></b></div>`;
@@ -85,13 +93,13 @@ function listHtml() {
   <div class="deck">${rows.map((l) => { const live = l.status === "live", ch = live && l.ticks.length ? (price(l) / l.p0 - 1) * 100 : 0;
     return `<a class="pcard" href="${live ? "#/trade/lc-" + l.id : "#/lc/" + l.id}"><div class="pc-img">${art(l)}<span class="pc-tick">${esc(l.sym)}</span>${live ? `<span class="lc-live">${T("LIVE", "EN VIVO")}</span>` : ""}</div>
       <div class="pc-body"><h3>${esc(l.name)}</h3>${live ? `<div class="lc-px"><b>${fmtP(price(l))}</b><em class="${ch >= 0 ? "u" : "d"}">${ch >= 0 ? "+" : ""}${ch.toFixed(0)}%</em></div>` : bar(l)}
-      <dl class="pc-stats"><div><dt>${live ? T("Pool", "Pool") : T("Raised", "Recaudado")}</dt><dd>$${usd(live ? l.rU : l.raised)}</dd></div><div><dt>${T("Goal", "Meta")}</dt><dd>$${usd(l.goal)}</dd></div><div><dt>${T("Activity", "Actividad")}</dt><dd>${ago(l.last)}</dd></div></dl></div></a>`; }).join("")}</div>`;
+      <dl class="pc-stats"><div><dt>${live ? T("Pool", "Pool") : T("Raised", "Recaudado")}</dt><dd>$${usd(live ? l.rU : l.raised)}</dd></div><div><dt>${T("Goal", "Meta")}</dt><dd>$${usd(l.goal)}</dd></div><div><dt>${live ? T("Activity", "Actividad") : T("Time left", "Tiempo")}</dt><dd>${live ? ago(l.last) : isExp(l) ? T("Expired", "Expiró") : clock(l.dl - now())}</dd></div></dl></div></a>`; }).join("")}</div>`;
 }
 function pageHtml(l) {
-  const live = l.status === "live", mine = me.dep[l.id] || 0, tk = me.tok[l.id] || 0, left = l.goal - l.raised;
+  const live = l.status === "live", mine = mineOf(l), tk = me.tok[l.id] || 0, left = l.goal - l.raised;
   return `<a class="back" href="#/lc">${T("All launches", "Todos los lanzamientos")}</a>
   <div class="lc-pg"><div class="lc-hero">${art(l)}<div class="lc-hero-t"><span class="pc-tick">${esc(l.sym)}</span><h1>${esc(l.name)}</h1></div></div>
-  <div class="lc-side" id="lc-side">${live ? liveHtml(l, tk) : openHtml(l, mine, left)}</div>
+  <div class="lc-side" id="lc-side">${l.chain && l.cs?.state === "live" ? liveChainHtml(l) : live ? liveHtml(l, tk) : openHtml(l, mine, left)}</div>
   <div class="lc-main">${live ? `<div class="tx-chart" id="lc-chart"></div>` : `<div class="lc-note">${T("Everyone gets the same price. The moment the goal is reached the round closes, all the money goes into a locked pool and trading opens.", "Todos reciben el mismo precio. En cuanto se llega a la meta, la ronda se cierra, todo el dinero pasa a un pool bloqueado y se abre el mercado.")}</div><div class="lc-lock"><span>${T("Chart and trading open when the round fills", "El gráfico y el trading se abren cuando se llene")}</span></div>`}
     ${l.creator ? `<p class="lc-dev">${T("Creator put in", "El creador metió")} <b>${l.creator}%</b> ${T("of the goal", "de la meta")}.</p>` : ""}
     <h3 class="lc-h">${T("Thread", "Hilo")}</h3><ul class="lc-cm" id="lc-cm">${cmHtml(l)}</ul>
@@ -99,11 +107,21 @@ function pageHtml(l) {
 }
 const cmHtml = (l) => l.comments.slice().sort((a, b) => b[2] - a[2]).map((c) => `<li><b>${esc(c[0])}</b><span>${esc(c[1])}</span><em>${ago(c[2])}</em></li>`).join("");
 function openHtml(l, mine, left) {
-  return `<div class="lc-big"><b>$${usd(l.raised)}</b><span>${T("of", "de")} $${usd(l.goal)}</span></div>${bar(l)}<p class="lc-left">${T("$" + usd(left) + " left to fill", "Faltan $" + usd(left) + " para llenarse")}</p>
-  <label class="lc-lab">${T("Put in (USDC)", "Meter (USDC)")}</label><div class="field-amt cy-field"><input id="lc-amt" type="number" inputmode="decimal" placeholder="0"><span class="u">USDC</span></div>
+  const bal = l.chain ? l.cbal ?? 0 : me.usdc, exp = isExp(l) || l.cs?.expired || l.cs?.state === "refund";
+  const clk = exp ? `<p class="lc-clock exp" id="lc-clock">${l.cs?.state === "refund" ? T("This round was cancelled. Take your money back.", "Esta ronda se canceló. Recupera tu dinero.") : T("This round expired without filling. Take your money back.", "Esta ronda expiró sin llenarse. Recupera tu dinero.")}</p>` : `<p class="lc-clock" id="lc-clock"><span>${T("Time left", "Tiempo restante")}</span><b>${clock(l.dl - now())}</b><small>${T("If it doesn't fill in time, everyone gets their money back.", "Si no se llena a tiempo, todos recuperan su dinero.")}</small></p>`;
+  const addr = l.chain ? `<p class="lc-addr"><button type="button" data-copy="${l.chain}">${l.chain.slice(0, 6)}…${l.chain.slice(-4)}</button><span>${T("token address (it exists from now on)", "dirección del token (existe desde ya)")}</span></p>` : "";
+  return `<div class="lc-big"><b>$${usd(l.raised)}</b><span>${T("of", "de")} $${usd(l.goal)}</span></div>${bar(l)}<p class="lc-left">${exp ? "" : T("$" + usd(left) + " left to fill", "Faltan $" + usd(left) + " para llenarse")}</p>${clk}
+  ${exp ? "" : `<label class="lc-lab">${T("Put in (USDC)", "Meter (USDC)")}</label><div class="field-amt cy-field"><input id="lc-amt" type="number" inputmode="decimal" placeholder="0"><span class="u">USDC</span></div>
   <div class="tx-q tx-amts">${[5, 10, 25, 50, 100].map((v) => `<button type="button" data-lcq="${v}">$${v}</button>`).join("")}<button type="button" data-lcq="max">Max</button></div>
-  <p class="lc-prev" id="lc-prev"></p><button class="btn btn-ember btn-block" id="lc-in">${T("Put in", "Meter")}</button><p class="lc-bal">${T("Balance", "Saldo")} $${usd(me.usdc)}</p>
-  ${mine > 0 ? `<div class="lc-mine"><span>${T("You put in", "Pusiste")} <b>$${usd(mine)}</b></span><button class="btn btn-line btn-sm" id="lc-out">${T("Take my money out", "Sacar mi dinero")}</button></div>` : ""}`;
+  <p class="lc-prev" id="lc-prev"></p><button class="btn btn-ember btn-block" id="lc-in">${T("Put in", "Meter")}</button>`}<p class="lc-bal">${T("Balance", "Saldo")} $${usd(bal)}</p>${addr}
+  ${mine > 0 ? `<div class="lc-mine"><span>${T("You put in", "Pusiste")} <b>$${usd(mine)}</b></span><button class="btn btn-line btn-sm" id="${exp ? "lc-rec" : "lc-out"}">${exp ? T("Recover my money", "Recuperar mi dinero") : T("Take my money out", "Sacar mi dinero")}</button></div>` : ""}`;
+}
+function liveChainHtml(l) {
+  const s = l.cs, mine = mineOf(l), C = CTX?.CONFIG;
+  return `<div class="lc-big"><b>${T("Market open", "Mercado abierto")}</b></div><p class="lc-left">${T("The round filled. The pool is locked forever.", "La ronda se llenó. El pool queda bloqueado para siempre.")}</p>
+  <p class="lc-addr"><button type="button" data-copy="${l.chain}">${l.chain.slice(0, 6)}…${l.chain.slice(-4)}</button><span>${T("token", "token")}</span></p>
+  ${C ? `<a class="btn btn-line btn-block" href="${C.explorer}/address/${s.pool}" target="_blank" rel="noopener">${T("See the pool", "Ver el pool")}</a>` : ""}
+  ${mine > 0 ? `<button class="btn btn-ember btn-block" id="lc-claim" style="margin-top:12px">${T("Claim my tokens", "Reclamar mis tokens")}</button>` : `<p class="lc-bal">${T("Nothing left to claim.", "No tienes tokens por reclamar.")}</p>`}`;
 }
 function liveHtml(l, tk) {
   const ch = (price(l) / l.p0 - 1) * 100;
@@ -128,7 +146,7 @@ function view() {
   const h = location.hash; cur = "";
   if (h === "#/lc/new") { cur = "new"; root.innerHTML = newHtml(); bindNew(); return; }
   const m = h.match(/^#\/lc\/(l\d+)/);
-  if (m) { const l = L.find((x) => x.id === m[1]); if (!l) { location.hash = "#/lc"; return; } if (l.status === "live") { location.hash = "#/trade/lc-" + l.id; return; } cur = l.id; root.innerHTML = pageHtml(l); bindPage(l); return; }
+  if (m) { const l = L.find((x) => x.id === m[1]); if (!l) { location.hash = "#/lc"; return; } if (l.status === "live") { location.hash = "#/trade/lc-" + l.id; return; } cur = l.id; root.innerHTML = pageHtml(l); bindPage(l); if (l.chain) syncChain(l).then(() => { if (cur === l.id) { root.innerHTML = pageHtml(l); bindPage(l); } }).catch(() => {}); return; }
   cur = "list"; const sy = scrollY; root.innerHTML = listHtml(); scrollTo(0, sy);
   root.querySelectorAll("[data-lcf]").forEach((b) => (b.onclick = () => { window.__lcf = b.dataset.lcf; view(); }));
   const sq = root.querySelector("#lc-q"); if (sq) sq.oninput = () => { window.__lcq = sq.value; const pos = sq.selectionStart; view(); const n = root.querySelector("#lc-q"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } };
@@ -137,7 +155,8 @@ function liveUpdate() {
   const l = L.find((x) => x.id === cur); if (!l) return; const side = document.getElementById("lc-side"); if (!side) return;
   const a = document.getElementById("lc-amt")?.value;
   if (l.status === "live" && !document.getElementById("lc-buy")) { view(); return; }
-  if (l.status === "open") { side.innerHTML = openHtml(l, me.dep[l.id] || 0, l.goal - l.raised); bindSide(l); if (a) document.getElementById("lc-amt").value = a; }
+  if (l.chain && l.cs?.state === "live") { if (!document.getElementById("lc-claim") && mineOf(l) > 0 || !side.querySelector(".lc-big")) { side.innerHTML = liveChainHtml(l); bindSide(l); } else if (mineOf(l) === 0 && document.getElementById("lc-claim")) { side.innerHTML = liveChainHtml(l); bindSide(l); } }
+  else if (l.status === "open") { side.innerHTML = openHtml(l, mineOf(l), l.goal - l.raised); bindSide(l); if (a) document.getElementById("lc-amt").value = a; }
   else { const pl = side.querySelector(".lc-big"); if (pl) { const ch = (price(l) / l.p0 - 1) * 100; pl.innerHTML = `<b>${fmtP(price(l))}</b><span class="${ch >= 0 ? "u" : "d"}">${ch >= 0 ? "+" : ""}${ch.toFixed(1)}%</span>`; } chart?.update(); }
   document.getElementById("lc-cm") && (document.getElementById("lc-cm").innerHTML = cmHtml(l));
 }
@@ -146,11 +165,22 @@ function bindSide(l) {
   const prev = () => { const el = document.getElementById("lc-prev"); if (!el) return; const v = parseFloat(amt()?.value) || 0;
     el.innerHTML = v ? T(`With $${usd(v)} you get <b>${usd(v / l.p0)} ${esc(l.sym)}</b> at ${fmtP(l.p0)} each`, `Con $${usd(v)} recibes <b>${usd(v / l.p0)} ${esc(l.sym)}</b> a ${fmtP(l.p0)} cada uno`) : T(`Launch price ${fmtP(l.p0)} · same for everyone`, `Precio de salida ${fmtP(l.p0)} · igual para todos`); };
   if (amt()) amt().oninput = prev; prev();
+  if (l.chain && CTX && CTX.wallet) return bindChain(l);
   root.querySelectorAll("[data-lcq]").forEach((b) => (b.onclick = () => { amt().value = b.dataset.lcq === "max" ? Math.floor(me.usdc) : b.dataset.lcq; prev(); }));
   q("lc-in", () => { const v = Math.min(parseFloat(amt().value) || 0, me.usdc, l.goal - l.raised); if (v <= 0) return; me.usdc -= v; me.dep[l.id] = (me.dep[l.id] || 0) + v; l.raised += v; l.last = now(); if (l.raised >= l.goal - 0.01) { me.tok[l.id] = me.dep[l.id] / l.p0; goLive(l); for (const o of L) if (o.status === "live" && o !== l) {} } view(); });
   q("lc-out", () => { const v = me.dep[l.id] || 0; me.usdc += v; l.raised -= v; me.dep[l.id] = 0; view(); });
   q("lc-buy", () => { const v = Math.min(parseFloat(amt().value) || 0, me.usdc); if (v <= 0) return; me.usdc -= v; me.tok[l.id] = (me.tok[l.id] || 0) + trade(l, "buy", v); l.last = now(); view(); });
   q("lc-sell", () => { const t = me.tok[l.id] || 0; if (t <= 0) return; me.usdc += trade(l, "sell", t); me.tok[l.id] = 0; l.last = now(); view(); });
+}
+function bindChain(l) {
+  const amt = () => document.getElementById("lc-amt"), q = (id, f) => { const e = document.getElementById(id); if (e) e.onclick = f; };
+  root.querySelectorAll("[data-lcq]").forEach((b) => (b.onclick = () => { amt().value = b.dataset.lcq === "max" ? Math.floor(l.cbal || 0) : b.dataset.lcq; }));
+  const run = async (fn, btn) => { try { if (btn) btn.disabled = true; const C = await import("./lcchain.js"); await fn(C); await syncChain(l); } catch (e) { alert(e.shortMessage || e.message); } if (cur === l.id) { root.innerHTML = pageHtml(l); bindPage(l); } };
+  q("lc-in", (e) => run((C) => { const v = Math.min(parseFloat(amt().value) || 0, l.cbal || 0, l.goal - l.raised); if (v <= 0) throw new Error(T("Enter an amount.", "Escribe un monto.")); return C.deposit(CTX.CONFIG, CTX.pub, CTX.wallet, CTX.account, l.chain, v); }, e.target));
+  q("lc-out", (e) => run((C) => C.withdraw(CTX.pub, CTX.wallet, CTX.account, l.chain), e.target));
+  q("lc-rec", (e) => run((C) => C.withdraw(CTX.pub, CTX.wallet, CTX.account, l.chain), e.target));
+  q("lc-claim", (e) => run((C) => C.claim(CTX.pub, CTX.wallet, CTX.account, l.chain), e.target));
+  root.querySelectorAll("[data-copy]").forEach((b) => (b.onclick = () => navigator.clipboard?.writeText(b.dataset.copy)));
 }
 function bindPage(l) {
   bindSide(l);
@@ -168,7 +198,7 @@ function bindNew() {
     if (CTX && CTX.wallet && CTX.account) { const btn = f.querySelector('button[type="submit"]'); btn.disabled = true; btn.textContent = T("Creating on the network…", "Creando en la red…");
       import("./lcchain.js").then(async (C) => { const p = C.launchParams(CTX.CONFIG, { name, symbol: sym, creator: CTX.account, goal, creatorPct: pct, vestingWeeks: wks }), addr = await C.ensureDeployed(CTX.CONFIG, CTX.pub, CTX.wallet, CTX.account, p);
         if (first > 0) await C.deposit(CTX.CONFIG, CTX.pub, CTX.wallet, CTX.account, addr, Math.min(first, goal));
-        const l = mk(name, sym, goal, Math.min(first, goal), img); l.chain = addr; l.creator = Math.round((first / goal) * 100); location.hash = "#/lc/" + l.id; }).catch((e) => { btn.disabled = false; btn.textContent = T("Launch", "Lanzar"); alert(e.shortMessage || e.message); });
+        const l = mk(name, sym, goal, Math.min(first, goal), img); l.chain = addr; l.dl = now() + 48 * 3600; l.creator = Math.round((first / goal) * 100); location.hash = "#/lc/" + l.id; }).catch((e) => { btn.disabled = false; btn.textContent = T("Launch", "Lanzar"); alert(e.shortMessage || e.message); });
       return; }
     const l = mk(name, sym, goal, Math.min(first, goal), img); l.creator = Math.round((first / goal) * 100); me.usdc -= 1; l.last = now(); location.hash = "#/lc/" + l.id; };
 }
