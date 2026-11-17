@@ -9,7 +9,7 @@ import { initI18n } from "./i18n.js";
 import { mountCoin } from "./coin3d.js";
 import { mountChart } from "./pro.js";
 import { createDemo } from "./demo.js";
-import { showLaunches, launchRows, stopLaunches } from "./launch.js";
+import { showLaunches, launchRows, launchItems, stopLaunches } from "./launch.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, msgProfile, validProfile, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
@@ -649,24 +649,34 @@ function vTerminal(p) {
     </div>
   <div class="tx-bar"><button type="button" class="b" data-sheet="buy">Buy</button><button type="button" class="s" data-sheet="sell">Sell</button></div><div class="tx-sheet-bg" data-sheet-x></div></section>`;
 }
+function mkItems() {
+  const q = (S.mkQ || "").toLowerCase(), ch = (p) => (p.trades ? stats24(p).chg : ((p.mk.price - p.mk.round) / p.mk.round) * 100);
+  const own = S.list.filter((p) => p.mk && (!q || p.q.name.toLowerCase().includes(q) || p.q.symbol.toLowerCase().includes(q))).map((p) => ({ id: p.id, href: `#/trade/${p.id}`, sym: p.q.symbol, name: p.q.name, mark: mark(p), price: p.mk.price, chg: ch(p), cap: stats24(p).cap, liq: Number(p.mk.poolUsdc) / 1e6, vol: Number(vol24(p)) / 1e6, spark: spark(p), isNew: false, idx: S.list.indexOf(p) }));
+  return [...own, ...launchItems(S.mkQ || "")];
+}
 function vMarket() {
-  const q = (S.mkQ || "").toLowerCase(), sort = S.mkSort || "volume", fv = favs();
-  let live = S.list.filter((p) => p.mk && (!q || p.q.name.toLowerCase().includes(q) || p.q.symbol.toLowerCase().includes(q)));
-  const ch = (p) => (p.trades ? stats24(p).chg : ((p.mk.price - p.mk.round) / p.mk.round) * 100);
-  if (sort === "favorites") live = live.filter((p) => fv.includes(p.id));
-  live.sort((x, y) => sort === "gainers" ? ch(y) - ch(x) : sort === "losers" ? ch(x) - ch(y) : sort === "new" ? S.list.indexOf(y) - S.list.indexOf(x) : Number(vol24(y) - vol24(x)));
+  const sort = S.mkSort || "volume", fv = favs(), F = S.mkF || {}, col = S.mkCol, dir = S.mkDir || -1;
+  let it = mkItems();
+  if (sort === "favorites") it = it.filter((x) => fv.includes(x.id));
+  if (F.new) it = it.filter((x) => x.isNew); if (F.liq) it = it.filter((x) => x.liq >= 1000); if (F.up) it = it.filter((x) => x.chg > 0);
+  const by = col ? (x, y) => dir * ((x[col] ?? 0) - (y[col] ?? 0)) : sort === "gainers" ? (x, y) => y.chg - x.chg : sort === "losers" ? (x, y) => x.chg - y.chg : sort === "new" ? (x, y) => y.idx - x.idx : (x, y) => y.vol - x.vol;
+  it.sort(by);
+  const H = (k, t) => `<button type="button" data-mkcol="${k}" class="${col === k ? "on" : ""}">${t}${col === k ? (dir < 0 ? " ↓" : " ↑") : ""}</button>`, usdS = (v) => !v ? "–" : "$" + (v >= 1e6 ? (v / 1e6).toFixed(2) + "M" : v >= 1e3 ? (v / 1e3).toFixed(1) + "K" : v.toFixed(0));
   return `<div class="page-h mk-h"><h1>Market</h1><p>Every Holdfast token with an open Uniswap pool. Anyone can buy with USDC; liquidity is locked for 12 months.</p></div>
-  <div class="cat-bar"><div class="cat-tabs">${[["volume", "Top volume"], ["gainers", "Gainers"], ["losers", "Losers"], ["new", "New"], ["favorites", "★ Favorites"]].map(([k, t]) => `<button type="button" data-mks="${k}" aria-selected="${sort === k}">${t}</button>`).join("")}</div>
+  <div class="cat-bar"><div class="cat-tabs">${[["volume", "Top volume"], ["gainers", "Gainers"], ["losers", "Losers"], ["new", "New"], ["favorites", "★ Favorites"]].map(([k, t]) => `<button type="button" data-mks="${k}" aria-selected="${sort === k && !col}">${t}</button>`).join("")}</div>
     <label class="cat-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="mk-q" type="search" placeholder="Search name or token" value="${esc(S.mkQ || "")}" aria-label="Search markets"></label></div>
-  ${live.length || launchRows(S.mkQ || "") ? `<div class="mk-list"><div class="mk-row mk-head"><span>Token</span><span>Price</span><span>24h</span><span>Liquidity</span><span>24h volume</span><span></span></div>
-    ${live.map((p) => { const c = ch(p), up = c >= 0; return `<a class="mk-row" href="#/trade/${p.id}" data-testid="mk-${p.id}">
-      <span class="mk-tok">${mark(p)}<span><b>${esc(p.q.symbol)}${fv.includes(p.id) ? ' <i class="mk-star">★</i>' : ""}</b><small>${esc(p.q.name)}</small></span></span>
-      <span class="mk-p">${fmtP(p.mk.price)}</span><span class="${up ? "u" : "d"}">${up ? "+" : ""}${c.toFixed(2)}%</span>
-      <span>$${usd(p.mk.poolUsdc)}</span><span>$${usd(vol24(p))}</span><span>${spark(p)}</span></a>`; }).join("")}${sort === "favorites" ? "" : launchRows(S.mkQ || "")}</div>`
-    : `<div class="list"><div class="empty">${sort === "favorites" ? "Tap ★ on a token to follow it." : "No token has a market yet. Markets open when a raise closes successfully."}</div></div>`}`;
+  <div class="mk-filters"><span>Filter</span>${[["new", "New launches"], ["liq", "Liquidity over $1K"], ["up", "Going up"]].map(([k, t]) => `<button type="button" data-mkf="${k}" aria-pressed="${!!F[k]}">${t}</button>`).join("")}<em>${it.length} tokens</em></div>
+  ${it.length ? `<div class="mk-list"><div class="mk-row mk-head"><span>Token</span>${H("price", "Price")}${H("chg", "24h")}${H("cap", "Market cap")}${H("liq", "Liquidity")}${H("vol", "24h volume")}<span></span></div>
+    ${it.map((x) => `<a class="mk-row" href="${x.href}"><span class="mk-tok">${x.mark}<span><b>${esc(x.sym)}${x.isNew ? ' <i class="mk-new">NEW</i>' : ""}<button type="button" class="mk-fv${fv.includes(x.id) ? " on" : ""}" data-mkfav="${esc(x.id)}" aria-label="Favorite">★</button></b><small>${esc(x.name)}</small></span></span>
+      <span class="mk-p">${fmtP(x.price)}</span><span class="${x.chg >= 0 ? "u" : "d"}">${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(2)}%</span><span>${usdS(x.cap)}</span><span>${usdS(x.liq)}</span><span>${usdS(x.vol)}</span><span>${x.spark || ""}</span></a>`).join("")}</div>`
+    : `<div class="list"><div class="empty">${sort === "favorites" ? "Tap ★ on a token to follow it." : "No token matches. Try removing a filter."}</div></div>`}`;
 }
 function bindMarket() {
-  document.querySelectorAll("[data-mks]").forEach((b) => (b.onclick = () => { S.mkSort = b.dataset.mks; $("#app").innerHTML = vMarket(); bindMarket(); }));
+  const rr = () => { $("#app").innerHTML = vMarket(); bindMarket(); };
+  document.querySelectorAll("[data-mkcol]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); const k = b.dataset.mkcol; if (S.mkCol === k) { if ((S.mkDir || -1) < 0) S.mkDir = 1; else { S.mkCol = null; S.mkDir = -1; } } else { S.mkCol = k; S.mkDir = -1; } rr(); }));
+  document.querySelectorAll("[data-mkf]").forEach((b) => (b.onclick = () => { S.mkF = { ...(S.mkF || {}), [b.dataset.mkf]: !(S.mkF || {})[b.dataset.mkf] }; rr(); }));
+  document.querySelectorAll("[data-mkfav]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); e.stopPropagation(); const id = b.dataset.mkfav, f = favs(), n = f.includes(id) ? f.filter((x) => x !== id) : [...f, id]; try { localStorage.setItem("hf-fav", JSON.stringify(n)); } catch {} rr(); }));
+  document.querySelectorAll("[data-mks]").forEach((b) => (b.onclick = () => { S.mkSort = b.dataset.mks; S.mkCol = null; $("#app").innerHTML = vMarket(); bindMarket(); }));
   const i = $("#mk-q"); if (i) i.oninput = () => { S.mkQ = i.value; const pos = i.selectionStart; $("#app").innerHTML = vMarket(); bindMarket(); const n = $("#mk-q"); n.focus(); n.setSelectionRange(pos, pos); };
 }
 let coinOff = null;

@@ -156,6 +156,13 @@ export function showLaunches(el) {
   if (!window.__lcLang) { window.__lcLang = 1; document.addEventListener("click", (e) => { if (e.target.closest("[data-lang]") && location.hash.startsWith("#/lc")) setTimeout(view, 80); }); }
   view();
 }
+export function launchItems(q = "") {
+  q = q.trim().toLowerCase(); const t0 = now() - 86400;
+  const sp = (l) => { const pts = [l.p0, ...l.ticks.map((x) => x.p)]; if (pts.length < 2) return ""; const lo = Math.min(...pts), hi = Math.max(...pts), W = 120, H = 36, d = pts.map((v, i) => `${i ? "L" : "M"}${((i / (pts.length - 1)) * W).toFixed(1)} ${(H - ((v - lo) / (hi - lo || 1)) * H).toFixed(1)}`).join(" "), up = pts[pts.length - 1] >= pts[0];
+    return `<svg class="spark" viewBox="-2 -4 ${W + 6} ${H + 8}" aria-hidden="true"><path class="${up ? "lsu" : "lsd"}" d="${d}" fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`; };
+  return L.filter((l) => l.status === "live" && (!q || l.name.toLowerCase().includes(q) || l.sym.toLowerCase().includes(q))).map((l) => { const pr = price(l), chg = l.ticks.length ? (pr / l.p0 - 1) * 100 : 0;
+    return { id: l.id, href: `#/lc/${l.id}`, sym: l.sym, name: l.name, mark: `<span class="mk-mark">${art(l)}</span>`, price: pr, chg, cap: pr * (l.goal / l.p0), liq: l.rU, vol: l.ticks.filter((x) => x.t > t0).reduce((a, x) => a + x.v, 0), spark: sp(l), isNew: true, idx: 1e6 + (l.liveAt || 0) }; });
+}
 export function launchRows(q = "") {
   q = q.trim().toLowerCase();
   return L.filter((l) => l.status === "live" && (!q || l.name.toLowerCase().includes(q) || l.sym.toLowerCase().includes(q))).sort((a, b) => b.last - a.last).map((l) => { const ch = l.ticks.length ? (price(l) / l.p0 - 1) * 100 : 0, up = ch >= 0;
