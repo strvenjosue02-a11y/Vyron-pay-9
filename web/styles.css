@@ -2423,3 +2423,24 @@ body { font-feature-settings: "ss01" 1, "tnum" 1; -webkit-font-smoothing: antial
   .term.tx .cp-tools button { flex: none !important; white-space: nowrap; }
 }
 @media (max-width: 900px) { .term.tx .cp-tools button { height: 30px !important; border-radius: 999px !important; padding: 0 12px !important; line-height: 1 !important; display: inline-flex !important; align-items: center; } }
+
+/* ===== COMUNIDAD tipo X: cabecera compacta de perfil, la conversación se ve de una vez ===== */
+.xc .cc-hero.xc-hero { min-height: 0 !important; text-align: left !important; padding: 0 0 14px !important; overflow: visible; }
+.xc .xc-banner { position: relative; height: 128px; margin: 0 -16px; overflow: hidden; } .xc .xc-banner .cc-bg { inset: -30%; transform: translateY(calc(var(--sy, 0) * .15px)) scale(1.05); }
+.xc .xc-banner .cc-bk, .xc .xc-banner .cc-sh { top: 12px; }
+.xc .cc-hero > :not(.cc-bg):not(.cc-fog) { transform: none; }
+.xc-top { display: flex; align-items: flex-end; justify-content: space-between; margin-top: -42px; position: relative; z-index: 2; }
+.xc .cc-logo.xc-av { width: 88px; height: 88px; box-shadow: 0 0 0 4px #050505, 0 0 0 5.5px rgba(255,255,255,.45); animation: ccpop .8s .1s cubic-bezier(.2,1.3,.3,1) both; }
+.xc-btns { display: flex; align-items: center; gap: 8px; padding-bottom: 6px; }
+.xc-ic { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 0; color: #fff; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.3); cursor: pointer; text-decoration: none; } .xc-ic.on { background: #f2f2ee; color: #050505; box-shadow: none; }
+.xc .cc-join.xc-follow { flex: none; height: 40px; padding: 0 20px; font-size: 15px; box-shadow: none; } .xc .cc-join.xc-follow.on { background: transparent; color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.45); }
+.xc .cc-name { margin: 14px 0 0; font-size: clamp(28px, 8.4vw, 38px); text-align: left; letter-spacing: -.04em; }
+.xc-h { margin-top: 4px; color: var(--ink-3); font: 500 15px var(--font); }
+.xc .cc-tag { margin: 12px 0 0; max-width: none; text-align: left; color: rgba(242,242,238,.85); font-size: 16px; line-height: 1.45; animation: ccfade .7s .5s both; }
+.xc-st { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 14px 0 0; color: var(--ink-3); font-size: 14.5px; animation: ccfade .7s .6s both; } .xc-st b { color: #fff; font-weight: 700; font-family: var(--mono); letter-spacing: -.03em; display: inline-flex; align-items: center; } .xc-eq .cc-eq { margin-right: 5px; height: 12px; } .xc-eq .cc-eq i { width: 2.5px; background: #f2f2ee; } @keyframes cceq { 0%, 100% { height: 3px; } 50% { height: 12px; } }
+.xc-by { display: flex; align-items: center; gap: 10px; margin-top: 12px; color: var(--ink-3); font-size: 13.5px; animation: ccfade .7s .7s both; } .xc-by b { color: var(--ink-2); font-weight: 600; } .xc-by .cc-stk .ava { width: 24px; height: 24px; margin-left: -8px; } .xc-by .cc-stk .ava:first-child { margin-left: 0; }
+.xc-px { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 12px 16px; border-radius: 16px; text-decoration: none; color: #fff; background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); animation: ccfade .7s .8s both; } .xc-px b { font: 700 17px var(--mono); letter-spacing: -.05em; } .xc-px em { font: 700 13px var(--mono); font-style: normal; } .xc-px em.u { color: var(--up); } .xc-px em.d { color: var(--dn); } .xc-px span { margin-left: auto; color: var(--ink-2); font-weight: 600; font-size: 14.5px; }
+.xc-tabs { position: sticky; top: 61px; z-index: 15; background: rgba(5,5,5,.92); backdrop-filter: blur(14px); margin-top: 6px !important; }
+.xc-pin { display: flex; gap: 10px; align-items: flex-start; padding: 14px 2px 4px; color: var(--ink-3); font-size: 14px; line-height: 1.45; } .xc-pin svg { flex: none; margin-top: 3px; } .xc-pin b { color: var(--ink-2); }
+.xc .cc-b { padding-top: 6px; }
+.xc .cc-hero.xc-hero { padding: 0 16px 14px !important; } .xc .xc-banner { margin: 0 -16px !important; } .xc .xc-px { margin-left: 0; }

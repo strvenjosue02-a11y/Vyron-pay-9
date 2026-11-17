@@ -1843,26 +1843,28 @@ function activeNow(p) {
 }
 const ccBody = (p) => {
   const t = S.ccTab || "posts";
-  if (t === "posts") return threadHtml("tok-" + p.id, xCtx(p));
+  if (t === "posts") return `<div class="xc-pin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M9 3h6l-1 7 3 3H7l3-3z"/></svg><span><b>${T2("Pinned", "Fijado")}</b> ${T2("Be respectful, no spam and never share your keys. Holdfast will never message you first.", "Respeto, cero spam y nunca compartas tus llaves. Holdfast nunca te escribe primero.")}</span></div>` + threadHtml("tok-" + p.id, xCtx(p));
   if (t === "members") { const old = S.ttab; S.ttab = "holders"; let h = ""; try { h = termTab(p); } finally { S.ttab = old; } return h; }
   const c = p.q.creator ? uname(p.q.creator) : "–", f0 = (p.trades || []).find((q) => q.ts), age = f0 ? agoS((S.now || Date.now() / 1000) - f0.ts) : "–";
   return `<div class="cc-ab"><div><small>${T2("Creator", "Creador")}</small><b>${esc(c)}</b></div><div><small>${T2("Contract", "Contrato")}</small><b>${short(p.address || p.q.creator)}</b></div><div><small>${T2("Liquidity", "Liquidez")}</small><b>${T2("Locked forever", "Bloqueada para siempre")}</b></div><div><small>${T2("Market open", "Mercado abierto")}</small><b>${T2("", "hace ")}${age}${T2(" ago", "")}</b></div></div>`;
 };
 function communityHtml(p) {
-  const src = logoSrc(p) || p.meta?.cover || "", sym = p.q.symbol, hn = holdN(p), me = joined(p.id), x = stats24(p), up = x.chg >= 0, pv = threadPreview("tok-" + p.id), t = S.ccTab || "posts";
-  const tag = (p.meta?.tagline && String(p.meta.tagline).slice(0, 90)) || T2(`The community of ${sym}`, `La comunidad de ${sym}`);
-  const faces = traderBoard(p, "all").slice(0, 5).map((r) => r.a), members = (hn ?? faces.length) + (me ? 1 : 0);
+  const src = logoSrc(p) || p.meta?.cover || "", sym = p.q.symbol, hn = holdN(p), fol = joined(p.id), x = stats24(p), up = x.chg >= 0, pv = threadPreview("tok-" + p.id), t = S.ccTab || "posts";
+  const tag = (p.meta?.tagline && String(p.meta.tagline).slice(0, 110)) || T2(`The community of ${sym}. Talk, share and follow the best traders.`, `La comunidad de ${sym}. Conversa, comparte y sigue a los mejores traders.`);
+  const faces = traderBoard(p, "all").slice(0, 3), by = p.q.creator ? uname(p.q.creator) : "";
   const lg = logoSrc(p) ? `<img src="${esc(logoSrc(p))}" alt="">` : mark(p, "lg");
-  const name = esc(p.q.name).split("").map((c, i) => `<span style="--i:${i}">${c === " " ? "&nbsp;" : c}</span>`).join("");
-  return `<section class="cc" data-cc="${p.id}"><div class="cc-hero" id="cc-hero"><i class="cc-bg${src ? "" : " g"}" style="${src ? `background-image:url('${esc(src)}')` : `--c:${esc(p.meta?.color || "#2a2a30")}`}"></i><i class="cc-fog"></i>
-    <a class="cc-bk" href="#/" aria-label="Back">‹</a><button type="button" class="cc-sh" data-ccsh aria-label="Share"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>
-    <div class="cc-med"><i class="cc-glow"></i><i class="cc-ring"></i><i class="cc-ring r2"></i><span class="cc-logo">${lg}</span></div>
-    <h1 class="cc-name">${name}</h1><p class="cc-tag">${esc(tag)}</p>
-    <div class="cc-st"><div><b id="cc-m">${kfmt(members)}</b><small>${T2("members", "miembros")}</small></div><div><b><span class="cc-eq"><i></i><i></i><i></i><i></i></span><span id="cc-a">${activeNow(p)}</span></b><small>${T2("active now", "activos ahora")}</small></div><div><b id="cc-p">${pv ? pv.c : 0}</b><small>${T2("posts", "publicaciones")}</small></div></div>
-    ${faces.length ? `<div class="cc-fc"><span class="cc-stk">${faces.map((a2) => avatar(a2, 30)).join("")}</span><small>${T2("Join the people already here", "Súmate a quienes ya están aquí")}</small></div>` : ""}
-    <div class="cc-ac"><button type="button" class="cc-join${me ? " on" : ""}" data-ccj>${me ? T2("Joined", "Unido") : T2("Join", "Unirme")}</button><a class="cc-px" href="#/trade/${p.id}"><small>Trade</small><span><b id="cc-px">${fmtP(p.mk.price)}</b><em id="cc-ch" class="${up ? "u" : "d"}">${up ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%</em></span></a></div></div>
-    <div class="cc-pin"><span class="cc-pn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M9 3h6l-1 7 3 3H7l3-3z"/></svg>${T2("Community rules", "Reglas de la comunidad")}</span><p>${T2("Be respectful, no spam and never share your keys. Holdfast will never message you first.", "Respeto, cero spam y nunca compartas tus llaves. Holdfast nunca te escribe primero.")}</p></div>
-    <div class="cc-tabs" role="tablist">${[["posts", T2("Posts", "Publicaciones")], ["members", T2("Members", "Miembros")], ["about", T2("About", "Acerca")]].map(([k, n2]) => `<button type="button" data-cct="${k}" aria-selected="${t === k}">${n2}</button>`).join("")}</div>
+  const name = esc(p.q.name).split("").map((c, i2) => `<span style="--i:${i2}">${c === " " ? "&nbsp;" : c}</span>`).join("");
+  const bell = (() => { try { return localStorage.getItem("hf-bell-" + p.id) === "1"; } catch { return false; } })();
+  const ic = (d) => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  return `<section class="cc xc" data-cc="${p.id}"><div class="cc-hero xc-hero" id="cc-hero">
+    <div class="xc-banner"><i class="cc-bg${src ? "" : " g"}" style="${src ? `background-image:url('${esc(src)}')` : `--c:${esc(p.meta?.color || "#2a2a30")}`}"></i><i class="cc-fog"></i>
+      <a class="cc-bk" href="#/" aria-label="Back">‹</a><button type="button" class="cc-sh" data-ccsh aria-label="Share">${ic('<path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>')}</button></div>
+    <div class="xc-top"><span class="cc-logo xc-av">${lg}</span><div class="xc-btns"><a class="xc-ic" href="#/trade/${p.id}" aria-label="Trade">${ic('<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>')}</a><button type="button" class="xc-ic${bell ? " on" : ""}" data-ccbell aria-label="${T2("Notify me", "Avísame")}">${ic('<path d="M6 9a6 6 0 1 1 12 0c0 6 2 7.5 2 7.5H4S6 15 6 9zM10 20a2 2 0 0 0 4 0"/>')}</button><button type="button" class="cc-join xc-follow${fol ? " on" : ""}" data-ccj>${fol ? T2("Following", "Siguiendo") : T2("Follow", "Seguir")}</button></div></div>
+    <h1 class="cc-name">${name}</h1><div class="xc-h">$${esc(sym)}${by ? ` · ${T2("by", "por")} ${esc(by)}` : ""}</div><p class="cc-tag">${esc(tag)}</p>
+    <div class="xc-st"><span><b id="cc-m">${kfmt(hn ?? 0)}</b> holders</span><span><b class="xc-eq"><span class="cc-eq"><i></i><i></i><i></i><i></i></span><span id="cc-a">${activeNow(p)}</span></b> ${T2("active now", "activos ahora")}</span><span><b id="cc-p">${pv ? pv.c : 0}</b> ${T2("posts", "publicaciones")}</span></div>
+    ${faces.length ? `<div class="xc-by"><span class="cc-stk">${faces.map((r) => avatar(r.a, 24)).join("")}</span><small>${T2("Top traders here:", "Mejores traders aquí:")} <b>${faces.map((r) => esc(uname(r.a))).join(", ")}</b></small></div>` : ""}
+    <a class="xc-px" href="#/trade/${p.id}"><b id="cc-px">${fmtP(p.mk.price)}</b><em id="cc-ch" class="${up ? "u" : "d"}">${up ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%</em><span>${T2("Trade it", "Operar")} ›</span></a></div>
+    <div class="cc-tabs xc-tabs" role="tablist">${[["posts", T2("Posts", "Publicaciones")], ["members", "Holders"], ["about", T2("About", "Acerca")]].map(([k, n2]) => `<button type="button" data-cct="${k}" aria-selected="${t === k}">${n2}</button>`).join("")}</div>
     <div class="cc-b" id="cc-b">${ccBody(p)}</div></section>`;
 }
 function renderCommunity(p) {
@@ -1875,11 +1877,12 @@ function renderCommunity(p) {
   const paint = async () => { if (!location.hash.startsWith(`#/c/${p.id}`)) { clearInterval(S.poll); return; }
     try { if (!p.trades) await loadTrades(p); await loadHolders(p); } catch {}
     const x = stats24(p), set = (id, v) => { const e = $("#" + id); if (e) e.textContent = v; }; set("cc-px", fmtP(p.mk.price)); const ch = $("#cc-ch"); if (ch) { ch.textContent = `${x.chg >= 0 ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%`; ch.className = x.chg >= 0 ? "u" : "d"; }
-    set("cc-a", activeNow(p)); const hn = holdN(p); if (hn != null) set("cc-m", kfmt(hn + (joined(p.id) ? 1 : 0))); const pv = threadPreview("tok-" + p.id); if (pv) set("cc-p", pv.c); };
+    set("cc-a", activeNow(p)); const hn = holdN(p); if (hn != null) set("cc-m", kfmt(hn)); const pv = threadPreview("tok-" + p.id); if (pv) set("cc-p", pv.c); };
   paint(); S.poll = setInterval(paint, 5000);
   const root = $("#app");
   root.querySelector(".cc-tabs").onclick = (e) => { const b = e.target.closest("[data-cct]"); if (!b) return; S.ccTab = b.dataset.cct; document.querySelectorAll("[data-cct]").forEach((y) => y.setAttribute("aria-selected", y === b)); $("#cc-b").innerHTML = ccBody(p); };
-  root.querySelector("[data-ccj]").onclick = (e) => { joinToggle(p.id); const on = joined(p.id), bt = e.currentTarget; bt.classList.toggle("on", on); bt.textContent = on ? T2("Joined", "Unido") : T2("Join", "Unirme"); hfShake(bt); hfShake(root.querySelector(".cc-logo")); const m = $("#cc-m"); if (m) { const hn = holdN(p); m.textContent = kfmt((hn ?? 0) + (on ? 1 : 0)); } };
+  root.querySelector("[data-ccj]").onclick = (e) => { joinToggle(p.id); const on = joined(p.id), bt = e.currentTarget; bt.classList.toggle("on", on); bt.textContent = on ? T2("Following", "Siguiendo") : T2("Follow", "Seguir"); hfShake(bt); };
+  root.querySelector("[data-ccbell]").onclick = (e) => { const bt = e.currentTarget; let on = false; try { on = localStorage.getItem("hf-bell-" + p.id) !== "1"; on ? localStorage.setItem("hf-bell-" + p.id, "1") : localStorage.removeItem("hf-bell-" + p.id); } catch {} bt.classList.toggle("on", on); hfShake(bt); toast(on ? T2("We'll notify you about this community", "Te avisaremos de esta comunidad") : T2("Notifications off", "Avisos desactivados")); };
   root.querySelector("[data-ccsh]").onclick = () => { try { navigator.share ? navigator.share({ title: p.q.name, url: location.href }) : navigator.clipboard?.writeText(location.href); } catch {} };
 }
 
