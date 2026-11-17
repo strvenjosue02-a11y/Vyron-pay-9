@@ -14,7 +14,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   const L = { candles: "Candles", line: "Line", ma: "MA", draw: "Line", clear: "Clear", full: "Full screen", exit: "Exit", vol: "Vol", price: "Price", cap: "Market cap", ...labels };
   const key = `hf-hl-${id}`;
   let hl = []; try { hl = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
-  const st = { faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: "candle", ma: !matchMedia("(max-width: 1000px)").matches, draw: false, period, k: 1, last: null };
+  const st = { faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: "candle", ma: !matchMedia("(max-width: 900px)").matches, draw: false, period, k: 1, last: null };
   el.classList.add("cp");
   el.innerHTML = `<div class="cp-bar">
       <div class="cp-per" role="tablist">${periods.map((k) => `<button type="button" data-per="${k}" aria-selected="${k === period}">${k}</button>`).join("")}</div>

@@ -27,10 +27,23 @@ function goLive(l, seed = false) {
   if (seed) { let t = now() - 3 * 3600; for (let i = 0; i < 60; i++) { t += 180; trade(l, Math.random() < 0.58 ? "buy" : "sell", rnd(2, 14) * (l.goal / 500), t, true); } }
 }
 function price(l) { return l.rU / l.rT; }
-function trade(l, side, usdc, t = now(), silent = false) {
-  const fee = 0.997;
-  if (side === "buy") { const out = (l.rT * usdc * fee) / (l.rU + usdc * fee); l.rU += usdc; l.rT -= out; l.ticks.push({ t, p: price(l), v: usdc }); return out; }
-  const tokens = usdc, out = (l.rU * tokens * fee) / (l.rT + tokens * fee); l.rT += tokens; l.rU -= out; l.ticks.push({ t, p: price(l), v: out }); return out;
+const BOTW = Array.from({ length: 9 }, (_, i) => "0x" + (0xa1 + i * 7).toString(16).padStart(2, "0").repeat(20));
+function trade(l, side, usdc, t = now(), silent = false, who = null) {
+  const fee = 0.997; who = who || BOTW[Math.floor(Math.random() * BOTW.length)];
+  if (side === "buy") { const out = (l.rT * usdc * fee) / (l.rU + usdc * fee); l.rU += usdc; l.rT -= out; l.ticks.push({ t, p: price(l), v: usdc, b: true, k: out, w: who }); return out; }
+  const tokens = usdc, out = (l.rU * tokens * fee) / (l.rT + tokens * fee); l.rT += tokens; l.rU -= out; l.ticks.push({ t, p: price(l), v: out, b: false, k: tokens, w: who }); return out;
+}
+export const lcLive = () => L.filter((x) => x.status === "live");
+export const lcGet = (id) => L.find((x) => x.id === id);
+export const lcMeBal = () => me;
+export function lcQuote(l, side, v) {
+  const fee = 0.997, p0 = l.rU / l.rT;
+  if (side === "buy") { const out = (l.rT * v * fee) / (l.rU + v * fee); return { out, imp: Math.abs(v / out - p0) / p0 * 100 }; }
+  const out = (l.rU * v * fee) / (l.rT + v * fee); return { out, imp: Math.abs(out / v - p0) / p0 * 100 };
+}
+export function lcSwap(l, side, v, who) {
+  if (side === "buy") { me.usdc -= v; me.tok[l.id] = (me.tok[l.id] || 0) + trade(l, "buy", v, now(), false, who); } else { me.tok[l.id] = Math.max(0, (me.tok[l.id] || 0) - v); me.usdc += trade(l, "sell", v, now(), false, who); }
+  l.last = now();
 }
 function candles(l, step) {
   const tk = l.ticks; if (!tk.length) return []; const out = []; let last = l.p0;
@@ -52,7 +65,7 @@ mk("Moon Bread", "BREAD", 500, 0, "", true);
 
 let timer = null, chart = null, cur = "";
 function tick() {
-  if (!location.hash.startsWith("#/lc") && !["", "#", "#/"].includes(location.hash)) { if (cur) stopLaunches(); return; }
+  if (!location.hash.startsWith("#/lc") && !location.hash.startsWith("#/trade/lc-") && !location.hash.startsWith("#/market") && !["", "#", "#/"].includes(location.hash)) { if (cur) stopLaunches(); return; }
   const open = L.filter((l) => l.status === "open");
   if (open.length) { const l = open[Math.floor(Math.random() * open.length)], add = Math.min(l.goal - l.raised, rnd(4, 30) * (l.goal / 500 + 0.4)); l.raised += add; l.last = now(); if (l.raised >= l.goal - 0.01) goLive(l); }
   const live = L.filter((l) => l.status === "live"); if (live.length) { const l = live[Math.floor(Math.random() * live.length)]; if (Math.random() < 0.55) trade(l, "buy", rnd(1, 9) * (l.goal / 500)); else trade(l, "sell", (l.rT * rnd(0.002, 0.012))); l.last = now(); }
@@ -68,7 +81,7 @@ function listHtml() {
   <div class="cat-bar"><div class="cat-tabs">${[["all", T("Active", "Activos")], ["open", T("Filling", "Llenándose")], ["live", T("Live", "En vivo")]].map(([k, t]) => `<button type="button" data-lcf="${k}" aria-selected="${f === k}">${t}</button>`).join("")}</div><a class="btn btn-ember btn-sm" href="#/lc/new">${T("Launch", "Lanzar")}</a></div>
   <label class="cat-search lc-sq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="lc-q" type="search" placeholder="${T("Search by name or ticker", "Buscar por nombre o ticker")}" value="${esc(window.__lcq || "")}" autocomplete="off"></label>
   <div class="deck">${rows.map((l) => { const live = l.status === "live", ch = live && l.ticks.length ? (price(l) / l.p0 - 1) * 100 : 0;
-    return `<a class="pcard" href="#/lc/${l.id}"><div class="pc-img">${art(l)}<span class="pc-tick">${esc(l.sym)}</span>${live ? `<span class="lc-live">${T("LIVE", "EN VIVO")}</span>` : ""}</div>
+    return `<a class="pcard" href="${live ? "#/trade/lc-" + l.id : "#/lc/" + l.id}"><div class="pc-img">${art(l)}<span class="pc-tick">${esc(l.sym)}</span>${live ? `<span class="lc-live">${T("LIVE", "EN VIVO")}</span>` : ""}</div>
       <div class="pc-body"><h3>${esc(l.name)}</h3>${live ? `<div class="lc-px"><b>${fmtP(price(l))}</b><em class="${ch >= 0 ? "u" : "d"}">${ch >= 0 ? "+" : ""}${ch.toFixed(0)}%</em></div>` : bar(l)}
       <dl class="pc-stats"><div><dt>${live ? T("Pool", "Pool") : T("Raised", "Recaudado")}</dt><dd>$${usd(live ? l.rU : l.raised)}</dd></div><div><dt>${T("Goal", "Meta")}</dt><dd>$${usd(l.goal)}</dd></div><div><dt>${T("Activity", "Actividad")}</dt><dd>${ago(l.last)}</dd></div></dl></div></a>`; }).join("")}</div>`;
 }
@@ -112,7 +125,7 @@ function view() {
   const h = location.hash; cur = "";
   if (h === "#/lc/new") { cur = "new"; root.innerHTML = newHtml(); bindNew(); return; }
   const m = h.match(/^#\/lc\/(l\d+)/);
-  if (m) { const l = L.find((x) => x.id === m[1]); if (!l) { location.hash = "#/lc"; return; } cur = l.id; root.innerHTML = pageHtml(l); bindPage(l); return; }
+  if (m) { const l = L.find((x) => x.id === m[1]); if (!l) { location.hash = "#/lc"; return; } if (l.status === "live") { location.hash = "#/trade/lc-" + l.id; return; } cur = l.id; root.innerHTML = pageHtml(l); bindPage(l); return; }
   cur = "list"; const sy = scrollY; root.innerHTML = listHtml(); scrollTo(0, sy);
   root.querySelectorAll("[data-lcf]").forEach((b) => (b.onclick = () => { window.__lcf = b.dataset.lcf; view(); }));
   const sq = root.querySelector("#lc-q"); if (sq) sq.oninput = () => { window.__lcq = sq.value; const pos = sq.selectionStart; view(); const n = root.querySelector("#lc-q"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } };

@@ -9,7 +9,7 @@ import { initI18n } from "./i18n.js";
 import { mountCoin } from "./coin3d.js";
 import { mountChart } from "./pro.js";
 import { createDemo } from "./demo.js";
-import { showLaunches, launchRows, launchItems, stopLaunches } from "./launch.js";
+import { showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote } from "./launch.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, msgProfile, validProfile, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
@@ -102,7 +102,46 @@ async function loadCatalog() {
 }
 
 const READS = ["pool", "lpUnlock", "liquidityUsdc", "state", "totalRaised", "poolAfterFees", "usdcReleased", "milestonesDone", "voteEnd", "votesYes", "votesNo", "deadline", "succeeded", "refundPool", "voteRound", "retrying"];
+// ---- lanzamientos llenos usan EXACTAMENTE la misma terminal de trading (adaptador sobre los datos del prototipo)
+const lcCache = new Map(), fakeAddr = (s) => keccak256(toBytes(s)).slice(0, 42);
+function lcP(l) {
+  let p = lcCache.get(l.id);
+  if (!p) { const hh = [...l.name].reduce((x, c) => (x * 31 + c.charCodeAt(0)) % 360, 7);
+    p = { lc: l.id, id: "lc-" + l.id, address: fakeAddr("lc-" + l.id), exists: true, q: { symbol: l.sym, name: l.name, creator: fakeAddr("cr-" + l.id), milestones: 0 }, s: { ...blankS(), pool: fakeAddr("pool-" + l.id), lpUnlock: 4102444800n, succeeded: false, milestonesDone: 0 }, u: blankU(), meta: { color: `hsl(${hh} 55% 38%)`, links: "{}", logo: /^data:image\/(webp|png|jpeg);base64,/.test(l.img || "") || /^\.\/assets\/tokens\//.test(l.img || "") ? l.img : "" }, order: {}, holders: null }; lcCache.set(l.id, p); }
+  syncLc(p, l); return p;
+}
+function syncLc(p, l = lcGet(p.lc)) {
+  if (!l) return; const shift = S.now ? S.now - Date.now() / 1000 : 0, big = (x) => BigInt(Math.round(x * 1e6)) * 10n ** 12n;
+  p.mk = { price: l.rU / l.rT, round: l.p0, poolUsdc: BigInt(Math.round(l.rU * 1e6)), usdc0: false, usdc: false };
+  p.supply = 1_000_000n * 10n ** 18n;
+  p.tHead = BigInt(Math.floor((S.now || Date.now() / 1000) / 12));
+  p.trades = l.ticks.map((t, i) => ({ ts: t.t + shift, block: BigInt(Math.floor((t.t + shift) / 12)), tx: fakeAddr(l.id + ":" + i) + "0".repeat(24), buy: !!t.b, usdc: BigInt(Math.round(t.v * 1e6)), tok: big(t.k || 0), price: t.p, who: t.w }));
+  p.u.balance = big(lcMeBal().tok[l.id] || 0); p.exists = true;
+}
+function holdersLc(p) {
+  const l = lcGet(p.lc); if (!l) return; const bal = {}; for (const t of l.ticks) bal[t.w] = (bal[t.w] || 0) + (t.b ? t.k : -t.k);
+  const big = (x) => BigInt(Math.round(Math.max(0, x) * 1e6)) * 10n ** 12n, list = Object.entries(bal).filter(([, v]) => v > 0).map(([a2, v]) => ({ a: a2, b: big(v) }));
+  list.push({ a: p.s.pool, b: big(l.rT) }, { a: p.q.creator, b: big(50000) }); p.holders = list.sort((x, y) => (y.b > x.b ? 1 : -1)).slice(0, 12);
+}
+const findTok = (fn) => S.list.find(fn) || lcLive().map(lcP).find(fn);
+function lcQuoteUi(p) {
+  const l = lcGet(p.lc), side = S.side || "buy", v = parseFloat($("#tamt")?.value || "0") || 0;
+  if (v <= 0 || !l) { if ($("#tout")) $("#tout").textContent = "–"; if ($("#timp")) $("#timp").textContent = "–"; if ($("#tmin")) $("#tmin").textContent = "–"; S.quote = null; return; }
+  const r = lcQuote(l, side, v), fT = (x) => Math.round(x).toLocaleString("en-US"), fU = (x) => "$" + x.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  S.quote = { lc: v, side, imp: r.imp, out: r.out };
+  $("#tout").textContent = side === "buy" ? `${fT(r.out)} ${p.q.symbol}` : `${fU(r.out)} USDC`;
+  const mn = r.out * (1 - (S.slip || 1) / 100); if ($("#tmin")) $("#tmin").textContent = side === "buy" ? `${fT(mn)} ${p.q.symbol}` : `${fU(mn)} USDC`;
+  $("#timp").textContent = `${r.imp.toFixed(2)}%`; $("#timp").classList.toggle("warn", r.imp > 5);
+}
+async function swapLc(p) {
+  lcQuoteUi(p); const q = S.quote; if (!q) return toast("Enter an amount to trade.", true);
+  const l = lcGet(p.lc), mb = lcMeBal();
+  if (q.side === "buy" ? q.lc > mb.usdc + 1e-9 : q.lc > (mb.tok[l.id] || 0) + 1e-9) return toast("Not enough balance.", true);
+  lcSwap(l, q.side, q.lc, S.me); syncLc(p, l); S.quote = null; toast("Trade done");
+  const box = $(".cyber"); if (box) { box.outerHTML = tradePanel(p); bindTrade(p); } const h = posBox(p), el = $("#tx-pos"); if (el) el.outerHTML = h; chartOff?.update();
+}
 async function loadChain(p) {
+  if (p.lc) { syncLc(p); return; }
   const code = await pub.getCode({ address: p.address });
   p.exists = !!code && code !== "0x"; p.s = blankS(); p.u = blankU();
   if (!p.exists) return;
@@ -187,6 +226,7 @@ function usdcPerToken(sqrt, usdc0) {
 }
 const fmtP = (x) => x >= 0.01 ? `$${x.toLocaleString("en-US", { maximumFractionDigits: 4 })}` : `$${x.toPrecision(3)}`;
 async function loadTrades(p) {
+  if (p.lc) { syncLc(p); return p.trades; }
   if (!p.mk) await loadChain(p).catch(() => {});
   if (!p.mk) return [];
   try {
@@ -232,7 +272,7 @@ function tradePanel(p) {
     <label class="cy-lab" for="tamt">${side === "buy" ? "You pay" : "You sell"}</label>
     <div class="field-amt cy-field"><input id="tamt" type="number" inputmode="decimal" min="0" step="any" placeholder="0" data-testid="trade-amount"><span class="u">${side === "buy" ? "USDC" : esc(p.q.symbol)}</span></div>
     ${side === "buy" ? `<div class="tx-q tx-amts">${[5, 10, 25, 50, 100].map((v) => `<button type="button" data-amt="${v}">$${v}</button>`).join("")}<button type="button" data-pct="100">Max</button></div>` : `<div class="tx-q">${[25, 50, 100].map((v) => `<button type="button" data-pct="${v}">${v === 100 ? "Max" : v + "%"}</button>`).join("")}</div>`}
-    <div class="under"><span>Balance ${!hasW ? "–" : side === "buy" ? `${usd(S.usdc)} USDC` : `${tok(p.u.balance)} ${esc(p.q.symbol)}`}</span><span class="tx-slip">Slippage ${[0.5, 1, 2].map((v) => `<button type="button" data-slip="${v}" aria-pressed="${(S.slip || 1) === v}">${v}%</button>`).join("")}</span></div>
+    <div class="under"><span>Balance ${!hasW ? "–" : side === "buy" ? `${p.lc ? lcMeBal().usdc.toLocaleString("en-US", { maximumFractionDigits: 2 }) : usd(S.usdc)} USDC` : `${tok(p.u.balance)} ${esc(p.q.symbol)}`}</span><span class="tx-slip">Slippage ${[0.5, 1, 2].map((v) => `<button type="button" data-slip="${v}" aria-pressed="${(S.slip || 1) === v}">${v}%</button>`).join("")}</span></div>
     <div class="lines cy-sum"><div><span>You receive</span><b id="tout">–</b></div><div><span>Minimum you'll get</span><b id="tmin">–</b></div><div><span>Price impact</span><b id="timp">–</b></div><div><span>Pool fee</span><b>0.3%</b></div></div>
     ${hasW ? `<button class="btn btn-cyber btn-block" data-act="swap" data-testid="swap">${side === "buy" ? `Buy ${esc(p.q.symbol)}` : `Sell ${esc(p.q.symbol)}`}</button>` : `<button class="btn btn-cyber btn-block" data-act="connect">Connect wallet to ${side === "buy" ? "buy" : "sell"}</button>`}
     <label class="cy-1tap"><input type="checkbox" data-onetap ${oneTap() ? "checked" : ""}><span>One-tap buy: quick amounts buy instantly</span></label>
@@ -243,13 +283,14 @@ let quoteT = 0;
 function bindTrade(p) {
   const el = $("#tamt"); if (!el || !p.mk) return;
   el.oninput = () => { clearTimeout(quoteT); quoteT = setTimeout(() => quote(p), 250); };
-  document.querySelectorAll("[data-pct]").forEach((b) => (b.onclick = () => { if (!S.me) return; const side = S.side || "buy", bal = side === "buy" ? S.usdc : p.u.balance, d = side === "buy" ? 6 : 18;
+  document.querySelectorAll("[data-pct]").forEach((b) => (b.onclick = () => { if (!S.me) return; const side = S.side || "buy", bal = side === "buy" ? (p.lc ? BigInt(Math.floor(lcMeBal().usdc * 1e6)) : S.usdc) : p.u.balance, d = side === "buy" ? 6 : 18;
     const v = (bal * BigInt(b.dataset.pct)) / 100n; el.value = formatUnits(v, d).replace(/(\.\d{0,6})\d*$/, "$1"); el.oninput(); }));
   document.querySelectorAll("[data-amt]").forEach((b) => (b.onclick = () => { el.value = b.dataset.amt; el.oninput(); if (oneTap() && S.me) { clearTimeout(quoteT); quote(p).then(() => document.querySelector("[data-act=swap]")?.click()); } }));
   document.querySelectorAll("[data-slip]").forEach((b) => (b.onclick = () => { S.slip = Number(b.dataset.slip); document.querySelectorAll("[data-slip]").forEach((x) => x.setAttribute("aria-pressed", x === b)); }));
 }
 async function quote(p) {
   if (!S.me) return;
+  if (p.lc) return lcQuoteUi(p);
   const side = S.side || "buy", raw = $("#tamt")?.value;
   let amt = 0n; try { amt = parseUnits(raw || "0", side === "buy" ? 6 : 18); } catch {}
   if (amt <= 0n) { $("#tout").textContent = "–"; $("#timp").textContent = "–"; if ($("#tmin")) $("#tmin").textContent = "–"; S.quote = null; return; }
@@ -265,6 +306,7 @@ async function quote(p) {
   } catch { $("#tout").textContent = "Not enough liquidity"; S.quote = null; }
 }
 async function swap(p) {
+  if (p.lc) return swapLc(p);
   await quote(p);
   const q = S.quote; if (!q) return toast("Enter an amount to trade.", true);
   const tokenIn = q.side === "buy" ? CONFIG.usdc : p.address, tokenOut = q.side === "buy" ? p.address : CONFIG.usdc;
@@ -330,6 +372,7 @@ function spark(p) {
 }
 const vol24 = (p) => (p.trades || []).filter((t) => t.ts > (S.now || 0) - 86400).reduce((a, t) => a + t.usdc, 0n);
 async function loadHolders(p) {
+  if (p.lc) { holdersLc(p); return; }
   // Sin recorrer todo el historial: saldos de las direcciones conocidas (inversores, operadores del pool y cuentas del proyecto).
   try {
     const set = new Set([p.s.pool, p.address, CONFIG.platform, p.q.creator, ...Object.keys(p.order || {}), ...(p.trades || []).map((t) => t.who)].filter(Boolean).map((a) => a.toLowerCase()));
@@ -498,7 +541,7 @@ async function editProfile() {
   ov.onclick = async (e) => { if (e.target === ov || e.target.closest("[data-px]")) { ov.classList.remove("on"); setTimeout(() => ov.remove(), 250); return; }
     if (!e.target.closest("#pf-save")) return; const name = ov.querySelector("#pf-name").value.trim(), err = validProfile(name, photo); if (err) return toast(err, true); let sig;
     const ok = await flow("Save profile", ["Sign with your wallet", "Save"], [async () => { sig = await sign(msgProfile(S.me, name, keccak256(toBytes(photo)))); }, async () => api("./api/profile", { address: S.me, name, photo, signature: sig })], "Profile saved");
-    if (ok) { ov.remove(); const old = S.list.find((x) => location.hash.endsWith(x.id)), tr = old?.trades, hd = old?.tHead, hl = old?.holders;
+    if (ok) { ov.remove(); const old = findTok((x) => location.hash.endsWith(x.id)), tr = old?.trades, hd = old?.tHead, hl = old?.holders;
       const r = await fetch("./api/profile", { cache: "no-store" }).then((x) => x.json()).catch(() => ({})); S.prof = {};
       for (const x of r.profiles || []) if (await verifyMessage({ address: x.address, message: msgProfile(x.address, x.name, keccak256(toBytes(x.photo || ""))), signature: x.signature }).catch(() => false)) S.prof[x.address] = x;
       if (old && $("#term-tab")) $("#term-tab").innerHTML = termTab(old); } };
@@ -538,7 +581,7 @@ function tpslCheck(p) {
 }
 const chatGet = (p) => { try { return JSON.parse(localStorage.getItem(`hf-chat-${p.id}`) || "[]"); } catch { return []; } };
 const chatHtml = (p) => { const l = chatGet(p).slice(-40).reverse(); return `<form class="chat-f" data-chat><input id="chat-in" maxlength="200" placeholder="Write a comment…" autocomplete="off"><button class="btn btn-dark btn-sm" type="submit">Post</button></form>` + (l.length ? `<ul class="chat">${l.map((m) => `<li><b>${esc(m.n)}</b><span>${esc(m.t)}</span><small>${agoS((S.now || Date.now() / 1000) - m.ts)}</small></li>`).join("")}</ul>` : `<p class="fine">Be the first to comment on ${esc(p.q.symbol)}.</p>`); };
-const curTok = () => S.list.find((x) => location.hash === `#/trade/${x.id}` || location.hash.startsWith(`#/trade/${x.id}?`));
+const curTok = () => findTok((x) => location.hash === `#/trade/${x.id}` || location.hash.startsWith(`#/trade/${x.id}?`));
 if (!window.__txKeys) {
   window.__txKeys = 1;
   document.addEventListener("keydown", (e) => {
@@ -652,7 +695,8 @@ function vTerminal(p) {
 function mkItems() {
   const q = (S.mkQ || "").toLowerCase(), ch = (p) => (p.trades ? stats24(p).chg : ((p.mk.price - p.mk.round) / p.mk.round) * 100);
   const own = S.list.filter((p) => p.mk && (!q || p.q.name.toLowerCase().includes(q) || p.q.symbol.toLowerCase().includes(q))).map((p) => ({ id: p.id, href: `#/trade/${p.id}`, sym: p.q.symbol, name: p.q.name, mark: mark(p), price: p.mk.price, chg: ch(p), cap: stats24(p).cap, liq: Number(p.mk.poolUsdc) / 1e6, vol: Number(vol24(p)) / 1e6, spark: spark(p), isNew: false, idx: S.list.indexOf(p) }));
-  return [...own, ...launchItems(S.mkQ || "")];
+  const lcs = lcLive().filter((l) => !q || l.name.toLowerCase().includes(q) || l.sym.toLowerCase().includes(q)).map((l) => { const p = lcP(l); return { id: p.id, href: `#/trade/${p.id}`, sym: l.sym, name: l.name, mark: mark(p), price: p.mk.price, chg: ch(p), cap: stats24(p).cap, liq: l.rU, vol: Number(vol24(p)) / 1e6, spark: spark(p), isNew: true, idx: 1e6 + (l.liveAt || 0) }; });
+  return [...own, ...lcs];
 }
 function vMarket() {
   const sort = S.mkSort || "volume", fv = favs(), F = S.mkF || {}, col = S.mkCol, dir = S.mkDir || -1;
@@ -687,6 +731,7 @@ function startTerminal(p) {
   const weak = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 3 || matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (weak) $("#coin3d").innerHTML = logoSrc(p) ? `<img src="${esc(logoSrc(p))}" alt="" class="coin-flat">` : "";
   else mountCoin($("#coin3d"), { logo: logoSrc(p), color: p.meta.color, symbol: p.q.symbol }).then((off) => (coinOff = off)).catch(() => {});
+  if (!logoSrc(p) && $("#coin3d")) $("#coin3d").innerHTML = mark(p, "lg");
   bindTrade(p);
   const es = (localStorage.getItem("hf-lang") || "en") === "es";
   chartOff = mountChart($("#chartpro"), { id: p.id, fsTarget: document.querySelector(".term"), periods: Object.keys(PERIODS), period: S.period || "5m", onPeriod: (k) => (S.period = k),
@@ -1482,7 +1527,7 @@ function route() {
   stopLaunches();
   const m = h.match(/^#\/p\/([\w-]+)/);
   const p = m && S.list.find((x) => x.id === m[1]);
-  const tm = h.match(/^#\/trade\/([\w-]+)/), tp = tm && S.list.find((x) => x.id === tm[1]);
+  const tm = h.match(/^#\/trade\/([\w-]+)/), tp = tm && findTok((x) => x.id === tm[1]);
   const key = tp || h.startsWith("#/market") ? "market" : p ? "home" : h.startsWith("#/launch") ? "launch" : h.startsWith("#/portfolio") ? "portfolio" : h.startsWith("#/studio") ? "studio" : h.startsWith("#/owner") ? "owner" : "home";
   document.querySelectorAll("[data-nav]").forEach((a) => (a.dataset.nav === key ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
   $("#nav-owner").classList.toggle("d-none", !isOwner()); $("#tab-owner").classList.toggle("d-none", !isOwner());
@@ -1642,13 +1687,13 @@ async function postUpdate(id) {
 
 document.addEventListener("click", async (e) => {
   const pr = e.target.closest("[data-period]");
-  if (pr) { S.period = pr.dataset.period; document.querySelectorAll("[data-period]").forEach((x) => x.setAttribute("aria-selected", x === pr)); const tp = S.list.find((x) => location.hash === `#/trade/${x.id}`); if (tp) $("#candles").innerHTML = candlesSvg(tp, S.period); return; }
+  if (pr) { S.period = pr.dataset.period; document.querySelectorAll("[data-period]").forEach((x) => x.setAttribute("aria-selected", x === pr)); const tp = findTok((x) => location.hash === `#/trade/${x.id}`); if (tp) $("#candles").innerHTML = candlesSvg(tp, S.period); return; }
   const tt = e.target.closest("[data-ttab]");
-  if (tt) { S.ttab = tt.dataset.ttab; document.querySelectorAll("[data-ttab]").forEach((x) => x.setAttribute("aria-selected", x === tt)); const tp = S.list.find((x) => location.hash === `#/trade/${x.id}`); if (tp) $("#term-tab").innerHTML = termTab(tp); return; }
+  if (tt) { S.ttab = tt.dataset.ttab; document.querySelectorAll("[data-ttab]").forEach((x) => x.setAttribute("aria-selected", x === tt)); const tp = findTok((x) => location.hash === `#/trade/${x.id}`); if (tp) $("#term-tab").innerHTML = termTab(tp); return; }
   const sd = e.target.closest("[data-side]");
-  if (sd) { S.side = sd.dataset.side; const p = S.list.find((x) => location.hash === `#/p/${x.id}` || location.hash === `#/trade/${x.id}`); if (p) { const box = $(".cyber"); box.outerHTML = tradePanel(p); bindTrade(p); } return; }
+  if (sd) { S.side = sd.dataset.side; const p = findTok((x) => location.hash === `#/p/${x.id}` || location.hash === `#/trade/${x.id}`); if (p) { const box = $(".cyber"); box.outerHTML = tradePanel(p); bindTrade(p); } return; }
   const tb = e.target.closest("[data-tab]");
-  if (tb) { S.tab = tb.dataset.tab; document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", x === tb)); const p = S.list.find((x) => location.hash === `#/p/${x.id}`); if (p) { $(".ptab-body").innerHTML = tabBody(p); bindTab(p); if (S.tab === "trade" && p.mk) loadTrades(p).then(() => { if (S.tab === "trade") $(".ptab-body").innerHTML = tabBody(p); }); } return; }
+  if (tb) { S.tab = tb.dataset.tab; document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", x === tb)); const p = findTok((x) => location.hash === `#/p/${x.id}`); if (p) { $(".ptab-body").innerHTML = tabBody(p); bindTab(p); if (S.tab === "trade" && p.mk) loadTrades(p).then(() => { if (S.tab === "trade") $(".ptab-body").innerHTML = tabBody(p); }); } return; }
   if (e.target.closest("#bb-go")) { const v = $("#amt")?.value; if (v && Number(v) > 0) return $('[data-act="buy"]')?.click(); $("#amt")?.scrollIntoView({ block: "center", behavior: "smooth" }); setTimeout(() => $("#amt")?.focus(), 400); return; }
   const sc = e.target.closest("[data-scroll]");
   if (sc) return document.getElementById(sc.dataset.scroll)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
@@ -1658,14 +1703,14 @@ document.addEventListener("click", async (e) => {
   if (!S.wallet) return toast("Connect your wallet first.", true);
   document.querySelectorAll("button").forEach((x) => (x.disabled = true));
   try {
-    const p = S.list.find((x) => location.hash === `#/p/${x.id}` || location.hash === `#/trade/${x.id}`);
+    const p = findTok((x) => location.hash === `#/p/${x.id}` || location.hash === `#/trade/${x.id}`);
     if (act === "buy") await buy(p);
     else if (ACTS[act]) { const [label, fn, args] = ACTS[act]; await flow(label, [label], [() => S.wallet.writeContract({ address: p.address, abi: ABI, functionName: fn, args })], `${label}: done`); }
     else if (act === "approve" || act === "reject") return await decide(b.dataset.id, act === "approve");
     else if (act === "openPanel") return await openPanel();
     else if (act === "postUpdate") return await postUpdate(b.dataset.id);
     else if (act === "card") return await backerCard(p);
-    else if (act === "swap") { await swap(p); p.trades = null; }
+    else if (act === "swap") { await swap(p); if (!p.lc) p.trades = null; }
     else if (act === "ask" || act === "answer") return await qaPost(p, act, b.dataset.qts);
     await refresh();
   } catch (x) { console.error(x); toast(x.shortMessage || x.message, true); }
