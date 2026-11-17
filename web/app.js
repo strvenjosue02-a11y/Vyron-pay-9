@@ -216,17 +216,25 @@ function chartSvg(p) {
     <line x1="0" x2="${W}" y1="${y(p.mk.round).toFixed(1)}" y2="${y(p.mk.round).toFixed(1)}" class="cy-round"/>
     <path d="${line} L${W} ${H} L0 ${H}Z" fill="url(#cyf)"/><path d="${line}" class="cy-line"/></svg>`;
 }
+const agoS = (s) => (s = Math.max(0, Math.round(s)), s < 60 ? s + "s" : s < 3600 ? Math.floor(s / 60) + "m" : s < 86400 ? Math.floor(s / 3600) + "h" : Math.floor(s / 86400) + "d");
+const capFmt = (v) => (!v ? "–" : v >= 1e9 ? "$" + (v / 1e9).toFixed(2) + "B" : v >= 1e6 ? "$" + (v / 1e6).toFixed(2) + "M" : v >= 1e3 ? "$" + (v / 1e3).toFixed(1) + "K" : "$" + v.toFixed(0));
+function chgAgo(p, secs) {
+  const now = S.now || Date.now() / 1000, tr = (p.trades || []).filter((t) => t.ts), bf = tr.filter((t) => t.ts <= now - secs), o = bf.length ? bf[bf.length - 1].price : (tr[0]?.price || p.mk.round);
+  return o ? ((p.mk.price - o) / o) * 100 : 0;
+}
+const chipsHtml = (p) => [["5m", 300], ["1h", 3600], ["6h", 21600], ["24h", 86400]].map(([l, s]) => { const c = chgAgo(p, s); return `<span class="${c >= 0.005 ? "u" : c <= -0.005 ? "d" : ""}"><small>${l}</small>${c >= 0 ? "+" : ""}${c.toFixed(1)}%</span>`; }).join("");
+const feedHtml = (p) => { const now = S.now || Date.now() / 1000; return (p.trades || []).slice(-8).reverse().map((t) => `<span class="${t.buy ? "b" : "s"}"><i></i>${t.buy ? "+" : "-"}$${usd(t.usdc)}<small>${agoS(now - (t.ts || now))}</small></span>`).join("") || `<span class="none">Waiting for the first trade…</span>`; };
 function tradePanel(p) {
-  const side = S.side || "buy", m = p.mk;
+  const side = S.side || "buy", m = p.mk, hasW = !!S.me;
   return `<div class="panel cyber" data-testid="trade-panel">
     <div class="cy-top"><span class="cy-live"><i></i>Market open</span><span>Uniswap v3</span></div>
     <div class="cy-toggle" role="tablist"><button type="button" data-side="buy" aria-selected="${side === "buy"}">Buy</button><button type="button" data-side="sell" aria-selected="${side === "sell"}">Sell</button></div>
     <label class="cy-lab" for="tamt">${side === "buy" ? "You pay" : "You sell"}</label>
     <div class="field-amt cy-field"><input id="tamt" type="number" inputmode="decimal" min="0" step="any" placeholder="0" data-testid="trade-amount"><span class="u">${side === "buy" ? "USDC" : esc(p.q.symbol)}</span></div>
     ${side === "buy" ? `<div class="tx-q tx-amts">${[5, 10, 25, 50, 100].map((v) => `<button type="button" data-amt="${v}">$${v}</button>`).join("")}<button type="button" data-pct="100">Max</button></div>` : `<div class="tx-q">${[25, 50, 100].map((v) => `<button type="button" data-pct="${v}">${v === 100 ? "Max" : v + "%"}</button>`).join("")}</div>`}
-    <div class="under"><span>Balance ${side === "buy" ? `${usd(S.usdc)} USDC` : `${tok(p.u.balance)} ${esc(p.q.symbol)}`}</span><span class="tx-slip">Slippage ${[0.5, 1, 2].map((v) => `<button type="button" data-slip="${v}" aria-pressed="${(S.slip || 1) === v}">${v}%</button>`).join("")}</span></div>
+    <div class="under"><span>Balance ${!hasW ? "–" : side === "buy" ? `${usd(S.usdc)} USDC` : `${tok(p.u.balance)} ${esc(p.q.symbol)}`}</span><span class="tx-slip">Slippage ${[0.5, 1, 2].map((v) => `<button type="button" data-slip="${v}" aria-pressed="${(S.slip || 1) === v}">${v}%</button>`).join("")}</span></div>
     <div class="lines cy-sum"><div><span>You receive</span><b id="tout">–</b></div><div><span>Minimum you'll get</span><b id="tmin">–</b></div><div><span>Price impact</span><b id="timp">–</b></div><div><span>Pool fee</span><b>0.3%</b></div></div>
-    <button class="btn btn-cyber btn-block" data-act="swap" data-testid="swap">${side === "buy" ? `Buy ${esc(p.q.symbol)}` : `Sell ${esc(p.q.symbol)}`}</button>
+    ${hasW ? `<button class="btn btn-cyber btn-block" data-act="swap" data-testid="swap">${side === "buy" ? `Buy ${esc(p.q.symbol)}` : `Sell ${esc(p.q.symbol)}`}</button>` : `<button class="btn btn-cyber btn-block" data-act="connect">Connect wallet to ${side === "buy" ? "buy" : "sell"}</button>`}
     <p class="cy-fine">Trades go straight to the Uniswap pool. Holdfast never holds your funds.</p>
   </div>`;
 }
@@ -234,12 +242,13 @@ let quoteT = 0;
 function bindTrade(p) {
   const el = $("#tamt"); if (!el || !p.mk) return;
   el.oninput = () => { clearTimeout(quoteT); quoteT = setTimeout(() => quote(p), 250); };
-  document.querySelectorAll("[data-pct]").forEach((b) => (b.onclick = () => { const side = S.side || "buy", bal = side === "buy" ? S.usdc : p.u.balance, d = side === "buy" ? 6 : 18;
+  document.querySelectorAll("[data-pct]").forEach((b) => (b.onclick = () => { if (!S.me) return; const side = S.side || "buy", bal = side === "buy" ? S.usdc : p.u.balance, d = side === "buy" ? 6 : 18;
     const v = (bal * BigInt(b.dataset.pct)) / 100n; el.value = formatUnits(v, d).replace(/(\.\d{0,6})\d*$/, "$1"); el.oninput(); }));
   document.querySelectorAll("[data-amt]").forEach((b) => (b.onclick = () => { el.value = b.dataset.amt; el.oninput(); }));
   document.querySelectorAll("[data-slip]").forEach((b) => (b.onclick = () => { S.slip = Number(b.dataset.slip); document.querySelectorAll("[data-slip]").forEach((x) => x.setAttribute("aria-pressed", x === b)); }));
 }
 async function quote(p) {
+  if (!S.me) return;
   const side = S.side || "buy", raw = $("#tamt")?.value;
   let amt = 0n; try { amt = parseUnits(raw || "0", side === "buy" ? 6 : 18); } catch {}
   if (amt <= 0n) { $("#tout").textContent = "–"; $("#timp").textContent = "–"; if ($("#tmin")) $("#tmin").textContent = "–"; S.quote = null; return; }
@@ -477,17 +486,19 @@ function posBox(p) {
 function vTerminal(p) {
   if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
   const m = p.mk, x = stats24(p), up = x.chg >= 0, fav = favs().includes(p.id), alert = (() => { try { return localStorage.getItem(`hf-alert-${p.id}`) || ""; } catch { return ""; } })();
-  return `<section class="term tx">
+  return `<section class="term tx ${up ? "tx-up" : "tx-dn"}">
     <a class="back" href="#/market">All markets</a>
     <header class="tx-top">
       <div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
       <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
-      <div class="tx-px"><img class="tx-mood" id="tx-mood" src="./assets/mood-${x.chg > 1 ? "up" : x.chg < -1 ? "down" : "calm"}.webp" alt="" width="120" height="72"><b id="tt-price">${fmtP(m.price)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span></div>
+      <div class="tx-px"><small class="tx-cl">Market cap</small><b id="tx-capbig">${capFmt(x.cap)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span><em class="tx-sub">Price <span id="tt-price">${fmtP(m.price)}</span></em></div>
+      <div class="tx-chips" id="tx-chips">${chipsHtml(p)}</div>
       <dl class="tx-stats">
-        <div><dt>24h volume</dt><dd id="tt-vol">$${usd(x.vol)}</dd></div><div><dt>Market cap</dt><dd id="tx-cap">${x.cap ? "$" + x.cap.toLocaleString("en-US", { maximumFractionDigits: 0 }) : "–"}</dd></div>
-        <div><dt>24h high</dt><dd id="tx-hi">${fmtP(x.hi)}</dd></div><div><dt>24h low</dt><dd id="tx-lo">${fmtP(x.lo)}</dd></div><div><dt>Liquidity</dt><dd>$${usd(m.poolUsdc)}</dd></div><div><dt>Round price</dt><dd>${fmtP(m.round)}</dd></div>
+        <div><dt>24h volume</dt><dd id="tt-vol">$${usd(x.vol)}</dd></div><div><dt>Liquidity</dt><dd>$${usd(m.poolUsdc)}</dd></div><div><dt>Holders</dt><dd id="tx-hold">${p.holders ? p.holders.length : "–"}</dd></div>
+        <div><dt>24h high</dt><dd id="tx-hi">${fmtP(x.hi)}</dd></div><div><dt>24h low</dt><dd id="tx-lo">${fmtP(x.lo)}</dd></div><div><dt>Round price</dt><dd>${fmtP(m.round)}</dd></div>
       </dl><button type="button" class="tx-more" onclick="this.previousElementSibling.classList.toggle('open');this.textContent=this.previousElementSibling.classList.contains('open')?'Less':'More data'">More data</button>
     </header>
+    <div class="tx-feed" id="tx-feed" aria-label="Live trades">${feedHtml(p)}</div>
     <div class="term-grid tx-3">
       <nav class="tx-side" id="tx-side" aria-label="Markets"><div class="tx-side-h"><b>Markets</b><button type="button" class="tx-side-x" data-sidex aria-label="Close">✕</button></div>
         <input class="tx-sq" id="tx-sq" type="search" placeholder="Search token" aria-label="Search token">
@@ -498,7 +509,7 @@ function vTerminal(p) {
         <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["top", "Top traders"], ["whales", "Whales"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${k === "whales" ? ICO.whale + " " : ""}${t}</button>`).join("")}</div>
         <div id="term-tab">${termTab(p)}</div>
       </div>
-      <aside class="term-side">${posBox(p)}${S.me ? tradePanel(p) : `<div class="panel cyber"><p class="muted" style="margin:0 0 16px">Connect your wallet to buy or sell ${esc(p.q.symbol)}. Anyone can buy with USDC.</p><button class="btn btn-cyber btn-block" data-act="connect">Connect wallet</button></div>`}
+      <aside class="term-side">${posBox(p)}${tradePanel(p)}
         <div class="panel tx-alert"><h3>Price alert</h3><div class="tx-al"><span>$</span><input id="alert" type="number" step="any" placeholder="${fmtP(m.price).slice(1)}" value="${esc(alert)}" aria-label="Alert price"><button type="button" class="btn btn-line btn-sm" id="alert-set">${alert ? "Update" : "Set"}</button></div><small>We'll show a notice here when the price crosses it.</small></div>
         <div class="panel tx-trust"><h3>Safety</h3>
           <div><span>${ICO.lock} Liquidity locked until</span><b>${day(p.s.lpUnlock)}</b></div>
@@ -544,7 +555,7 @@ function startTerminal(p) {
     getData: (per) => (p.mk ? { candles: buildCandles(p, per), round: p.mk.round, supply: p.supply ? Number(p.supply) / 1e18 : 0, marks: S.me ? (p.trades || []).filter((t) => t.ts && t.who?.toLowerCase() === S.me.toLowerCase()).map((t) => ({ t: t.ts, buy: t.buy })) : [] } : { candles: [], round: 0, supply: 0, marks: [] }),
     labels: es ? { cap: "Valor total", price: "Precio", candles: "Velas", line: "Línea", ma: "Promedios", draw: "Dibujar", clear: "Borrar", full: "Pantalla completa", exit: "Salir", vol: "Vol" } : {} });
   const stats = () => { if (!p.mk) return; const x = stats24(p), d = $("#tt-delta"); if (!d) return; d.className = x.chg >= 0 ? "u" : "d"; d.textContent = `${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(2)}% 24h`;
-    $("#tx-hi").textContent = fmtP(x.hi); $("#tx-lo").textContent = fmtP(x.lo); $("#tt-vol").textContent = "$" + usd(x.vol); if (x.cap) $("#tx-cap").textContent = "$" + x.cap.toLocaleString("en-US", { maximumFractionDigits: 0 }); };
+    $("#tx-hi").textContent = fmtP(x.hi); $("#tx-lo").textContent = fmtP(x.lo); $("#tt-vol").textContent = "$" + usd(x.vol); if (x.cap) $("#tx-capbig").textContent = capFmt(x.cap); const pr = $("#tt-price"); if (pr) pr.textContent = fmtP(p.mk.price); const ch = $("#tx-chips"); if (ch) ch.innerHTML = chipsHtml(p); const fd = $("#tx-feed"); if (fd) fd.innerHTML = feedHtml(p); const hd = $("#tx-hold"); if (hd && p.holders) hd.textContent = p.holders.length; const sc = document.querySelector(".term.tx"); if (sc) { sc.classList.toggle("tx-up", x.chg >= 0); sc.classList.toggle("tx-dn", x.chg < 0); } };
   const reTerm = () => { if (!$("#term-tab")) return; chartOff?.update(); $("#term-tab").innerHTML = termTab(p); stats(); };
   const hl = async () => { if (!p.order) await loadActivity(); await loadHolders(p); stats(); if ((S.ttab || "trades") === "holders") reTerm(); };
   if (!p.trades) loadTrades(p).then(() => { reTerm(); hl(); }); else { reTerm(); if (!p.holders) hl(); }
@@ -564,7 +575,7 @@ function startTerminal(p) {
     const before = p.mk.price; await loadChain(p); if (!p.mk) return;
     if (!p.trades || !p.trades.length) { await loadTrades(p); reTerm(); }
     if (Math.abs(p.mk.price - before) / before > 1e-6) {
-      const el = $("#tt-price"); el.textContent = fmtP(p.mk.price);
+      const el = $("#tx-capbig") || $("#tt-price"); el.textContent = capFmt(stats24(p).cap) !== "–" ? capFmt(stats24(p).cap) : fmtP(p.mk.price);
       const mo = $("#tx-mood"); if (mo) { const dn = p.mk.price < before, base = stats24(p).chg; mo.src = `./assets/mood-${dn ? "down" : "up"}.webp`; mo.classList.remove("pop"); void mo.offsetWidth; mo.classList.add("pop"); clearTimeout(S.moodT); S.moodT = setTimeout(() => { const m2 = $("#tx-mood"); if (m2) m2.src = `./assets/mood-${base > 1 ? "up" : base < -1 ? "down" : "calm"}.webp`; }, 3500); }
       el.classList.remove("flash-up", "flash-dn"); void el.offsetWidth; el.classList.add(p.mk.price > before ? "flash-up" : "flash-dn");
       const n0 = (p.trades || []).length; await loadTrades(p); reTerm();
