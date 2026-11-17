@@ -21,10 +21,12 @@ const hue = (s) => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charC
 const dAva = (s, z) => `<span class="ava" style="width:${z}px;height:${z}px;background:conic-gradient(from ${hue(s)}deg, hsl(${hue(s)} 70% 55%), hsl(${(hue(s) + 140) % 360} 65% 45%), hsl(${hue(s)} 70% 55%))"></span>`;
 const ago = (t) => { const s = Math.max(1, nowS() - t); return s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m` : s < 86400 ? `${Math.floor(s / 3600)}h` : `${Math.floor(s / 86400)}d`; };
 const bot = (i) => { const n = BOTS[i % BOTS.length]; return { n, a: n }; };
+const pick = (key, i) => { const au = REG.get(key)?.authors?.() || []; if (au.length) { const x = au[i % au.length]; return { n: x.n, a: x.a }; } return bot(i); };
 function seed(key) {
   let m = load(key); if (m) return m;
   const L = LINES[lang()], t0 = nowS(); m = [];
-  for (let i = 0; i < 6; i++) { const b = bot(Math.floor(Math.random() * 8)); m.push({ id: "s" + i + Math.random().toString(36).slice(2, 6), n: b.n, a: b.a, t: L[Math.floor(Math.random() * L.length)], ts: t0 - (6 - i) * 260 - Math.floor(Math.random() * 120), r: i % 2 ? { "🔥": 1 + Math.floor(Math.random() * 4) } : {} }); }
+  for (let i = 0; i < 6; i++) { const b = pick(key, Math.floor(Math.random() * 8)); m.push({ id: "s" + i + Math.random().toString(36).slice(2, 6), n: b.n, a: b.a, t: L[Math.floor(Math.random() * L.length)], ts: t0 - (6 - i) * 260 - Math.floor(Math.random() * 120), r: i % 2 ? { "🔥": 1 + Math.floor(Math.random() * 4) } : {} }); }
+  m.forEach((x, i) => { x.v = 40 + Math.floor(Math.random() * 900); if (i >= 3 && Math.random() < 0.55) { const tg = m.slice(0, i).filter((y) => !y.re); if (tg.length) x.re = tg[Math.floor(Math.random() * tg.length)].id; } });
   save(key, m); return m;
 }
 const msgHtml = (m, byId, ctx, me) => {
@@ -33,8 +35,25 @@ const msgHtml = (m, byId, ctx, me) => {
   return `<li class="th-m${mine ? " me" : ""}" data-id="${m.id}">${(ctx.avatar || dAva)(m.a || m.n, 34)}<div class="th-b"><div class="th-h"><b>${esc(m.n)}</b>${tag}<small>${ago(m.ts)}</small></div>${rep ? `<div class="th-q"><i>${esc(rep.n)}</i> ${rep.g && !rep.t ? "GIF" : esc(rep.t.slice(0, 70))}</div>` : ""}${m.g ? `<div class="th-gifw"><img src="${esc(m.g)}" alt="GIF" loading="lazy" referrerpolicy="no-referrer"></div>${m.t ? `<p>${esc(m.t)}</p>` : ""}` : `<p>${esc(m.t)}</p>`}<div class="th-a">${rx}<button type="button" class="th-rx add" data-thr="🔥" data-id="${m.id}" aria-label="React">+🔥</button><button type="button" class="th-re" data-thre="${m.id}">${T("Reply", "Responder")}</button></div></div></li>`;
 };
 const evHtml = (e) => `<li class="th-e ${e.buy ? "b" : "s"}"><i></i><span><b>${esc(e.n)}</b> ${e.buy ? T("bought", "compró") : T("sold", "vendió")} <em>$${e.usd}</em></span><small>${ago(e.ts)}</small></li>`;
+const IC = { re: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.6A8 8 0 1 1 21 12z"/></svg>', lk: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 5.6a5.2 5.2 0 0 0-7.4 0L12 7l-1.4-1.4a5.2 5.2 0 0 0-7.4 7.4L12 21.8l8.8-8.8a5.2 5.2 0 0 0 0-7.4z"/></svg>', sh: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>', ey: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>' };
+function xpHtml(key, m, ctx, me, kids, isReply, i) {
+  const tag = ctx.tag?.(m) || "", mine = me && m.a && String(m.a).toLowerCase() === String(me.a).toLowerCase(), fol = !!ctx.isFol?.(m.a);
+  const likes = (m.r && m.r["♥"]) || 0; let liked = false; try { liked = localStorage.getItem("hf-thmy-" + key + m.id + "♥") === "1"; } catch {}
+  const others = Object.entries(m.r || {}).filter(([e, n]) => e !== "♥" && n > 0).map(([e, n]) => `<button type="button" class="th-rx on" data-thr="${e}" data-id="${m.id}">${e} <b>${n}</b></button>`).join("");
+  const body = m.g ? `<div class="th-gifw"><img src="${esc(m.g)}" alt="GIF" loading="lazy" referrerpolicy="no-referrer"></div>${m.t ? `<p>${esc(m.t)}</p>` : ""}` : `<p>${esc(m.t)}</p>`;
+  return `<article class="xp${isReply ? " rp" : ""}${mine ? " me" : ""}" data-id="${m.id}" style="--i:${i || 0}"><div class="xp-l">${(ctx.avatar || dAva)(m.a || m.n, isReply ? 30 : 42)}${kids ? '<i class="xp-line"></i>' : ""}</div>
+    <div class="xp-r"><div class="xp-h"><b>${esc(m.n)}</b>${tag}<span>${ago(m.ts)}</span>${!mine && m.a && ctx.toggleFol ? `<button type="button" class="xp-f${fol ? " on" : ""}" data-xpf="${esc(m.a)}">${fol ? T("Following", "Siguiendo") : T("Follow", "Seguir")}</button>` : ""}</div>
+    ${body}${(!isReply && ctx.card?.(m)) || ""}${others ? `<div class="xp-o">${others}</div>` : ""}
+    <div class="xp-a"><button type="button" data-thre="${m.id}" aria-label="${T("Reply", "Responder")}">${IC.re}<b>${kids ? kids.n : ""}</b></button><button type="button" data-xl="${m.id}" class="${liked ? "on" : ""}" aria-label="Like">${IC.lk}<b>${likes || ""}</b></button><button type="button" data-xs="${m.id}" aria-label="${T("Share", "Compartir")}">${IC.sh}</button>${m.v ? `<span class="xp-v">${IC.ey}${m.v}</span>` : ""}</div>${kids ? kids.h : ""}</div></article>`;
+}
+function xListHtml(key, ctx, msgs, me) {
+  const tops = msgs.filter((m) => !m.re || !msgs.some((y) => y.id === m.re)).sort((a, b) => b.ts - a.ts).slice(0, 40);
+  if (!tops.length) return `<p class="th-empty">${T("Be the first to post.", "Sé el primero en publicar.")}</p>`;
+  return `<div class="xp-l-wrap">${tops.map((m, i) => { const ks = msgs.filter((y) => y.re === m.id).sort((a, b) => a.ts - b.ts); const kids = ks.length ? { n: ks.length, h: `<div class="xp-kids">${ks.map((k) => xpHtml(key, k, ctx, me, null, true, 0)).join("")}</div>` } : null; return xpHtml(key, m, ctx, me, kids, false, i); }).join("")}</div>`;
+}
 function listHtml(key) {
   const ctx = REG.get(key), msgs = load(key) || [], me = ctx.me?.(), byId = Object.fromEntries(msgs.map((m) => [m.id, m]));
+  if (ctx.x) return xListHtml(key, ctx, msgs, me);
   const items = msgs.map((m) => ({ ts: m.ts, h: msgHtml(m, byId, ctx, me) })).concat((ctx.events?.() || []).map((e) => ({ ts: e.ts, h: evHtml(e) }))).sort((a, b) => b.ts - a.ts).slice(0, 60);
   return items.length ? `<ul class="th-l">${items.map((x) => x.h).join("")}</ul>` : `<p class="th-empty">${T("Be the first to write.", "Sé el primero en escribir.")}</p>`;
 }
@@ -43,9 +62,9 @@ export function threadHtml(key, ctx) {
   const me = ctx.me?.(), n = (load(key) || []).length;
   const comp = me ? `<form class="th-f" data-thf><div class="th-rp" hidden></div><div class="th-row">${(ctx.avatar || dAva)(me.a, 34)}<textarea rows="1" maxlength="200" placeholder="${T("Write something…", "Escribe algo…")}" aria-label="${T("Message", "Mensaje")}"></textarea><button class="th-s" type="submit" aria-label="${T("Send", "Enviar")}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div><div class="th-em"><button type="button" class="th-gif" data-thg>GIF</button>${EMOJI.map((e) => `<button type="button" data-the="${e}">${e}</button>`).join("")}<span class="th-c">0/200</span></div><div class="th-gp" hidden><label class="th-up"><input type="file" accept="image/gif,image/webp,image/png,image/jpeg" data-thgf>${T("Upload from your gallery", "Subir desde tu galería")}<small>${T("Up to 350 KB", "Hasta 350 KB")}</small></label><div class="th-ln"><input type="url" placeholder="${T("Or paste a GIF link (https)", "O pega el enlace de un GIF (https)")}" data-thgu><button type="button" data-thgl>${T("Add", "Añadir")}</button></div></div></form>`
     : `<button type="button" class="th-con" data-thc>${T("Connect your wallet to join the thread", "Conecta tu wallet para escribir en el hilo")}</button>`;
-  return `<div class="th" data-th="${esc(key)}"><div class="th-top"><b>${T("Thread", "Hilo")}</b><small>${n} ${T("messages", "mensajes")}</small></div>${comp}<div class="th-list">${listHtml(key)}</div></div>`;
+  return `<div class="th${ctx.x ? " th-x th-in" : ""}" data-th="${esc(key)}"><div class="th-top"><b>${ctx.x ? T("Posts", "Publicaciones") : T("Thread", "Hilo")}</b><small>${n} ${T("messages", "mensajes")}</small></div>${comp}<div class="th-list">${listHtml(key)}</div></div>`;
 }
-const refresh = (root) => { const key = root.dataset.th; if (!REG.has(key)) return; root.querySelector(".th-list").innerHTML = listHtml(key); const s = root.querySelector(".th-top small"); if (s) s.textContent = `${(load(key) || []).length} ${T("messages", "mensajes")}`; };
+const refresh = (root) => { const key = root.dataset.th; if (!REG.has(key)) return; setTimeout(() => root.classList.remove("th-in"), 900); root.querySelector(".th-list").innerHTML = listHtml(key); const s = root.querySelector(".th-top small"); if (s) s.textContent = `${(load(key) || []).length} ${T("messages", "mensajes")}`; };
 function postGif(root, src) {
   const key = root.dataset.th, ctx = REG.get(key), me = ctx.me?.(); if (!me || !gifOk(src)) return false;
   const ta = root.querySelector("textarea"), cap = (ta?.value || "").trim().slice(0, 200), m = load(key) || [];
@@ -62,7 +81,7 @@ function reactTo(root, id, emoji) {
   x.r = x.r || {}; x.r[emoji] = Math.max(0, (x.r[emoji] || 0) + (had ? -1 : 1)); try { had ? localStorage.removeItem(mk) : localStorage.setItem(mk, "1"); } catch {} save(key, m); refresh(root);
 }
 function replyTo(root, id) {
-  const key = root.dataset.th, x = (load(key) || []).find((y) => y.id === id); if (!x) return; root.dataset.re = x.id; const rp = root.querySelector(".th-rp");
+  const key = root.dataset.th, x = (load(key) || []).find((y) => y.id === id); if (!x) return; root.dataset.re = x.re || x.id; const rp = root.querySelector(".th-rp");
   if (rp) { rp.hidden = false; rp.innerHTML = `${T("Replying to", "Respondiendo a")} <b>${esc(x.n)}</b> <button type="button" data-thx aria-label="${T("Cancel", "Cancelar")}">✕</button>`; } root.querySelector("textarea")?.focus();
 }
 let MENU = null;
@@ -84,6 +103,9 @@ if (!window.__thInit) {
   document.addEventListener("keydown", (e) => { const ta = e.target.closest?.(".th-f textarea"); if (ta && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ta.closest("form").requestSubmit(); } });
   document.addEventListener("click", (e) => {
     const root = e.target.closest(".th"); if (!root) return;
+    const xl = e.target.closest("[data-xl]"); if (xl) { reactTo(root, xl.dataset.xl, "♥"); return; }
+    const xf = e.target.closest("[data-xpf]"); if (xf) { REG.get(root.dataset.th)?.toggleFol?.(xf.dataset.xpf); refresh(root); return; }
+    if (e.target.closest("[data-xs]")) { try { navigator.clipboard?.writeText(location.href); } catch {} return; }
     if (e.target.closest("[data-thg]")) { const gp = root.querySelector(".th-gp"); gp.hidden = !gp.hidden; return; }
     if (e.target.closest("[data-thgl]")) { const u = root.querySelector("[data-thgu]"); if (!postGif(root, u.value.trim())) u.setCustomValidity?.("https"); u.value = ""; return; }
     if (e.target.closest("[data-thc]")) { document.getElementById("connect")?.click(); return; }
@@ -96,16 +118,16 @@ if (!window.__thInit) {
   const stop = () => { clearTimeout(lp); lp = null; };
   document.addEventListener("pointerdown", (e) => {
     if (MENU && !e.target.closest(".th-menu")) closeMenu();
-    const li = e.target.closest(".th-m"); if (!li || e.target.closest("button, a, textarea")) return; sx = e.clientX; sy = e.clientY; stop(); lp = setTimeout(() => { lp = null; li.dataset.lp = "1"; openMenu(li); }, 420);
+    const li = e.target.closest(".th-m, .xp:not(.rp)"); if (!li || e.target.closest("button, a, textarea")) return; sx = e.clientX; sy = e.clientY; stop(); lp = setTimeout(() => { lp = null; li.dataset.lp = "1"; openMenu(li); }, 420);
   });
   document.addEventListener("pointermove", (e) => { if (lp && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) stop(); });
-  document.addEventListener("pointerup", (e) => { stop(); const li = e.target.closest(".th-m"); if (!li || e.target.closest("button, a") || li.dataset.lp) { if (li) delete li.dataset.lp; return; }
+  document.addEventListener("pointerup", (e) => { stop(); const li = e.target.closest(".th-m, .xp:not(.rp)"); if (!li || e.target.closest("button, a") || li.dataset.lp) { if (li) delete li.dataset.lp; return; }
     const n = Date.now(); if (lastTap.id === li.dataset.id && n - lastTap.t < 320) { reactTo(li.closest(".th"), li.dataset.id, "🔥"); lastTap = { id: "", t: 0 }; } else lastTap = { id: li.dataset.id, t: n }; });
   document.addEventListener("pointercancel", stop); document.addEventListener("scroll", () => { stop(); }, true);
-  document.addEventListener("contextmenu", (e) => { const li = e.target.closest(".th-m"); if (li) { e.preventDefault(); stop(); openMenu(li); } });
+  document.addEventListener("contextmenu", (e) => { const li = e.target.closest(".th-m, .xp:not(.rp)"); if (li) { e.preventDefault(); stop(); openMenu(li); } });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
   // en modo demo la conversación sigue viva
-  setInterval(() => { if (!DEMO) return; document.querySelectorAll(".th").forEach((root) => { const key = root.dataset.th; if (!REG.has(key) || !root.isConnected || MENU || Math.random() > 0.45) return; const L = LINES[lang()], b = bot(Math.floor(Math.random() * 8)), m = load(key) || [], me = REG.get(key).me?.(); m.push({ id: "b" + nowS() + Math.random().toString(36).slice(2, 5), n: b.n, a: b.a, t: L[Math.floor(Math.random() * L.length)], ts: nowS(), r: {} }); save(key, m); if (!root.querySelector("textarea:focus")) refresh(root); }); }, 7000);
+  setInterval(() => { if (!DEMO) return; document.querySelectorAll(".th").forEach((root) => { const key = root.dataset.th; if (!REG.has(key) || !root.isConnected || MENU || Math.random() > 0.45) return; const L = LINES[lang()], b = pick(key, Math.floor(Math.random() * 8)), m = load(key) || [], me = REG.get(key).me?.(); m.push({ id: "b" + nowS() + Math.random().toString(36).slice(2, 5), n: b.n, a: b.a, t: L[Math.floor(Math.random() * L.length)], ts: nowS(), r: {} }); save(key, m); if (!root.querySelector("textarea:focus")) refresh(root); }); }, 7000);
   setInterval(() => document.querySelectorAll(".th").forEach((r) => { if (REG.has(r.dataset.th) && !MENU && !r.querySelector("textarea:focus")) refresh(r); }), 15000);
 }
 

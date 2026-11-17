@@ -17,11 +17,11 @@ const maOf = (cs, n) => cs.map((c, i) => (i + 1 < n ? null : { time: c.time, val
 const emaOf = (v, n) => { const k = 2 / (n + 1), out = []; let e = null; v.forEach((x, i) => { e = e == null ? x : x * k + e * (1 - k); out.push(e); }); return out; };
 const rsiOf = (c, n = 14) => { const out = []; let g = 0, l = 0; for (let i = 1; i < c.length; i++) { const d = c[i] - c[i - 1]; const up = Math.max(d, 0), dn = Math.max(-d, 0); if (i <= n) { g += up / n; l += dn / n; } else { g = (g * (n - 1) + up) / n; l = (l * (n - 1) + dn) / n; } if (i >= n) out.push([i, l === 0 ? 100 : 100 - 100 / (1 + g / l)]); } return out; };
 const PHONE = () => matchMedia("(max-width: 900px)").matches;
-export function mountChart(el, { id, getData, periods, period, onPeriod, labels = {}, fsTarget, onFace, onLine }) {
+export function mountChart(el, { id, getData, periods, period, onPeriod, labels = {}, fsTarget, onFace, onLine, mode: modeOpt }) {
   const L = { candles: "Candles", line: "Line", ma: "MA", draw: "Line", clear: "Clear", full: "Full screen", exit: "Exit", vol: "Vol", price: "Price", cap: "Market cap", ...labels };
   const key = `hf-hl-${id}`;
   let hl = []; try { hl = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
-  const st = { flow: (() => { try { return localStorage.getItem("hf-flow") === "1"; } catch { return false; } })(), ind: null, heat: (() => { try { return localStorage.getItem("hf-heat") !== "0"; } catch { return true; } })(), faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: PHONE() ? "line" : "candle", ma: !matchMedia("(max-width: 900px)").matches, draw: false, period, k: 1, last: null };
+  const st = { flow: (() => { try { return localStorage.getItem("hf-flow") === "1"; } catch { return false; } })(), ind: null, heat: (() => { try { return localStorage.getItem("hf-heat") !== "0"; } catch { return true; } })(), faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: modeOpt || (PHONE() ? "line" : "candle"), ma: !matchMedia("(max-width: 900px)").matches, draw: false, period, k: 1, last: null };
   el.classList.add("cp");
   el.innerHTML = `<div class="cp-bar">
       <div class="cp-per" role="tablist">${periods.map((k) => `<button type="button" data-per="${k}" aria-selected="${k === period}">${k}</button>`).join("")}</div>

@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Posts": "Publicaciones", "Be the first to post.": "Sé el primero en publicar.", "Profit": "Ganancia", "Spent": "Gastado", "Entry price": "Precio de entrada",
   "by": "por", "Value": "Valor", "Volume 24h": "Volumen 24h", "Messages": "Mensajes", "One community per token. Read, write and trade.": "Una comunidad por token. Lee, escribe y opera.",
   "Communities": "Comunidades", "Rounds filling": "Rondas llenándose", "One thread per token. Tap one to read, write and trade.": "Un hilo por cada token. Toca uno para leer, escribir y operar.", "Search a token": "Buscar un token", "No tokens yet.": "Todavía no hay tokens.", "Be the first to write": "Sé el primero en escribir",
   "Fullest round": "Ronda más llena",

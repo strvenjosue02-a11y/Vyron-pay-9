@@ -1762,34 +1762,62 @@ function route() {
     document.querySelectorAll("[data-tmphoto]").forEach((inp) => inp.addEventListener("change", (e) => pickImage(e, 128, 40000, (url) => { (S.tmPhotos ||= [])[inp.dataset.tmphoto] = url; $(`#tmp-${inp.dataset.tmphoto}`).style.backgroundImage = `url("${url}")`; })));
     preview(); }
 }
-// ===== Comunidad de un token (celular): hilo, holders y operaciones. Operar lleva al trading.
+// ===== Comunidad de un token (celular): el trade arriba, las publicaciones abajo =====
+const folToggle = (x) => { try { const l = JSON.parse(localStorage.getItem("hf-follow") || "[]"), k = x.toLowerCase(), n = l.indexOf(k); if (n < 0) l.push(k); else l.splice(n, 1); localStorage.setItem("hf-follow", JSON.stringify(l)); } catch {} };
+const favToggle = (id) => { try { const l = JSON.parse(localStorage.getItem("hf-fav") || "[]"), n = l.indexOf(id); if (n < 0) l.push(id); else l.splice(n, 1); localStorage.setItem("hf-fav", JSON.stringify(l)); } catch {} };
+const mny = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2) + "M" : v >= 1e3 ? (v / 1e3).toFixed(1) + "K" : v >= 100 ? v.toFixed(0) : v.toFixed(2));
+function posCard(p, addr) {
+  const me = String(addr || "").toLowerCase(); if (!me || !p.mk) return ""; const tr = (p.trades || []).filter((t) => t.who && t.who.toLowerCase() === me); if (!tr.length) return "";
+  let spent = 0, got = 0, bal = 0, bought = 0; for (const t of tr) { const u = Number(t.usdc) / 1e6, k = t.tok != null ? Number(t.tok) / 1e18 : (t.price ? u / t.price : 0); if (t.buy) { spent += u; bal += k; bought += k; } else { got += u; bal -= k; } }
+  if (spent <= 0) return ""; const val = Math.max(0, bal) * p.mk.price, pnl = val + got - spent, pct = (pnl / spent) * 100, avg = bought > 0 ? spent / bought : 0, up = pnl >= 0;
+  return `<div class="xp-c"><div><small>${T2("Position", "Posición")}</small><b>$${mny(val)}</b></div><div class="r"><small>${T2("Profit", "Ganancia")}</small><b class="${up ? "u" : "d"}">${up ? "+" : "-"}$${mny(Math.abs(pnl))} <em>${up ? "↑" : "↓"} ${Math.abs(pct).toFixed(1)}%</em></b></div><div><small>${T2("Spent", "Gastado")}</small><b>$${mny(spent)}</b></div><div class="r"><small>${T2("Entry price", "Precio de entrada")}</small><b>${fmtP(avg)}</b></div></div>`;
+}
+const xCtx = (p) => ({ x: true, seed: true, me: () => (S.me ? { a: S.me, n: uname(S.me) } : null), avatar: (x, z) => avatar(x, z),
+  tag: (m) => { const a2 = String(m.a || "").toLowerCase(); if (a2 && p.q.creator && a2 === p.q.creator.toLowerCase()) return `<em class="th-tag c">${T2("Creator", "Creador")}</em>`; const h = (p.holders || []).find((x) => String(x.a).toLowerCase() === a2); return h && p.supply ? `<em class="th-tag">${((Number(h.b) / Number(p.supply)) * 100).toFixed(1)}%</em>` : ""; },
+  events: () => [], authors: () => traderBoard(p, "all").slice(0, 8).map((r) => ({ a: r.a, n: uname(r.a) })), card: (m) => posCard(p, m.a), isFol: (x) => isFol(x), toggleFol: (x) => folToggle(x) });
 const cmBody = (p) => {
-  const t = S.cmTab || "thread";
-  if (t === "thread") return chatHtml(p);
+  const t = S.cmTab || "posts"; if (t === "posts") return threadHtml("tok-" + p.id, xCtx(p));
   const old = S.ttab; S.ttab = t === "holders" ? "holders" : "trades"; let h = ""; try { h = termTab(p); } finally { S.ttab = old; } return h;
 };
+function faces4(p) {
+  const top = traderBoard(p, "all").slice(0, 4).map((r) => r.a.toLowerCase()), by = {};
+  (p.trades || []).forEach((t) => { if (t.ts && t.who && top.includes(t.who.toLowerCase())) (by[t.who.toLowerCase()] ||= []).push(t); });
+  return Object.values(by).flatMap((l) => l.slice(-1)).map((t) => ({ t: t.ts, price: t.price, buy: t.buy, who: t.who, whale: isWhale(p, t), name: `${uname(t.who)} ${t.buy ? "bought" : "sold"} $${usd(t.usdc)}`, html: avatar(t.who, 32) }));
+}
+const holdN = (p) => (p.holders ? p.holders.filter((h) => !holderLabel(p, h.a) || holderLabel(p, h.a) === "Team").length : null);
 function communityHtml(p) {
-  const x = stats24(p), up = x.chg >= 0, t = S.cmTab || "thread", fav = favs().includes(p.id);
-  return `<section class="cm" data-cm="${p.id}">
-    <header class="cm-h"><a class="cm-bk" href="#/lc" aria-label="Back">‹</a><span class="cm-av">${logoSrc(p) ? `<img src="${esc(logoSrc(p))}" alt="">` : mark(p, "lg")}</span>
-      <div class="cm-t"><h1>${esc(p.q.name)}</h1><small>${esc(p.q.symbol)} · ${short(p.q.creator)}</small></div>
-      <div class="cm-p"><b id="cm-px">${fmtP(p.mk.price)}</b><em id="cm-ch" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(1)}%</em></div></header>
-    <div class="cm-st"><div><small>${T2("Value", "Valor")}</small><b>$${usd(x.cap)}</b></div><div><small>${T2("Holders", "Holders")}</small><b id="cm-hn">${p.holders ? p.holders.filter((h) => !holderLabel(p, h.a) || holderLabel(p, h.a) === "Team").length : "–"}</b></div><div><small>${T2("Liquidity", "Liquidez")}</small><b>🔒 ${T2("Locked", "Bloqueada")}</b></div></div>
-    <div class="cm-tabs" role="tablist">${[["thread", T2("Thread", "Hilo")], ["holders", "Holders"], ["trades", T2("Trades", "Operaciones")]].map(([k, n]) => `<button type="button" data-cmt="${k}" aria-selected="${t === k}">${n}</button>`).join("")}</div>
-    <div class="cm-b" id="cm-b">${cmBody(p)}</div>
-    <div class="cm-op"><a class="btn btn-ember btn-block" href="#/trade/${p.id}?op=1">${T2("Trade", "Operar")} ${esc(p.q.symbol)}</a></div></section>`;
+  const x = stats24(p), up = x.chg >= 0, t = S.cmTab || "posts", fav = favs().includes(p.id), hn = holdN(p), lg = logoSrc(p) ? `<img src="${esc(logoSrc(p))}" alt="">` : mark(p, "lg");
+  const f0 = (p.trades || []).find((q) => q.ts), age = f0 ? agoS((S.now || Date.now() / 1000) - f0.ts) : "";
+  const by = p.q.creator ? uname(p.q.creator) : "";
+  return `<section class="cm cx" data-cm="${p.id}">
+    <header class="cx-bar"><a class="cx-bk" href="#/" aria-label="Back">‹</a><span class="cx-av">${lg}</span><b class="cx-nm">${esc(p.q.symbol)}</b>${age ? `<span class="cx-pill">${age}</span>` : ""}<span class="cx-pill" id="cx-hn">${hn ?? "–"} holders</span><button type="button" class="cx-ic${fav ? " on" : ""}" data-cxfav aria-label="Favorite"><svg width="21" height="21" viewBox="0 0 24 24" fill="${fav ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></button><button type="button" class="cx-ic" data-cxsh aria-label="Share"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></header>
+    <div class="cx-sum"><div class="cx-t"><h1>${esc(p.q.name)}</h1><small>${esc(p.q.symbol)}${by ? ` ${T2("by", "por")} ${esc(by)}` : ""}</small></div><div class="cx-px"><b id="cm-px">${fmtP(p.mk.price)}</b><em id="cm-ch" class="${up ? "u" : "d"}">${up ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%</em></div></div>
+    <div class="cx-chart" id="cm-chart"></div>
+    <div class="cx-tabs" role="tablist">${[["posts", T2("Posts", "Publicaciones")], ["holders", "Holders"], ["trades", T2("Trades", "Operaciones")]].map(([k, n]) => `<button type="button" data-cmt="${k}" aria-selected="${t === k}">${n}</button>`).join("")}</div>
+    <div class="cx-b" id="cm-b">${cmBody(p)}</div>
+    <div class="cx-cta"><a class="cx-buy" data-cxs="buy" href="#/trade/${p.id}?op=1">${T2("Buy", "Comprar")}</a><a class="cx-sell" data-cxs="sell" href="#/trade/${p.id}?op=1">${T2("Sell", "Vender")}</a></div></section>`;
 }
 function renderCommunity(p) {
   clearInterval(S.poll); if (chartOff) { chartOff.destroy(); chartOff = null; }
   document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
   $("#app").innerHTML = communityHtml(p); scrollTo(0, 0);
-  const paint = async () => { if (!location.hash.startsWith(`#/trade/${p.id}`) || /[?&]op=1/.test(location.hash)) { clearInterval(S.poll); return; }
-    try { await loadHolders(p); } catch {}
-    const x = stats24(p); if ($("#cm-px")) $("#cm-px").textContent = fmtP(p.mk.price); if ($("#cm-ch")) { $("#cm-ch").textContent = `${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(1)}%`; $("#cm-ch").className = x.chg >= 0 ? "u" : "d"; }
-    if ($("#cm-hn") && p.holders) $("#cm-hn").textContent = p.holders.filter((h) => !holderLabel(p, h.a) || holderLabel(p, h.a) === "Team").length;
-    if ((S.cmTab || "thread") !== "thread" && $("#cm-b")) $("#cm-b").innerHTML = cmBody(p); };
+  const es = (localStorage.getItem("hf-lang") || "en") === "es", el = $("#cm-chart");
+  if (el && p.mk) chartOff = mountChart(el, { id: p.id, mode: "candle", periods: ["1m", "5m", "15m", "1H"], period: PERIODS[S.period] && ["1m", "5m", "15m", "1H"].includes(S.period) ? S.period : "5m", onPeriod: (k) => (S.period = k),
+    getData: (per) => (p.mk ? { candles: buildCandles(p, per), round: p.mk.round, supply: p.supply ? Number(p.supply) / 1e18 : 0, marks: [], symbol: p.q.symbol, heat: null, faces: faces4(p), lines: [], trades: [] } : { candles: [], round: 0, supply: 0, marks: [] }),
+    onFace: (who) => traderCard(p, who), labels: es ? { flow: "Flujo", net: "Dinero neto que entra", heat: "Calor", faces: "Caras", tap: "Toca para ver el perfil", cap: "Valor total", price: "Precio", candles: "Velas", line: "Línea", ma: "Promedios", draw: "Dibujar", clear: "Borrar", full: "Pantalla completa", exit: "Salir", vol: "Vol" } : {} });
+  let last = p.mk.price;
+  const paint = async () => { if (!location.hash.startsWith(`#/trade/${p.id}`) || /[?&]op=1/.test(location.hash)) { clearInterval(S.poll); chartOff?.destroy(); chartOff = null; return; }
+    try { if (!p.trades) await loadTrades(p); await loadHolders(p); } catch {}
+    const x = stats24(p), px = $("#cm-px"); if (px) { px.textContent = fmtP(p.mk.price); if (p.mk.price !== last) { px.classList.remove("fu", "fd"); void px.offsetWidth; px.classList.add(p.mk.price > last ? "fu" : "fd"); last = p.mk.price; } }
+    const ch = $("#cm-ch"); if (ch) { ch.textContent = `${x.chg >= 0 ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%`; ch.className = x.chg >= 0 ? "u" : "d"; }
+    const hn = holdN(p); if ($("#cx-hn") && hn != null) $("#cx-hn").textContent = hn + " holders"; chartOff?.update();
+    if ((S.cmTab || "posts") !== "posts" && $("#cm-b")) $("#cm-b").innerHTML = cmBody(p); };
   paint(); S.poll = setInterval(paint, 4000);
-  $("#app").querySelector(".cm-tabs").onclick = (e) => { const b = e.target.closest("[data-cmt]"); if (!b) return; S.cmTab = b.dataset.cmt; document.querySelectorAll("[data-cmt]").forEach((x) => x.setAttribute("aria-selected", x === b)); $("#cm-b").innerHTML = cmBody(p); };
+  const root = $("#app");
+  root.querySelector(".cx-tabs").onclick = (e) => { const b = e.target.closest("[data-cmt]"); if (!b) return; S.cmTab = b.dataset.cmt; document.querySelectorAll("[data-cmt]").forEach((y) => y.setAttribute("aria-selected", y === b)); $("#cm-b").innerHTML = cmBody(p); };
+  root.querySelectorAll(".cx-cta a").forEach((b) => (b.onclick = () => { S.side = b.dataset.cxs; }));
+  root.querySelector("[data-cxfav]").onclick = (e) => { favToggle(p.id); const on = favs().includes(p.id); e.currentTarget.classList.toggle("on", on); e.currentTarget.querySelector("svg").setAttribute("fill", on ? "currentColor" : "none"); };
+  root.querySelector("[data-cxsh]").onclick = () => { try { navigator.share ? navigator.share({ title: p.q.name, url: location.href }) : navigator.clipboard?.writeText(location.href); } catch {} };
 }
 
 function bindAmount(p) {
