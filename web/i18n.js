@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Calls": "Llamadas", "Call": "Llamada", "Target": "Meta", "Time": "Plazo", "hits": "aciertos", "No calls yet. Make the first one from Posts.": "Todavía no hay llamadas. Haz la primera desde Publicaciones.",
   "Notify me": "Avísame", "Pinned": "Fijado", "Top traders here:": "Mejores traders aquí:", "We'll notify you about this community": "Te avisaremos de esta comunidad", "Notifications off": "Avisos desactivados",
   "Community": "Comunidad", "members": "miembros", "active now": "activos ahora", "posts": "publicaciones", "Join": "Unirme", "Joined": "Unido", "Join the people already here": "Súmate a quienes ya están aquí", "Community rules": "Reglas de la comunidad", "Be respectful, no spam and never share your keys. Holdfast will never message you first.": "Respeto, cero spam y nunca compartas tus llaves. Holdfast nunca te escribe primero.", "Members": "Miembros",
   "Posts": "Publicaciones", "Be the first to post.": "Sé el primero en publicar.", "Profit": "Ganancia", "Spent": "Gastado", "Entry price": "Precio de entrada",

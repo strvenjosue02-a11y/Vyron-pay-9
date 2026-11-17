@@ -7,7 +7,7 @@ import { CONFIG } from "./config.js";
 import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
 import { initI18n } from "./i18n.js";
 import { mountChart } from "./pro.js";
-import { threadHtml, threadPreview } from "./thread.js";
+import { threadHtml, threadPreview, callHtml } from "./thread.js";
 import { createDemo } from "./demo.js";
 import { setLaunchChain, loadChainLaunches, lcChainLive, showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote, nextClose } from "./launch.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, msgProfile, validProfile, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
@@ -1775,9 +1775,35 @@ function posCard(p, addr) {
   if (spent <= 0) return ""; const val = Math.max(0, bal) * p.mk.price, pnl = val + got - spent, pct = (pnl / spent) * 100, avg = bought > 0 ? spent / bought : 0, up = pnl >= 0;
   return `<div class="xp-c"><div><small>${T2("Position", "Posición")}</small><b>$${mny(val)}</b></div><div class="r"><small>${T2("Profit", "Ganancia")}</small><b class="${up ? "u" : "d"}">${up ? "+" : "-"}$${mny(Math.abs(pnl))} <em>${up ? "↑" : "↓"} ${Math.abs(pct).toFixed(1)}%</em></b></div><div><small>${T2("Spent", "Gastado")}</small><b>$${mny(spent)}</b></div><div class="r"><small>${T2("Entry price", "Precio de entrada")}</small><b>${fmtP(avg)}</b></div></div>`;
 }
+
+// ===== Llamadas y reputación (por llamadas acertadas) =====
+const RANKS = ["SCRIPT", "NETRUNNER", "FIXER", "LEGEND"];
+function repScan() {
+  const now = Date.now(); if (S._rep && now - S._rep.t < 2500) return S._rep.m; const m = {};
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!k || !k.startsWith("hf-th-") || k.startsWith("hf-thmy")) continue; let arr; try { arr = JSON.parse(localStorage.getItem(k) || "[]"); } catch { continue; }
+    if (!Array.isArray(arr)) continue; for (const x of arr) { if (x?.call?.res && x.a) { const id = String(x.a).toLowerCase(), r = (m[id] ||= { h: 0, m: 0, n: x.n || id }); x.call.res === "hit" ? r.h++ : r.m++; } } } } catch {}
+  S._rep = { t: now, m }; return m;
+}
+function rankOf(a) { const r = repScan()[String(a || "").toLowerCase()] || { h: 0, m: 0 }, n = r.h + r.m, acc = n ? r.h / n : 0; return n >= 10 && acc >= 0.8 ? 3 : n >= 6 && acc >= 0.65 ? 2 : n >= 3 && acc >= 0.5 ? 1 : 0; }
+const rankTag = (a) => `<em class="xp-rk r${rankOf(a)}">[${RANKS[rankOf(a)]}]</em>`;
+function callState(p, m) {
+  const c = m.call; if (!c || !p.mk) return null; const p0 = c.p0 || p.mk.price, tgt = p0 * c.x, now = S.now || Date.now() / 1000;
+  const mx = Math.max(p.mk.price, ...(p.trades || []).filter((t) => t.ts && t.ts >= m.ts).map((t) => t.price || 0));
+  let res = c.res; if (!res) { res = mx >= tgt ? "hit" : now > m.ts + c.h ? "miss" : "open"; if (res !== "open") { c.res = res; m._d = true; } }
+  const left = Math.max(0, c.h - (now - m.ts)), lt = left >= 3600 ? Math.floor(left / 3600) + " h " + Math.floor((left % 3600) / 60) + " m" : Math.floor(left / 60) + " m";
+  return { res, pct: res === "hit" ? 100 : ((mx / p0 - 1) / (c.x - 1)) * 100, p0: fmtP(p0), left: lt };
+}
+function callsHtml(p) {
+  let msgs = []; try { msgs = JSON.parse(localStorage.getItem("hf-th-tok-" + p.id) || "[]"); } catch {}
+  const cs = msgs.filter((x) => x.call).sort((x, y) => y.ts - x.ts); if (!cs.length) return `<p class="th-empty">${T2("No calls yet. Make the first one from Posts.", "Todavía no hay llamadas. Haz la primera desde Publicaciones.")}</p>`;
+  const rep = repScan(), by = {}; cs.forEach((x) => { const id = String(x.a || x.n).toLowerCase(); by[id] = by[id] || { a: x.a || x.n, n: x.n }; });
+  const top = Object.values(by).map((u) => { const r = rep[String(u.a).toLowerCase()] || { h: 0, m: 0 }, cnt = r.h + r.m; return { ...u, h: r.h, cnt, acc: cnt ? r.h / cnt : 0 }; }).filter((u) => u.cnt > 0).sort((x, y) => y.acc - x.acc || y.cnt - x.cnt).slice(0, 3);
+  return `${top.length ? `<div class="cl-top">${top.map((u, i) => `<div class="cl-t"><span class="cl-n">${i + 1}</span>${avatar(u.a, 34)}<div><b>${esc(u.n)}</b><small>${rankTag(u.a)} ${u.h}/${u.cnt} ${T2("hits", "aciertos")}</small></div><em>${Math.round(u.acc * 100)}%</em></div>`).join("")}</div>` : ""}
+    <div class="cl-l">${cs.map((x) => { const st = callState(p, x); return `<div class="cl-i"><div class="cl-h">${avatar(x.a || x.n, 30)}<b>${esc(x.n)}</b><span class="xp-hd">@${String(x.n).toLowerCase().replace(/[^a-z0-9]+/g, "_")}</span>${x.a ? rankTag(x.a) : ""}</div><p>${esc(x.t)}</p>${callHtml(x, st)}</div>`; }).join("")}</div>`;
+}
 const xCtx = (p) => ({ x: true, seed: true, me: () => (S.me ? { a: S.me, n: uname(S.me) } : null), avatar: (x, z) => avatar(x, z),
   tag: (m) => { const a2 = String(m.a || "").toLowerCase(); if (a2 && p.q.creator && a2 === p.q.creator.toLowerCase()) return `<em class="th-tag c">${T2("Creator", "Creador")}</em>`; const h = (p.holders || []).find((x) => String(x.a).toLowerCase() === a2); return h && p.supply ? `<em class="th-tag">${((Number(h.b) / Number(p.supply)) * 100).toFixed(1)}%</em>` : ""; },
-  events: () => [], authors: () => traderBoard(p, "all").slice(0, 8).map((r) => ({ a: r.a, n: uname(r.a) })), card: (m) => posCard(p, m.a), isFol: (x) => isFol(x), toggleFol: (x) => folToggle(x) });
+  events: () => [], sym: p.q.symbol, lockHref: `#/trade/${p.id}`, price: () => p.mk.price, rank: (m) => (m.a ? rankTag(m.a) : ""), callState: (m) => callState(p, m), canPost: () => { try { return !!CONFIG.demo || (S.me && p.q.creator && S.me.toLowerCase() === p.q.creator.toLowerCase()) || !!myPos(p); } catch { return false; } }, authors: () => traderBoard(p, "all").slice(0, 8).map((r) => ({ a: r.a, n: uname(r.a) })), card: (m) => posCard(p, m.a), isFol: (x) => isFol(x), toggleFol: (x) => folToggle(x) });
 const trBody = (p) => {
   const t = S.trTab || "trades";
   const old = S.ttab; S.ttab = t === "holders" ? "holders" : "trades"; let h = ""; try { h = termTab(p); } finally { S.ttab = old; } return h;
@@ -1844,6 +1870,7 @@ function activeNow(p) {
 const ccBody = (p) => {
   const t = S.ccTab || "posts";
   if (t === "posts") return `<div class="xc-pin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M9 3h6l-1 7 3 3H7l3-3z"/></svg><span><b>${T2("Pinned", "Fijado")}</b> ${T2("Be respectful, no spam and never share your keys. Holdfast will never message you first.", "Respeto, cero spam y nunca compartas tus llaves. Holdfast nunca te escribe primero.")}</span></div>` + threadHtml("tok-" + p.id, xCtx(p));
+  if (t === "calls") return callsHtml(p);
   if (t === "members") { const old = S.ttab; S.ttab = "holders"; let h = ""; try { h = termTab(p); } finally { S.ttab = old; } return h; }
   const c = p.q.creator ? uname(p.q.creator) : "–", f0 = (p.trades || []).find((q) => q.ts), age = f0 ? agoS((S.now || Date.now() / 1000) - f0.ts) : "–";
   return `<div class="cc-ab"><div><small>${T2("Creator", "Creador")}</small><b>${esc(c)}</b></div><div><small>${T2("Contract", "Contrato")}</small><b>${short(p.address || p.q.creator)}</b></div><div><small>${T2("Liquidity", "Liquidez")}</small><b>${T2("Locked forever", "Bloqueada para siempre")}</b></div><div><small>${T2("Market open", "Mercado abierto")}</small><b>${T2("", "hace ")}${age}${T2(" ago", "")}</b></div></div>`;
@@ -1864,7 +1891,7 @@ function communityHtml(p) {
     <div class="xc-st"><span><b id="cc-m">${kfmt(hn ?? 0)}</b> holders</span><span><b class="xc-eq"><span class="cc-eq"><i></i><i></i><i></i><i></i></span><span id="cc-a">${activeNow(p)}</span></b> ${T2("active now", "activos ahora")}</span><span><b id="cc-p">${pv ? pv.c : 0}</b> ${T2("posts", "publicaciones")}</span></div>
     ${faces.length ? `<div class="xc-by"><span class="cc-stk">${faces.map((r) => avatar(r.a, 24)).join("")}</span><small>${T2("Top traders here:", "Mejores traders aquí:")} <b>${faces.map((r) => esc(uname(r.a))).join(", ")}</b></small></div>` : ""}
     <a class="xc-px" href="#/trade/${p.id}"><b id="cc-px">${fmtP(p.mk.price)}</b><em id="cc-ch" class="${up ? "u" : "d"}">${up ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%</em><span>${T2("Trade it", "Operar")} ›</span></a></div>
-    <div class="cc-tabs xc-tabs" role="tablist">${[["posts", T2("Posts", "Publicaciones")], ["members", "Holders"], ["about", T2("About", "Acerca")]].map(([k, n2]) => `<button type="button" data-cct="${k}" aria-selected="${t === k}">${n2}</button>`).join("")}</div>
+    <div class="cc-tabs xc-tabs" role="tablist">${[["posts", T2("Posts", "Publicaciones")], ["calls", T2("Calls", "Llamadas")], ["members", "Holders"], ["about", T2("About", "Acerca")]].map(([k, n2]) => `<button type="button" data-cct="${k}" aria-selected="${t === k}">${n2}</button>`).join("")}</div>
     <div class="cc-b" id="cc-b">${ccBody(p)}</div></section>`;
 }
 function renderCommunity(p) {
