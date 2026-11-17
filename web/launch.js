@@ -259,5 +259,5 @@ if (!window.__tiltInit) {
 export function nextClose() {
   const o = L.filter((x) => x.status === "open" && x.dl && x.dl > now()).sort((a, b) => a.dl - b.dl)[0];
   if (!o) return null; const top = L.filter((x) => x.status === "open" && !isExp(x)).sort((a, b) => b.raised / b.goal - a.raised / a.goal)[0];
-  return { name: o.name, sym: o.sym, secs: Math.max(0, Math.floor(o.dl - now())), id: o.id, fillName: top?.name, fillSym: top?.sym, fillPct: top ? Math.round((top.raised / top.goal) * 100) : 0, fillRaised: top ? top.raised : 0 };
+  return { name: o.name, sym: o.sym, secs: Math.max(0, Math.floor(o.dl - now())), id: o.id, fillName: top?.name, fillSym: top?.sym, fillId: top?.id, fillGoal: top?.goal || 0, fillPct: top ? Math.round((top.raised / top.goal) * 100) : 0, fillRaised: top ? top.raised : 0 };
 }

@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Fullest round": "Ronda más llena",
   "If it fills,": "Si se llena,", "it opens.": "se abre.", "Back a token with USDC for 24 hours. When the round fills, trading opens. If it doesn't, you get everything back.": "Respalda un token con USDC durante 24 horas. Cuando la ronda se llena, se abre el mercado. Si no, recuperas todo.", "Launch a token": "Lanzar un token", "Put in USDC": "Mete USDC", "The round fills": "La ronda se llena", "Trading opens": "Se abre el mercado", "Liquidity locked forever": "Liquidez bloqueada para siempre", "Automatic refund": "Reembolso automático", "Same price for everyone": "Mismo precio para todos", "hours": "horas", "minutes": "minutos", "seconds": "segundos", "Upload from your gallery": "Subir desde tu galería", "Up to 350 KB": "Hasta 350 KB", "Or paste a GIF link (https)": "O pega el enlace de un GIF (https)", "Add": "Añadir",
   "Profile": "Perfil", "Locked": "Bloqueada",
   "Copy text": "Copiar texto",

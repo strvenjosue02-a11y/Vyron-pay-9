@@ -1686,21 +1686,22 @@ function reviewCard(p) {
 let heroOff = null;
 function startHero() {
   if (heroOff) { heroOff(); heroOff = null; }
-  const hx = $("#hx"), v = $("#hx-vid"); if (!hx) return;
-  const cd = () => { const n = nextClose(); const box = $("#hx-cd"); if (!box) return; if (!n) { box.hidden = true; return; } box.hidden = false;
-    const s = n.secs, p2 = (x) => String(x).padStart(2, "0"); $("#hx-cdl").textContent = `${n.name} closes in`; $("#hx-ch").textContent = p2(Math.floor(s / 3600)); $("#hx-cm").textContent = p2(Math.floor((s % 3600) / 60)); $("#hx-cs").textContent = p2(s % 60); };
-  cd(); const tm = setInterval(() => { if (!$("#hx")) return clearInterval(tm); cd(); }, 1000);
-  let raf = 0, cur = 0, tgt = 0, on = true;
+  const hx = $("#hx"); if (!hx) return; const v = $("#hx-vid"); v?.play?.().catch(() => {});
+  const paintLive = () => { const n = nextClose(), cd = $("#hx-cd"), bid = $("#hx-bid"); if (!cd) return;
+    if (!n) { cd.hidden = true; bid.hidden = true; return; } cd.hidden = false; const s = n.secs, p2 = (x) => String(x).padStart(2, "0");
+    $("#hx-cdl").textContent = T2(`${n.name} closes in`, `${n.name} cierra en`); $("#hx-ch").textContent = p2(Math.floor(s / 3600)); $("#hx-cm").textContent = p2(Math.floor((s % 3600) / 60)); $("#hx-cs").textContent = p2(s % 60);
+    if (n.fillName) { bid.hidden = false; bid.href = "#/lc/" + n.fillId; $("#hx-bn").textContent = n.fillName; $("#hx-bp").textContent = n.fillPct + "%"; $("#hx-bv").textContent = `$${Math.round(n.fillRaised).toLocaleString("en-US")} ${T2("of", "de")} $${n.fillGoal.toLocaleString("en-US")}`; $("#hx-bu").style.width = Math.min(100, n.fillPct) + "%"; } else bid.hidden = true; };
+  paintLive(); const tm = setInterval(() => { if (!$("#hx")) return clearInterval(tm); paintLive(); }, 1000);
+  let raf = 0, on = true, tx = 0, ty = 0, cx = 0, cy = 0, cp = 0;
   const desk = () => matchMedia("(min-width: 901px)").matches && !matchMedia("(prefers-reduced-motion: reduce)").matches;
   const prog = () => { const r = hx.getBoundingClientRect(), span = hx.offsetHeight - innerHeight + 64; return Math.min(1, Math.max(0, -r.top / Math.max(1, span))); };
-  const paint = () => { if (!on || !$("#hx")) return; const p = prog(); hx.style.setProperty("--pr", p.toFixed(3));
-    hx.querySelectorAll(".hx-chips li").forEach((c) => c.classList.toggle("on", p >= Number(c.dataset.p)));
-    hx.querySelectorAll(".hx-steps li").forEach((c) => c.classList.toggle("on", p >= Number(c.dataset.s) / 3 - 0.001 && (Number(c.dataset.s) === 2 || p < (Number(c.dataset.s) + 1) / 3)));
-    if (desk() && v && v.duration) { tgt = p * (v.duration - 0.05); cur += (tgt - cur) * 0.18; if (Math.abs(v.currentTime - cur) > 0.012) v.currentTime = cur; }
+  const mv = (e) => { tx = (e.clientX / innerWidth - 0.5) * 2; ty = (e.clientY / innerHeight - 0.5) * 2; }; addEventListener("pointermove", mv);
+  const paint = () => { if (!on || !$("#hx")) return; const tp = prog(); cp += (tp - cp) * 0.12; cx += (tx - cx) * 0.06; cy += (ty - cy) * 0.06;
+    if (desk()) { hx.style.setProperty("--pr", cp.toFixed(4)); hx.style.setProperty("--mx", cx.toFixed(3)); hx.style.setProperty("--my", cy.toFixed(3)); }
+    hx.querySelectorAll(".hx-chips li").forEach((c) => c.classList.toggle("on", tp >= Number(c.dataset.p)));
     raf = requestAnimationFrame(paint); };
-  if (v) { v.pause(); v.addEventListener("loadedmetadata", () => { v.currentTime = 0; }); }
   raf = requestAnimationFrame(paint);
-  heroOff = () => { on = false; cancelAnimationFrame(raf); clearInterval(tm); };
+  heroOff = () => { on = false; cancelAnimationFrame(raf); clearInterval(tm); removeEventListener("pointermove", mv); };
 }
 
 function route() {
@@ -1709,14 +1710,18 @@ function route() {
   if (h === "#/" || h === "#" || h === "") {
     document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
     if (!$("#lc-home")) $("#app").innerHTML = `<section class="hx" id="hx"><div class="hx-pin">
-      <video class="hx-vid" id="hx-vid" muted playsinline preload="auto" poster="./assets/hero-poster.webp" src="./assets/hero-scroll.mp4" aria-hidden="true"></video>
-      <img class="hx-art" src="./assets/hero-poster.webp" alt="" aria-hidden="true">
+      <img class="hx-bd" src="./assets/hero-backdrop.webp" alt="" aria-hidden="true">
+      <svg class="hx-rings" viewBox="0 0 1000 1000" aria-hidden="true"><defs><linearGradient id="rg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3b7f"/><stop offset="1" stop-color="#9ad9ff"/></linearGradient></defs>
+        <circle class="r1" cx="500" cy="500" r="470" fill="none" stroke="url(#rg1)" stroke-width="1.5" stroke-dasharray="720 560 140 400"/>
+        <circle class="r2" cx="500" cy="500" r="395" fill="none" stroke="#9ad9ff" stroke-opacity=".55" stroke-width="1" stroke-dasharray="260 900 60 600"/>
+        <circle class="r3" cx="500" cy="500" r="330" fill="none" stroke="#ff3b7f" stroke-opacity=".7" stroke-width="1.5" stroke-dasharray="500 700 100 780"/></svg>
+      <div class="hx-fig"><video id="hx-vid" muted loop playsinline autoplay preload="auto" poster="./assets/hero-bust.webp" src="./assets/hero-bust.mp4" aria-hidden="true"></video></div>
       <div class="hx-shade"></div>
       <div class="hx-t"><h1><span>If it fills,</span><span>it opens.</span></h1>
         <p>Back a token with USDC for 24 hours. When the round fills, trading opens. If it doesn't, you get everything back.</p>
-        <div class="hx-b"><a class="btn btn-ember" href="#/lc">See launches</a><a class="btn btn-line" href="#/lc/new">Launch a token</a></div>
-        <ol class="hx-steps"><li data-s="0"><b>1</b><span>Put in USDC</span></li><li data-s="1"><b>2</b><span>The round fills</span></li><li data-s="2"><b>3</b><span>Trading opens</span></li></ol></div>
-      <ul class="hx-chips"><li data-p="0.10" style="--y:22%">Liquidity locked forever</li><li data-p="0.36" style="--y:46%">Automatic refund</li><li data-p="0.62" style="--y:70%">Same price for everyone</li></ul>
+        <div class="hx-b"><a class="btn btn-ember" href="#/lc">See launches</a><a class="btn btn-line" href="#/lc/new">Launch a token</a></div></div>
+      <ul class="hx-chips"><li class="c1" data-p="0.04">Liquidity locked forever</li><li class="c2" data-p="0.2">Automatic refund</li><li class="c3" data-p="0.36">Same price for everyone</li></ul>
+      <a class="hx-bid" id="hx-bid" href="#/lc" hidden><small>Fullest round</small><span class="hx-bn" id="hx-bn"></span><span class="hx-bm"><b id="hx-bp"></b><i id="hx-bv"></i></span><span class="hx-bb"><u id="hx-bu"></u></span></a>
       <div class="hx-cd" id="hx-cd" hidden><small id="hx-cdl"></small><div class="hx-cb"><span><b id="hx-ch">00</b><i>hours</i></span><span><b id="hx-cm">00</b><i>minutes</i></span><span><b id="hx-cs">00</b><i>seconds</i></span></div></div>
     </div></section><div id="lc-home"></div>`;
     startHero();
