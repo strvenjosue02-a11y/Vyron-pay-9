@@ -107,8 +107,9 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
       gr.addColorStop(0, `rgba(${col},.55)`); gr.addColorStop(1, `rgba(${col},.10)`); g.beginPath(); g.arc(p.x, p.y, r, 0, 7); g.fillStyle = gr; g.fill(); g.lineWidth = 1.5; g.strokeStyle = `rgba(${col},.9)`; g.stroke(); });
     const last = data[data.length - 1]; if (last) { const x = ts.timeToCoordinate(last.time), y = candle.priceToCoordinate(last.close); if (x != null && y != null) { g.fillStyle = "#fff"; g.beginPath(); g.arc(x, y, 4, 0, 7); g.fill(); } }
   }
+  let dead = false;
   function place() {
-    placeFog(); drawFlow(); if (!data.length) return; const ts = chart.timeScale(), times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; }, k = st.k;
+    if (dead) return; placeFog(); drawFlow(); if (!data.length) return; const ts = chart.timeScale(), times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; }, k = st.k;
     const stack = {}; ov.querySelectorAll("[data-fi]").forEach((n) => { const f = faces[Number(n.dataset.fi)], x = ts.timeToCoordinate(snap(f.t)), y = candle.priceToCoordinate(f.price * k);
       if (x == null || y == null) { n.style.display = "none"; return; } const key = Math.round(x / 22) + (f.buy ? "b" : "s"), o = stack[key] || 0; stack[key] = o + 1; n.style.display = ""; n.style.left = x - 15 + "px"; const late = times.indexOf(snap(f.t)) >= times.length - 2 ? 22 : 0; n.style.top = y + (f.buy ? 12 + late + o * 30 : -42 - late - o * 30) + "px"; });
     ov.querySelectorAll("[data-li]").forEach((n) => { if (n.dataset.drag === "1" && n.classList.contains("drag")) return; const l = lines[Number(n.dataset.li)], y = candle.priceToCoordinate(l.price * k); if (y == null) { n.style.display = "none"; return; } n.style.display = ""; n.style.top = y - 13 + "px"; });
@@ -144,13 +145,13 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     candle.setData(data); applyInd(); line.setData(data.map((c) => ({ time: c.time, value: c.close })));
     vol.setData((d.candles || []).filter((c) => c.t).map((c) => ({ time: c.t, value: c.v, color: (c.c >= c.o ? UP : DN) + "38" })));
     const ma7 = maOf(data, 7), ma25 = maOf(data, 25); m7.setData(st.ma ? ma7 : []); m25.setData(st.ma ? ma25 : []);
-    candle.applyOptions({ visible: st.mode === "candle" }); line.applyOptions({ visible: st.mode === "line" });
+    candle.applyOptions({ visible: st.mode === "candle" }); line.applyOptions({ visible: st.mode === "line" || (st.mode === "candle" && !st.flow), lineVisible: st.mode === "line", topColor: st.mode === "line" ? "rgba(61,220,151,.22)" : (data.length && data[data.length - 1].close >= data[0].open ? "rgba(61,220,151,.20)" : "rgba(255,93,93,.20)"), bottomColor: "rgba(0,0,0,0)" });
     if (roundLine) candle.removePriceLine(roundLine);
     roundLine = d.round ? candle.createPriceLine({ price: d.round * k, color: "rgba(255,255,255,.35)", lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "" }) : null;
     hlRefs.forEach((r) => candle.removePriceLine(r));
     hlRefs = hl.map((p) => candle.createPriceLine({ price: p * k, color: "#f4f4f1", lineWidth: 1, lineStyle: 0, axisLabelVisible: true, title: "" }));
     const times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; };
-    const marks = (d.marks || []).map((m) => ({ time: snap(m.t), position: m.buy ? "belowBar" : "aboveBar", color: m.buy ? UP : DN, shape: m.buy ? "arrowUp" : "arrowDown", text: m.buy ? "B" : "S" })).sort((a, b) => a.time - b.time);
+    const marks = (d.marks || []).map((m) => ({ time: snap(m.t), position: m.buy ? "belowBar" : "aboveBar", color: m.buy ? UP : DN, shape: "circle", size: 2, text: m.buy ? "+" : "−" })).sort((a, b) => a.time - b.time);
     candle.setMarkers(marks);
     allTr = d.trades || []; heat = d.heat || []; faces = d.faces || []; lines = d.lines || []; lnRefs.forEach((r) => candle.removePriceLine(r));
     lnRefs = lines.map((l) => candle.createPriceLine({ price: l.price * k, color: l.color, lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "" }));
@@ -188,5 +189,5 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   const onFs = () => { const tg = fsTarget || el, cls = fsTarget ? "t-fs" : "cp-fs"; if (!document.fullscreenElement && tg.classList.contains(cls)) { tg.classList.remove(cls); document.body.classList.remove("cp-lock"); el.querySelector(".cp-full").textContent = "⛶"; } };
   document.addEventListener("fullscreenchange", onFs);
   render();
-  return { update: render, destroy: () => { document.removeEventListener("fullscreenchange", onFs); document.body.classList.remove("cp-lock"); chart.remove(); } };
+  return { update: render, destroy: () => { dead = true; document.removeEventListener("fullscreenchange", onFs); document.body.classList.remove("cp-lock"); chart.remove(); } };
 }

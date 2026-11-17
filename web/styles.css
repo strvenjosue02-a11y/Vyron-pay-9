@@ -1673,3 +1673,9 @@ a.mk-row:hover { box-shadow: inset 2px 0 0 #fff; } .tx-feed span.fol, .tx-ca but
 }
 .term.tx:not(.pro) .cp-tools button[data-t="flow"], .term.tx .cp-tools button[data-t="flow"] { display: inline-flex !important; visibility: visible !important; }
 .term.tx:not(.pro) .cp-tools { display: flex !important; }
+
+/* ===== Aire fresco (inspirado en FOMO): tarjeta redonda, resplandor suave ===== */
+.tx-chart { border-radius: 26px !important; overflow: hidden; background: radial-gradient(90% 60% at 50% 0%, rgba(255,255,255,.035), transparent 70%), #08080a !important; box-shadow: inset 0 0 0 1px #1a1a1f, 0 30px 80px -40px rgba(61,220,151,.18) !important; }
+.term.tx.tx-dn .tx-chart { box-shadow: inset 0 0 0 1px #1a1a1f, 0 30px 80px -40px rgba(255,93,93,.18) !important; }
+.cp-svg canvas { image-rendering: auto; }
+@media (max-width: 900px) { .term.tx .tx-chart { border-radius: 22px !important; margin: 8px 0 0 !important; } }
