@@ -164,6 +164,10 @@ button { background: none; border: 0; cursor: pointer; }
 .exp h3 { font-size: 24px; font-weight: 500; margin: 0; line-height: 1.2; }
 .exp p { grid-column: 1 / -1; margin: 0; color: var(--muted); max-width: 46ch; }
 .exp .link { grid-row: 1; grid-column: 2; font-size: 15px; }
+.exp.has-ph .link { grid-row: 2; }
+.exp-ph { grid-column: 1 / -1; position: relative; aspect-ratio: 3 / 2; overflow: hidden; margin: 0 0 16px; background: #0E0E0F; }
+.exp-ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.exp-ph .ref { position: absolute; left: 10px; top: 10px; font-size: 12.5px; font-weight: 500; color: #F3EAE1; background: rgba(0,0,0,.45); padding: 3px 10px; border-radius: 999px; }
 
 /* ================= Reseñas ================= */
 .reviews { padding-top: 104px; text-align: center; }
@@ -419,7 +423,7 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
       openNow: (c) => "Abierto ahora, cierra a las " + c, opensAt: (d, h) => "Cerrado, abre " + d + " a las " + h, today: "hoy", tomorrow: "mañana",
       filters: { sg: "Sin gluten", v: "Vegetariano", vg: "Vegano", mariscos: "Sin mariscos", nueces: "Sin nueces", lacteos: "Sin lácteos" },
       showing: (n) => n === 1 ? "1 plato para vos" : n + " platos para vos", clear: "Quitar filtros", none: "Ningún plato cumple todos esos filtros.",
-      sold: "Agotado hoy", with: "Con ", ref: "Foto de referencia", occ: { "": "Ninguna en especial", cumple: "Cumpleaños", aniversario: "Aniversario", negocios: "Cena de negocios", propuesta: "Propuesta de matrimonio", chef: "Mesa del chef", playa: "Cena privada en la playa", jazz: "Jazz los viernes", degustacion: "Menú degustación" },
+      sold: "Agotado hoy", with: "Con ", ref: "Foto de referencia", occ: { "": "Ninguna en especial", cumple: "Cumpleaños", aniversario: "Aniversario", negocios: "Cena de negocios", propuesta: "Propuesta de matrimonio", chef: "Mesa del chef", playa: "Cena privada en la terraza", jazz: "Jazz los viernes", degustacion: "Menú degustación" },
       msg: { hi: "Hola, quisiera reservar en ", date: "Día", time: "Hora", people: "Personas", occ: "Ocasión", name: "Nombre", notes: "Notas" },
       days: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"], closedDay: "Cerrado",
       reviews: (n) => n.toLocaleString("es-CR") + " reseñas en Google",
@@ -439,7 +443,7 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
       openNow: (c) => "Open now, closes at " + c, opensAt: (d, h) => "Closed, opens " + d + " at " + h, today: "today", tomorrow: "tomorrow",
       filters: { sg: "Gluten-free", v: "Vegetarian", vg: "Vegan", mariscos: "No shellfish", nueces: "No nuts", lacteos: "No dairy" },
       showing: (n) => n === 1 ? "1 dish for you" : n + " dishes for you", clear: "Clear filters", none: "No dish matches all those filters.",
-      sold: "Sold out today", with: "With ", ref: "Reference photo", occ: { "": "Nothing special", cumple: "Birthday", aniversario: "Anniversary", negocios: "Business dinner", propuesta: "Marriage proposal", chef: "Chef's table", playa: "Private beach dinner", jazz: "Jazz Friday", degustacion: "Tasting menu" },
+      sold: "Sold out today", with: "With ", ref: "Reference photo", occ: { "": "Nothing special", cumple: "Birthday", aniversario: "Anniversary", negocios: "Business dinner", propuesta: "Marriage proposal", chef: "Chef's table", playa: "Private terrace dinner", jazz: "Jazz Friday", degustacion: "Tasting menu" },
       msg: { hi: "Hello, I'd like to book a table at ", date: "Day", time: "Time", people: "Guests", occ: "Occasion", name: "Name", notes: "Notes" },
       days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], closedDay: "Closed",
       reviews: (n) => n.toLocaleString("en-US") + " Google reviews",
@@ -635,7 +639,9 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
     $("#barNav").innerHTML = [["carta", L().menuTitle], ["degustacion", t(R.degustacion.nombre)], ["experiencias", L().expTitle], ["resenas", L().revTitle], ["reservar", L().reserveBtn]]
       .map(([id, n]) => '<a href="#' + id + '" data-id="' + id + '">' + esc(n) + "</a>").join("");
 
-    $("#exps").innerHTML = R.experiencias.map((x) => '<li class="exp"><h3>' + esc(t(x.nombre)) + '</h3><a class="link" href="#reservar" data-occ="' + x.ocasion + '">' + L().ask +
+    $("#exps").innerHTML = R.experiencias.map((x) => '<li class="exp' + (x.foto ? " has-ph" : "") + '">' +
+      (x.foto ? '<figure class="exp-ph"><img src="' + x.foto + '" alt="" loading="lazy" decoding="async">' + (DEMO ? '<span class="ref">' + L().ref + "</span>" : "") + "</figure>" : "") +
+      "<h3>" + esc(t(x.nombre)) + '</h3><a class="link" href="#reservar" data-occ="' + x.ocasion + '">' + L().ask +
       "</a><p>" + esc(t(x.desc)) + "</p></li>").join("");
 
     const rv = R.resenas;

@@ -40,8 +40,12 @@ window.RESTAURANTE = {
     {
       id: "empezar",
       nombre: { es: "Para empezar", en: "To begin" },
-      foto: "img/foto-caviar.jpg",
+      foto: "img/foto-entrada.jpg",
       platos: [
+        { id: "langostino", nombre: { es: "Langostino a la brasa", en: "Grilled king prawn" },
+          desc: { es: "Sobre ceviche de aguacate, tomate cherry y reducción de tamarindo", en: "On avocado ceviche, cherry tomatoes and tamarind reduction" },
+          maridaje: { es: "Sancerre", en: "Sancerre" },
+          precio: 15500, marcas: ["sg"], contiene: ["mariscos"] },
         { id: "ostras", nombre: { es: "Ostras de Guanacaste", en: "Guanacaste oysters" },
           desc: { es: "Mignonette de cas, aceite de culantro", en: "Cas fruit mignonette, cilantro oil" },
           maridaje: { es: "Champagne Blanc de Blancs", en: "Champagne Blanc de Blancs" },
@@ -58,9 +62,10 @@ window.RESTAURANTE = {
     {
       id: "platos",
       nombre: { es: "Platos", en: "Mains" },
+      foto: "img/foto-fuerte.jpg",
       platos: [
-        { id: "pargo", nombre: { es: "Pargo rojo", en: "Red snapper" },
-          desc: { es: "Beurre blanc de maracuyá, palmito asado", en: "Passion fruit beurre blanc, roasted heart of palm" },
+        { id: "pargo", nombre: { es: "Pargo entero a la brasa", en: "Whole ember-grilled snapper" },
+          desc: { es: "Patacones, arroz de coco, pico de mango y beurre blanc de maracuyá", en: "Patacones, coconut rice, mango pico and passion fruit beurre blanc" },
           maridaje: { es: "Chablis Premier Cru", en: "Chablis Premier Cru" },
           precio: 24000, marcas: ["sg"], contiene: ["mariscos", "lacteos"] },
         { id: "langosta", nombre: { es: "Langosta del Caribe", en: "Caribbean lobster" },
@@ -83,10 +88,10 @@ window.RESTAURANTE = {
     {
       id: "postres",
       nombre: { es: "Postres", en: "Desserts" },
-      foto: "img/foto-esfera.jpg",
+      foto: "img/foto-postre.jpg",
       platos: [
-        { id: "souffle", nombre: { es: "Soufflé de cacao de Talamanca", en: "Talamanca cacao soufflé" },
-          desc: { es: "Crema inglesa de vainilla", en: "Vanilla crème anglaise" },
+        { id: "volcan", nombre: { es: "Volcán de cacao de Talamanca", en: "Talamanca cacao fondant" },
+          desc: { es: "Helado de vainilla, coulis de mora y frutos rojos", en: "Vanilla ice cream, blackberry coulis and red berries" },
           maridaje: { es: "Banyuls", en: "Banyuls" },
           precio: 8500, marcas: ["v"], contiene: ["lacteos"] },
         { id: "tatin", nombre: { es: "Tarta tatin de piña", en: "Pineapple tarte tatin" },
@@ -97,8 +102,10 @@ window.RESTAURANTE = {
     {
       id: "bodega",
       nombre: { es: "Bodega", en: "Wine" },
-      foto: "img/foto-vino.jpg",
+      foto: "img/foto-bodega.jpg",
       platos: [
+        { id: "tinto", nombre: { es: "Bourgogne Pinot Noir", en: "Bourgogne Pinot Noir" },
+          desc: { es: "Copa de tinto, Borgoña", en: "Red by the glass, Burgundy" }, precio: 12500, marcas: ["vg", "sg"], contiene: [] },
         { id: "champagne", nombre: { es: "Champagne Blanc de Blancs", en: "Champagne Blanc de Blancs" },
           desc: { es: "Copa", en: "By the glass" }, precio: 18000, marcas: ["vg", "sg"], contiene: [] },
         { id: "sancerre", nombre: { es: "Sancerre", en: "Sancerre" },
@@ -115,16 +122,16 @@ window.RESTAURANTE = {
     precio: 75000,
     maridaje: { es: "Maridaje con vinos franceses", en: "French wine pairing" },
     precioMaridaje: 45000,
-    foto: "img/foto-champan.jpg"
+    foto: "img/foto-terraza.jpg"
   },
 
   experiencias: [
     { nombre: { es: "Mesa del chef", en: "Chef's table" },
       desc: { es: "Seis personas frente a la cocina abierta. Andrea cocina y explica cada tiempo.", en: "Six guests facing the open kitchen while Andrea cooks and explains each course." },
-      ocasion: "chef" },
-    { nombre: { es: "Cena privada en la playa", en: "Private dinner on the beach" },
-      desc: { es: "Mesa para dos al atardecer, con mesero propio. Ideal para propuestas.", en: "A table for two at sunset with your own waiter. Made for proposals." },
-      ocasion: "playa" },
+      ocasion: "chef", foto: "img/foto-cocina.jpg" },
+    { nombre: { es: "Cena privada en la terraza", en: "Private dinner on the terrace" },
+      desc: { es: "Mesa para dos frente al mar al atardecer, con mesero propio. Ideal para propuestas.", en: "A sea-view table for two at sunset with your own waiter. Made for proposals." },
+      ocasion: "playa", foto: "img/foto-playa.jpg" },
     { nombre: { es: "Jazz los viernes", en: "Jazz on Fridays" },
       desc: { es: "Trío en vivo desde las 8 pm. Conviene reservar.", en: "Live trio from 8 pm. Booking recommended." },
       ocasion: "jazz" }
@@ -136,7 +143,7 @@ window.RESTAURANTE = {
     lista: [
       { texto: { es: "La mejor cena de todo el viaje. El pargo con maracuyá todavía lo recuerdo.", en: "Best dinner of our whole trip. I still think about the snapper with passion fruit." }, autor: "Emma R., Londres" },
       { texto: { es: "Servicio impecable y una carta de vinos franceses que no esperábamos encontrar en Santa Teresa.", en: "Flawless service and a French wine list we never expected in Santa Teresa." }, autor: "Julien M., Lyon" },
-      { texto: { es: "Hicimos la cena en la playa para nuestro aniversario. Perfecto de principio a fin.", en: "We booked the beach dinner for our anniversary. Perfect from start to finish." }, autor: "Daniela C., San José" }
+      { texto: { es: "Hicimos la cena en la terraza para nuestro aniversario. Perfecto de principio a fin.", en: "We booked the terrace dinner for our anniversary. Perfect from start to finish." }, autor: "Daniela C., San José" }
     ]
   }
 };

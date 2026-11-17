@@ -1,6 +1,6 @@
 // Guarda la carta en el teléfono para que abra aunque la señal de playa falle.
-const CACHE = "carta-v3";
-const CORE = ["./", "index.html", "config.js", "img/bordeaux.jpg", "img/nuit.jpg", "img/bouteille.jpg", "img/porcelaine.jpg", "img/foto-caviar.jpg", "img/foto-esfera.jpg", "img/foto-vino.jpg", "img/foto-champan.jpg"];
+const CACHE = "carta-v4";
+const CORE = ["./", "index.html", "config.js", "img/bordeaux.jpg", "img/nuit.jpg", "img/bouteille.jpg", "img/porcelaine.jpg", "img/foto-entrada.jpg", "img/foto-fuerte.jpg", "img/foto-postre.jpg", "img/foto-bodega.jpg", "img/foto-terraza.jpg", "img/foto-cocina.jpg", "img/foto-playa.jpg"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)).then(() => self.skipWaiting()));
