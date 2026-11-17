@@ -1649,7 +1649,7 @@ function reviewCard(p) {
 // ================================================================= router
 function route() {
   const h = location.hash || "#/";
-  if (h.startsWith("#/lc")) { document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current"))); showLaunches($("#app")); return; }
+  if (h.startsWith("#/lc")) { document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === (location.hash === "#/lc/new" ? "launch" : "lc") ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current"))); showLaunches($("#app")); return; }
   if (h === "#/" || h === "#" || h === "") {
     document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
     if (!$("#lc-home")) $("#app").innerHTML = `<section class="hx"><div class="hx-t"><h1><span>Launch it.</span><span>Fill it.</span><em>Trade it.</em></h1><p>Put money in. If it fills, trading opens. If it doesn't, take it out.</p><div class="hx-b"><a class="btn btn-ember" href="#/lc">See launches</a><a class="btn btn-line" href="#/lc/new">Launch</a></div></div><canvas class="hx-bg" id="hx-bg" aria-hidden="true"></canvas></section><div id="lc-home"></div>`;
