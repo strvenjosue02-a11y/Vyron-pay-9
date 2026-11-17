@@ -108,3 +108,9 @@ if (!window.__thInit) {
   setInterval(() => { if (!DEMO) return; document.querySelectorAll(".th").forEach((root) => { const key = root.dataset.th; if (!REG.has(key) || !root.isConnected || MENU || Math.random() > 0.45) return; const L = LINES[lang()], b = bot(Math.floor(Math.random() * 8)), m = load(key) || [], me = REG.get(key).me?.(); m.push({ id: "b" + nowS() + Math.random().toString(36).slice(2, 5), n: b.n, a: b.a, t: L[Math.floor(Math.random() * L.length)], ts: nowS(), r: {} }); save(key, m); if (!root.querySelector("textarea:focus")) refresh(root); }); }, 7000);
   setInterval(() => document.querySelectorAll(".th").forEach((r) => { if (REG.has(r.dataset.th) && !MENU && !r.querySelector("textarea:focus")) refresh(r); }), 15000);
 }
+
+export function threadPreview(key) {
+  if (DEMO) seed(key);
+  const m = (load(key) || []).filter((x) => x.t && !x.g && !String(x.t).startsWith("[")); const x = m[m.length - 1];
+  return x ? { n: x.n, t: x.t, ts: x.ts, c: m.length } : null;
+}

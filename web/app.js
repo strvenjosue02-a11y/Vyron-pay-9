@@ -7,7 +7,7 @@ import { CONFIG } from "./config.js";
 import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
 import { initI18n } from "./i18n.js";
 import { mountChart } from "./pro.js";
-import { threadHtml } from "./thread.js";
+import { threadHtml, threadPreview } from "./thread.js";
 import { createDemo } from "./demo.js";
 import { setLaunchChain, loadChainLaunches, lcChainLive, showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote, nextClose } from "./launch.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, msgProfile, validProfile, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
@@ -1686,43 +1686,42 @@ function reviewCard(p) {
 let heroOff = null;
 function startHero() {
   if (heroOff) { heroOff(); heroOff = null; }
-  const hx = $("#hx"); if (!hx) return; const v = $("#hx-vid"); v?.play?.().catch(() => {});
-  const paintLive = () => { const n = nextClose(), cd = $("#hx-cd"), bid = $("#hx-bid"); if (!cd) return;
-    if (!n) { cd.hidden = true; bid.hidden = true; return; } cd.hidden = false; const s = n.secs, p2 = (x) => String(x).padStart(2, "0");
-    $("#hx-cdl").textContent = T2(`${n.name} closes in`, `${n.name} cierra en`); $("#hx-ch").textContent = p2(Math.floor(s / 3600)); $("#hx-cm").textContent = p2(Math.floor((s % 3600) / 60)); $("#hx-cs").textContent = p2(s % 60);
-    if (n.fillName) { bid.hidden = false; bid.href = "#/lc/" + n.fillId; $("#hx-bn").textContent = n.fillName; $("#hx-bp").textContent = n.fillPct + "%"; $("#hx-bv").textContent = `$${Math.round(n.fillRaised).toLocaleString("en-US")} ${T2("of", "de")} $${n.fillGoal.toLocaleString("en-US")}`; $("#hx-bu").style.width = Math.min(100, n.fillPct) + "%"; } else bid.hidden = true; };
-  paintLive(); const tm = setInterval(() => { if (!$("#hx")) return clearInterval(tm); paintLive(); }, 1000);
-  let raf = 0, on = true, tx = 0, ty = 0, cx = 0, cy = 0, cp = 0;
-  const desk = () => matchMedia("(min-width: 901px)").matches && !matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const prog = () => { const r = hx.getBoundingClientRect(), span = hx.offsetHeight - innerHeight + 64; return Math.min(1, Math.max(0, -r.top / Math.max(1, span))); };
-  const mv = (e) => { tx = (e.clientX / innerWidth - 0.5) * 2; ty = (e.clientY / innerHeight - 0.5) * 2; }; addEventListener("pointermove", mv);
-  const paint = () => { if (!on || !$("#hx")) return; const tp = prog(); cp += (tp - cp) * 0.12; cx += (tx - cx) * 0.06; cy += (ty - cy) * 0.06;
-    if (desk()) { hx.style.setProperty("--pr", cp.toFixed(4)); hx.style.setProperty("--mx", cx.toFixed(3)); hx.style.setProperty("--my", cy.toFixed(3)); }
-    hx.querySelectorAll(".hx-chips li").forEach((c) => c.classList.toggle("on", tp >= Number(c.dataset.p)));
-    raf = requestAnimationFrame(paint); };
-  raf = requestAnimationFrame(paint);
-  heroOff = () => { on = false; cancelAnimationFrame(raf); clearInterval(tm); removeEventListener("pointermove", mv); };
+  const paintLive = () => { const n = nextClose(), bid = $("#hx-bid"); if (!bid) return; if (!n || !n.fillName) { bid.hidden = true; return; }
+    bid.hidden = false; bid.href = "#/lc/" + n.fillId; $("#hx-bn").textContent = n.fillName; $("#hx-bp").textContent = n.fillPct + "%"; $("#hx-bv").textContent = `$${Math.round(n.fillRaised).toLocaleString("en-US")} ${T2("of", "de")} $${n.fillGoal.toLocaleString("en-US")}`; $("#hx-bu").style.width = Math.min(100, n.fillPct) + "%"; };
+  paintLive(); const tm = setInterval(() => { if (!$("#hx")) return clearInterval(tm); paintLive(); }, 2000);
+  heroOff = () => clearInterval(tm);
+}
+// Celular: la web app abre directo en las comunidades (una por token)
+function commFeedHtml() {
+  const q = (S.fdQ || "").toLowerCase(), items = mkItems().filter((x) => !q || x.sym.toLowerCase().includes(q) || x.name.toLowerCase().includes(q)).sort((x, y) => y.vol - x.vol);
+  const rows = items.map((x) => { const pv = threadPreview("tok-" + x.id), up = x.chg >= 0;
+    return `<a class="fd-r" href="${x.href}"><span class="fd-av">${x.mark}</span><div class="fd-m"><b>${esc(x.name)}</b><small>${pv ? `<i>${esc(pv.n)}</i> ${esc(pv.t)}` : T2("Be the first to write", "Sé el primero en escribir")}</small></div><div class="fd-p"><b>${fmtP(x.price)}</b><em class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(1)}%</em></div></a>`; }).join("");
+  return `<section class="fd"><header class="fd-h"><h1>${T2("Communities", "Comunidades")}</h1><p>${T2("One thread per token. Tap one to read, write and trade.", "Un hilo por cada token. Toca uno para leer, escribir y operar.")}</p></header>
+    <label class="fd-s"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="fd-q" type="search" placeholder="${T2("Search a token", "Buscar un token")}" value="${esc(S.fdQ || "")}" autocomplete="off"></label>
+    <div class="fd-c"><span class="on">${T2("Tokens", "Tokens")}</span><a href="#/lc">${T2("Rounds filling", "Rondas llenándose")}</a></div>
+    <div class="fd-l" id="fd-l">${rows || `<p class="fine">${T2("No tokens yet.", "Todavía no hay tokens.")}</p>`}</div></section>`;
+}
+function renderFeed() {
+  clearInterval(S.poll); if (heroOff) { heroOff(); heroOff = null; }
+  document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
+  $("#app").innerHTML = commFeedHtml(); scrollTo(0, 0);
+  const inp = $("#fd-q"); if (inp) inp.oninput = () => { S.fdQ = inp.value; const pos = inp.selectionStart; $("#app").innerHTML = commFeedHtml(); const n2 = $("#fd-q"); n2.oninput = inp.oninput; n2.focus(); n2.setSelectionRange(pos, pos); };
+  clearInterval(S.fdT); S.fdT = setInterval(() => { if (!$(".fd")) return clearInterval(S.fdT); if (document.activeElement?.id === "fd-q") return; const l = $("#fd-l"); if (l) l.outerHTML = commFeedHtml().match(/<div class="fd-l"[\s\S]*<\/div>(?=<\/section>)/)?.[0] || l.outerHTML; }, 5000);
 }
 
 function route() {
   const h = location.hash || "#/";
   if (h.startsWith("#/lc")) { document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === (location.hash === "#/lc/new" ? "launch" : "lc") ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current"))); showLaunches($("#app")); return; }
+  if ((h === "#/" || h === "#" || h === "") && matchMedia("(max-width: 900px)").matches) { renderFeed(); return; }
   if (h === "#/" || h === "#" || h === "") {
     document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
     if (!$("#lc-home")) $("#app").innerHTML = `<section class="hx" id="hx"><div class="hx-pin">
-      <img class="hx-bd" src="./assets/hero-backdrop.webp" alt="" aria-hidden="true">
-      <svg class="hx-rings" viewBox="0 0 1000 1000" aria-hidden="true"><defs><linearGradient id="rg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3b7f"/><stop offset="1" stop-color="#9ad9ff"/></linearGradient></defs>
-        <circle class="r1" cx="500" cy="500" r="470" fill="none" stroke="url(#rg1)" stroke-width="1.5" stroke-dasharray="720 560 140 400"/>
-        <circle class="r2" cx="500" cy="500" r="395" fill="none" stroke="#9ad9ff" stroke-opacity=".55" stroke-width="1" stroke-dasharray="260 900 60 600"/>
-        <circle class="r3" cx="500" cy="500" r="330" fill="none" stroke="#ff3b7f" stroke-opacity=".7" stroke-width="1.5" stroke-dasharray="500 700 100 780"/></svg>
-      <div class="hx-fig"><video id="hx-vid" muted loop playsinline autoplay preload="auto" poster="./assets/hero-bust.webp" src="./assets/hero-bust.mp4" aria-hidden="true"></video></div>
+      <img class="hx-bd" src="./assets/hero-abs.webp" alt="" aria-hidden="true">
       <div class="hx-shade"></div>
       <div class="hx-t"><h1><span>If it fills,</span><span>it opens.</span></h1>
         <p>Back a token with USDC for 24 hours. When the round fills, trading opens. If it doesn't, you get everything back.</p>
         <div class="hx-b"><a class="btn btn-ember" href="#/lc">See launches</a><a class="btn btn-line" href="#/lc/new">Launch a token</a></div></div>
-      <ul class="hx-chips"><li class="c1" data-p="0.04">Liquidity locked forever</li><li class="c2" data-p="0.2">Automatic refund</li><li class="c3" data-p="0.36">Same price for everyone</li></ul>
       <a class="hx-bid" id="hx-bid" href="#/lc" hidden><small>Fullest round</small><span class="hx-bn" id="hx-bn"></span><span class="hx-bm"><b id="hx-bp"></b><i id="hx-bv"></i></span><span class="hx-bb"><u id="hx-bu"></u></span></a>
-      <div class="hx-cd" id="hx-cd" hidden><small id="hx-cdl"></small><div class="hx-cb"><span><b id="hx-ch">00</b><i>hours</i></span><span><b id="hx-cm">00</b><i>minutes</i></span><span><b id="hx-cs">00</b><i>seconds</i></span></div></div>
     </div></section><div id="lc-home"></div>`;
     startHero();
     showLaunches($("#lc-home")); return;
