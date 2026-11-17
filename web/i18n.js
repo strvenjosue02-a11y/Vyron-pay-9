@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Edit profile": "Editar perfil",
   "Welcome. Set up your profile": "Bienvenido. Crea tu perfil", "Your name and photo are required. This is how others will see you.": "Tu nombre y foto son obligatorios. Así te verán los demás.", "Choose a profile photo.": "Elige una foto de perfil.", "Choose your own username.": "Elige tu propio nombre de usuario.", "Tap to choose a photo (required)": "Toca para elegir una foto (obligatoria)", "Public.": "Público.",
   "Welcome. Choose your name": "Bienvenido. Elige tu nombre", "This is how others will see you. You can skip it and change it later.": "Así te verán los demás. Puedes saltarlo y cambiarlo después.", "Skip for now": "Saltar por ahora", "Recent": "Recientes", "NEW": "NUEVO",
   "You hold": "Tienes", "Worth": "Vale",

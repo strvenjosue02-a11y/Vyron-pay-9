@@ -1864,3 +1864,7 @@ h1, h2, h3, .tx-px b, .tx-px #tx-capbig, .page-h h1 { text-shadow: none !importa
 .pc-age { position: absolute; right: 12px; bottom: 12px; font: 500 11.5px var(--mono); color: #d8d8d4; background: rgba(0,0,0,.55); padding: 4px 8px; border-radius: 8px; backdrop-filter: blur(6px); }
 .pc-new { position: absolute; left: 12px; top: 12px; font: 700 10.5px var(--mono); letter-spacing: .08em; color: #09090b; background: #f4f4f1; padding: 4px 8px; border-radius: 8px; }
 .pc-img { position: relative; }
+
+/* Perfil arriba: avatar + nombre en el botón de la cuenta */
+#connect .acct { display: inline-flex; align-items: center; gap: 8px; } #connect .acct b { font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } #connect .acct .ava { border-radius: 50%; flex: none; }
+.ac-me { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; margin-bottom: 12px; border-bottom: 1px solid #1a1a1f; } .ac-me > div { flex: 1; min-width: 0; display: grid; gap: 2px; } .ac-me b { font-size: 16px; } .ac-me small { color: var(--ink-3); font: 12.5px var(--mono); }

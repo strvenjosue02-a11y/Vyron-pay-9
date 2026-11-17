@@ -603,7 +603,7 @@ async function editProfile(first) {
   ov.onclick = async (e) => { if ((e.target === ov || e.target.closest("[data-px]")) && !first) { ov.classList.remove("on"); setTimeout(() => ov.remove(), 250); return; }
     if (!e.target.closest("#pf-save")) return; const name = ov.querySelector("#pf-name").value.trim(), err = validProfile(name, photo) || (first && !photo ? "Choose a profile photo." : first && name === uname(S.me) ? "Choose your own username." : ""); if (err) return toast(err, true); let sig;
     const ok = await flow("Save profile", ["Sign with your wallet", "Save"], [async () => { sig = await sign(msgProfile(S.me, name, keccak256(toBytes(photo)))); }, async () => api("./api/profile", { address: S.me, name, photo, signature: sig })], "Profile saved");
-    if (ok) { ov.remove(); const old = findTok((x) => location.hash.endsWith(x.id)), tr = old?.trades, hd = old?.tHead, hl = old?.holders;
+    if (ok) { ov.remove(); setTimeout(paintAcct, 400); const old = findTok((x) => location.hash.endsWith(x.id)), tr = old?.trades, hd = old?.tHead, hl = old?.holders;
       const r = await fetch("./api/profile", { cache: "no-store" }).then((x) => x.json()).catch(() => ({})); S.prof = {};
       for (const x of r.profiles || []) if (await verifyMessage({ address: x.address, message: msgProfile(x.address, x.name, keccak256(toBytes(x.photo || ""))), signature: x.signature }).catch(() => false)) S.prof[x.address] = x;
       if (old && $("#term-tab")) $("#term-tab").innerHTML = termTab(old); } };
@@ -753,11 +753,12 @@ function dataRowHtml(p) {
 function guaranteesHtml() {
   return `<ul class="gar">${["No admin: nobody can change the rules", "Nobody can create new tokens", "Nobody can freeze trading", "Liquidity locked forever", "Team tokens released slowly"].map((t) => `<li><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>${t}</li>`).join("")}</ul>`;
 }
+function paintAcct() { if (!S.me) return; $("#connect").innerHTML = `<span class="acct">${avatar(S.me, 22)}<b>${esc(uname(S.me))}</b></span>`; $("#connect").className = "btn btn-soft btn-sm"; }
 function acctHtml() {
   const rows = []; let tot = S.usdc ? Number(S.usdc) / 1e6 : 0, pnl = 0, hasP = false;
   const add = (p) => { if (!p.mk || !p.u) return; const bal = Number(p.u.balance || 0n) / 1e18; if (bal <= 0) return; const v = bal * p.mk.price, ps = myPos(p); tot += v; if (ps) { pnl += ps.pnl; hasP = true; } rows.push({ p, v, ps }); };
   S.list.forEach(add); lcLive().map(lcP).forEach(add); try { tot += lcMeBal().usdc; } catch {}
-  return `<div class="ac-box"><button type="button" class="ip-x" data-acx aria-label="Close">✕</button><small>Total balance</small><b class="ac-t">$${tot.toLocaleString("en-US", { maximumFractionDigits: 2 })}</b>${hasP ? `<span class="${pnl >= 0 ? "u" : "d"} ac-p">${pnl >= 0 ? "+" : "-"}$${Math.abs(pnl).toFixed(2)} <i>total profit</i></span>` : ""}
+  return `<div class="ac-box"><button type="button" class="ip-x" data-acx aria-label="Close">✕</button><div class="ac-me">${avatar(S.me, 48)}<div><b>${esc(uname(S.me))}</b><small>${short(S.me)}</small></div><button type="button" class="btn btn-line btn-sm" data-edp>Edit profile</button></div><small>Total balance</small><b class="ac-t">$${tot.toLocaleString("en-US", { maximumFractionDigits: 2 })}</b>${hasP ? `<span class="${pnl >= 0 ? "u" : "d"} ac-p">${pnl >= 0 ? "+" : "-"}$${Math.abs(pnl).toFixed(2)} <i>total profit</i></span>` : ""}
     <h3>Your positions</h3>${rows.length ? rows.map(({ p, v, ps }) => `<a class="ac-r" href="#/trade/${p.id}" data-acx><span>${mark(p)}<b>${esc(p.q.symbol)}</b></span><span>$${v.toFixed(2)}</span>${ps ? `<em class="${ps.pnl >= 0 ? "u" : "d"}">${ps.pnl >= 0 ? "+" : "-"}$${Math.abs(ps.pnl).toFixed(2)}</em>` : "<em></em>"}</a>`).join("") : `<p class="fine">No tokens yet. Buy one and it shows here.</p>`}</div>`;
 }
 function holderFlowHtml(p) {
@@ -1718,6 +1719,7 @@ async function connect() {
   eth.on?.("accountsChanged", () => location.reload()); eth.on?.("chainChanged", () => location.reload());
   if ($("#form")) $("#app").innerHTML = "";
   await refresh();
+  paintAcct();
   welcomeProfile();
 }
 const sign = (message) => S.wallet.signMessage({ account: S.me, message });
@@ -1871,7 +1873,7 @@ async function main() {
   initI18n();
   $("#net span").textContent = CONFIG.chainName;
   setLaunchChain({ CONFIG, pub, wallet: null, account: null }); if (!CONFIG.demo) loadChainLaunches().catch(() => {});
-  $("#connect").onclick = () => { if (S.me) { const o = document.getElementById("acct-ov"); if (o) { o.remove(); return; } const ov = document.createElement("div"); ov.id = "acct-ov"; ov.innerHTML = acctHtml(); document.body.appendChild(ov); ov.onclick = (e) => { if (e.target === ov || e.target.closest("[data-acx]")) ov.remove(); }; return; } connect().catch((x) => toast(x.shortMessage || x.message, true)); };
+  $("#connect").onclick = () => { if (S.me) { const o = document.getElementById("acct-ov"); if (o) { o.remove(); return; } const ov = document.createElement("div"); ov.id = "acct-ov"; ov.innerHTML = acctHtml(); document.body.appendChild(ov); ov.onclick = (e) => { if (e.target.closest("[data-edp]")) { ov.remove(); editProfile(); return; } if (e.target === ov || e.target.closest("[data-acx]")) ov.remove(); }; return; } connect().catch((x) => toast(x.shortMessage || x.message, true)); };
   window.addEventListener("hashchange", () => { S.tab = "overview"; clearInterval(S.poll); if (!location.hash.startsWith("#/launch")) $("#app").innerHTML = ""; route(); scrollTo(0, 0); });
   await loadCatalog();
   route();
