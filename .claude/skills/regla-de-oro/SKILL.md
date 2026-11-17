@@ -40,3 +40,8 @@ Una pregunta por decisión, en lenguaje simple. Si la respuesta ya se dio antes 
 - Responde en español, corto y sin tecnicismos. Si usas una palabra técnica, explícala en una línea.
 - No repitas explicaciones ya dadas. Lee solo lo necesario.
 - Al terminar, resume en pocas líneas: qué se hizo, qué se probó y cuál es el siguiente paso.
+
+## 6. Después de cada cosa hecha: cuestionario, nunca texto suelto
+- Al terminar cualquier tarea, NO preguntes con texto normal. Usa SIEMPRE la herramienta de preguntas (tanda de cuestionario, 2 a 4 preguntas, opciones concretas, la recomendada primero).
+- Manda capturas (computador y celular) y luego la tanda. Se repite en cada tanda hasta que el dueño diga "listo".
+- Si el dueño no se convence, la siguiente tanda pregunta qué no le gusta con ejemplos, no con explicaciones largas.
