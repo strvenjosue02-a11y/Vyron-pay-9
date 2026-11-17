@@ -3,263 +3,264 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Menú</title>
+<title>Carta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Young+Serif&family=Lilita+One&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-/* ---------- Temas ---------- */
-:root, [data-theme="playa"] {
-  --bg: #E6EFEA; --surface: #F4F8F5; --ink: #10302B; --muted: #4D6B64;
-  --accent: #F2643D; --on-accent: #FFFFFF; --line: #BCD0C8;
-  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
-  --font-body: "Bricolage Grotesque", system-ui, sans-serif;
-  --display-weight: 800; --display-track: -0.035em; --radius: 18px;
+/* ---------- Paletas ---------- */
+:root, [data-paleta="bordeaux"] {
+  --bg: #2A0E14; --ink: #F2E8DE; --muted: #BCA39B; --metal: #D9BF8C;
+  --line: rgba(217, 191, 140, .24); --plate-ink: #2A0E14;
 }
-[data-theme="volcan"] {
-  --bg: #1C1714; --surface: #27201B; --ink: #F1E6D8; --muted: #B5A493;
-  --accent: #E8592B; --on-accent: #1C1714; --line: #46392F;
-  --font-display: "Young Serif", Georgia, serif;
-  --font-body: "Inter Tight", system-ui, sans-serif;
-  --display-weight: 400; --display-track: -0.01em; --radius: 4px;
+[data-paleta="nuit"] {
+  --bg: #0F1729; --ink: #ECE5D8; --muted: #A2A8B6; --metal: #CDAE73;
+  --line: rgba(205, 174, 115, .24); --plate-ink: #0F1729;
 }
-[data-theme="caribe"] {
-  --bg: #FFF1C9; --surface: #FFF8E3; --ink: #17392A; --muted: #4F6B5A;
-  --accent: #D7263D; --on-accent: #FFFFFF; --line: #E9D49A;
-  --font-display: "Lilita One", system-ui, sans-serif;
-  --font-body: "Nunito Sans", system-ui, sans-serif;
-  --display-weight: 400; --display-track: 0.005em; --radius: 26px;
+[data-paleta="bouteille"] {
+  --bg: #0F271F; --ink: #EEE7D8; --muted: #A3B2A7; --metal: #CFAA62;
+  --line: rgba(207, 170, 98, .24); --plate-ink: #0F271F;
 }
-[data-theme="ciudad"] {
-  --bg: #F5F5F2; --surface: #FFFFFF; --ink: #161616; --muted: #66665F;
-  --accent: #2E55F0; --on-accent: #FFFFFF; --line: #DADAD3;
-  --font-display: "Instrument Serif", Georgia, serif;
-  --font-body: "Inter Tight", system-ui, sans-serif;
-  --display-weight: 400; --display-track: -0.02em; --radius: 0px;
+[data-paleta="porcelaine"] {
+  --bg: #D6D2CA; --ink: #1F1A17; --muted: #5E5650; --metal: #6E1A26;
+  --line: rgba(31, 26, 23, .18); --plate-ink: #6E1A26;
 }
 
 /* ---------- Base ---------- */
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 76px; -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 64px; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
-  font-family: var(--font-body); font-size: 16px; line-height: 1.5;
-  transition: background-color .45s ease, color .45s ease;
+  font-family: "Jost", system-ui, sans-serif; font-weight: 300; font-size: 16px; line-height: 1.6;
+  transition: background-color .6s ease, color .6s ease;
+  -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; }
-button { font: inherit; color: inherit; }
-:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
-.wrap { max-width: 680px; margin: 0 auto; padding: 0 20px; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+:focus-visible { outline: 1px solid var(--metal); outline-offset: 4px; }
+.serif { font-family: "Bodoni Moda", Didot, "Bodoni 72", Georgia, serif; }
 
-/* ---------- Barra superior ---------- */
-.topbar { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 20px 0; max-width: 680px; margin: 0 auto; }
-.seg { display: inline-flex; border: 1.5px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface); }
-.seg button {
-  border: 0; background: transparent; padding: 6px 12px; border-radius: 999px;
-  font-size: 14px; font-weight: 600; cursor: pointer; min-width: 44px; min-height: 34px;
-}
-.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+/* Selector de idioma y moneda */
+.switch { display: inline-flex; align-items: center; gap: 2px; font-size: 13px; letter-spacing: .08em; }
+.switch button { padding: 10px 6px; color: var(--muted); min-height: 40px; }
+.switch button[aria-pressed="true"] { color: var(--ink); text-decoration: underline; text-decoration-color: var(--metal); text-underline-offset: 6px; }
+.switch i { width: 1px; height: 12px; background: var(--line); margin: 0 4px; }
 
-/* ---------- Encabezado ---------- */
-header.hero { padding-top: 40px; padding-bottom: 28px; }
-.name {
-  font-family: var(--font-display); font-weight: var(--display-weight);
-  letter-spacing: var(--display-track); line-height: .9; margin: 0;
-  font-size: clamp(72px, 22vw, 156px); overflow-wrap: anywhere;
-}
-.name span { display: inline-block; }
-.lema { font-size: clamp(18px, 4.6vw, 22px); max-width: 32ch; margin: 18px 0 22px; text-wrap: balance; }
-.info { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 15px; }
-.info li { display: flex; gap: 10px; align-items: center; }
-.info svg { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; }
-.info a { text-underline-offset: 3px; }
+/* ---------- Portada ---------- */
+.cover { min-height: 100svh; display: flex; flex-direction: column; align-items: center; padding: 0 16px 40px; position: relative; overflow: hidden; }
+.cover-top { width: 100%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center; padding-top: max(10px, env(safe-area-inset-top)); }
+.place { font-size: 13px; letter-spacing: .12em; color: var(--muted); margin: 18px 0 0; text-align: center; }
 
-/* ---------- Navegación de categorías ---------- */
-nav.cats {
-  position: sticky; top: 0; z-index: 10; background: var(--bg);
-  border-bottom: 1.5px solid var(--line); transition: background-color .45s ease;
+.stage {
+  position: relative; width: min(118vw, 74svh, 860px); aspect-ratio: 1; margin-top: -2svh;
+  will-change: transform;
 }
-nav.cats .wrap { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-top: 10px; padding-bottom: 10px; }
-nav.cats .wrap::-webkit-scrollbar { display: none; }
-nav.cats a {
-  flex: none; text-decoration: none; padding: 8px 14px; border-radius: 999px;
-  font-weight: 600; font-size: 15px; color: var(--muted); white-space: nowrap;
+.stage img {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  -webkit-mask-image: radial-gradient(closest-side, #000 72%, transparent 100%);
+          mask-image: radial-gradient(closest-side, #000 72%, transparent 100%);
 }
-nav.cats a.on { background: var(--accent); color: var(--on-accent); }
+/* El nombre vive impreso dentro del plato */
+.monogram {
+  position: absolute; left: 50%; top: 59.4%; width: 40%; transform: translate(-50%, -50%);
+  margin: 0; text-align: center; color: var(--plate-ink);
+  font-family: "Bodoni Moda", Didot, Georgia, serif; font-weight: 400; font-optical-sizing: auto;
+  font-size: clamp(30px, calc(min(118vw, 74svh, 860px) * .082), 74px); line-height: 1; letter-spacing: -.01em;
+  transition: color .6s ease;
+}
+.monogram small {
+  display: block; font-family: "Jost", sans-serif; font-weight: 400; font-size: .17em; letter-spacing: .32em;
+  margin-top: 1.1em; padding-left: .32em; color: var(--plate-ink); opacity: .7;
+}
+.lema { font-family: "Bodoni Moda", Georgia, serif; font-style: italic; font-size: clamp(20px, 5vw, 28px); margin: -1svh 0 0; text-align: center; text-wrap: balance; }
+.to-menu {
+  margin-top: 26px; font-size: 14px; letter-spacing: .12em; text-decoration: none; color: var(--muted);
+  display: inline-flex; flex-direction: column; align-items: center; gap: 12px; padding: 8px;
+}
+.to-menu span.ln { width: 1px; height: 44px; background: linear-gradient(var(--metal), transparent); }
 
-/* ---------- Filtros dietéticos ---------- */
-.filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 18px 0 4px; }
-.chip {
-  border: 1.5px solid var(--line); background: transparent; border-radius: 999px;
-  padding: 6px 12px; font-size: 14px; cursor: pointer; min-height: 36px;
+/* ---------- Barra fija ---------- */
+.bar {
+  position: fixed; inset: 0 0 auto 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line); transform: translateY(-100%); transition: transform .45s cubic-bezier(.2,.7,.2,1), background-color .6s;
 }
-.chip[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--bg); }
+.bar.show { transform: none; }
+.bar-in { max-width: 1100px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 18px; height: 56px; }
+.bar .nm { font-family: "Bodoni Moda", Georgia, serif; font-size: 22px; flex: none; text-decoration: none; }
+.bar nav { flex: 1; display: flex; gap: 20px; overflow-x: auto; scrollbar-width: none; justify-content: center; }
+.bar nav::-webkit-scrollbar { display: none; }
+.bar nav a { font-size: 14px; color: var(--muted); text-decoration: none; white-space: nowrap; padding: 6px 0; border-bottom: 1px solid transparent; }
+.bar nav a.on { color: var(--ink); border-color: var(--metal); }
+@media (max-width: 640px) { .bar nav { display: none; } .bar-in { justify-content: space-between; } }
 
-/* ---------- Plato de la casa ---------- */
-.feature {
-  margin: 22px 0 8px; padding: 26px 24px; border-radius: var(--radius);
-  background: var(--accent); color: var(--on-accent); position: relative; overflow: hidden;
+/* ---------- Carta ---------- */
+main { max-width: 600px; margin: 0 auto; padding: 0 20px; text-align: center; }
+.note { padding: 72px 0 32px; }
+.note p { font-family: "Bodoni Moda", Georgia, serif; font-style: italic; font-size: clamp(22px, 5.6vw, 30px); line-height: 1.35; margin: 0 auto; max-width: 24ch; text-wrap: balance; }
+.note cite { display: block; font-style: normal; font-size: 14px; color: var(--muted); margin-top: 20px; letter-spacing: .04em; }
+
+.course { padding: 64px 0 8px; }
+.course h2 {
+  font-family: "Bodoni Moda", Georgia, serif; font-weight: 400; font-style: italic;
+  font-size: clamp(34px, 9vw, 48px); line-height: 1.05; margin: 0;
 }
-.feature .kicker { font-size: 14px; font-weight: 600; opacity: .85; margin: 0 0 6px; }
-.feature h2 {
-  font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-track);
-  font-size: clamp(32px, 8.5vw, 46px); line-height: 1; margin: 0 0 12px;
+.course h2::after { content: ""; display: block; width: 28px; height: 1px; background: var(--metal); margin: 26px auto 8px; }
+.dish { list-style: none; padding: 26px 0; }
+.dishes { margin: 0; padding: 0; }
+.dish h3 { font-family: "Bodoni Moda", Georgia, serif; font-weight: 500; font-size: 22px; line-height: 1.2; margin: 0; letter-spacing: -.005em; }
+.dish p { margin: 6px auto 0; color: var(--muted); font-size: 15.5px; max-width: 34ch; }
+.dish .pr { display: inline-block; margin-top: 10px; font-size: 15px; letter-spacing: .06em; font-variant-numeric: tabular-nums lining-nums; color: var(--metal); font-weight: 400; }
+.mk { font-family: "Jost", sans-serif; font-weight: 400; font-size: 11px; letter-spacing: .08em; vertical-align: super; color: var(--muted); margin-left: 6px; }
+
+/* Menú degustación: doble filete, como una carta impresa */
+.tasting {
+  margin: 72px 0 0; padding: 44px 28px; border: 1px solid var(--line);
+  outline: 1px solid var(--line); outline-offset: -8px;
 }
-.feature p.d { margin: 0 0 18px; max-width: 40ch; }
-.feature .p { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.feature svg.sun { position: absolute; right: -40px; top: -40px; width: 170px; height: 170px; opacity: .18; }
+.tasting h2 { font-family: "Bodoni Moda", Georgia, serif; font-weight: 400; font-size: clamp(30px, 8vw, 40px); margin: 0 0 12px; line-height: 1.1; }
+.tasting p { margin: 0 auto; color: var(--muted); max-width: 30ch; }
+.tasting .big { font-family: "Bodoni Moda", Georgia, serif; font-size: 40px; color: var(--ink); margin: 22px 0 2px; font-variant-numeric: lining-nums; }
+.tasting .per { font-size: 14px; color: var(--muted); }
+.tasting .pair { margin-top: 18px; font-size: 15px; }
+.tasting .pair b { font-weight: 400; color: var(--metal); margin-left: 6px; letter-spacing: .06em; }
 
-/* ---------- Secciones y platos ---------- */
-section.cat { padding-top: 30px; }
-section.cat h2 {
-  font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-track);
-  font-size: clamp(30px, 8vw, 40px); line-height: 1.05; margin: 0 0 6px;
+/* ---------- Reservar ---------- */
+.reserve { padding: 96px 0 40px; }
+.reserve h2 { font-family: "Bodoni Moda", Georgia, serif; font-weight: 400; font-size: clamp(36px, 10vw, 56px); margin: 0 0 16px; line-height: 1; }
+.reserve p { color: var(--muted); margin: 0 0 30px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 54px; padding: 0 34px;
+  border: 1px solid var(--metal); color: var(--ink); text-decoration: none; font-size: 15px; letter-spacing: .1em;
+  transition: background-color .3s, color .3s;
 }
-ul.items { list-style: none; margin: 0; padding: 0; }
-.item { padding: 16px 0; border-bottom: 1px solid var(--line); }
-.item:last-child { border-bottom: 0; }
-.row { display: flex; align-items: baseline; gap: 10px; }
-.row h3 { font-size: 18px; font-weight: 700; margin: 0; line-height: 1.25; }
-.row .lead { flex: 1; border-bottom: 2px dotted var(--line); transform: translateY(-5px); min-width: 16px; }
-.row .price { font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.item p { margin: 4px 0 0; color: var(--muted); font-size: 15px; max-width: 52ch; }
-.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.tag { font-size: 12.5px; padding: 2px 9px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
-.item[hidden], section.cat[hidden] { display: none; }
-.empty { color: var(--muted); padding: 24px 0; }
+.btn:hover { background: var(--metal); color: var(--bg); }
+.facts { margin: 48px 0 0; display: grid; gap: 22px; }
+.facts dt { font-size: 13px; color: var(--muted); letter-spacing: .08em; }
+.facts dd { margin: 2px 0 0; font-size: 16px; }
+.facts a { text-decoration-color: var(--line); text-underline-offset: 4px; }
 
-.note { color: var(--muted); font-size: 14px; margin: 34px 0 0; }
+footer { max-width: 600px; margin: 0 auto; padding: 48px 20px 120px; text-align: center; color: var(--muted); font-size: 13.5px; border-top: 1px solid var(--line); }
+footer p { margin: 0 0 6px; }
 
-/* ---------- Pie ---------- */
-footer { padding-top: 36px; padding-bottom: 120px; }
-.cta {
-  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
-  padding: 16px 20px; border-radius: var(--radius); text-decoration: none; font-weight: 700; font-size: 17px;
-  background: var(--ink); color: var(--bg); min-height: 56px;
-}
-.cta svg { width: 22px; height: 22px; fill: currentColor; }
-.links { display: flex; justify-content: center; gap: 22px; margin-top: 18px; font-size: 15px; }
-.links a { color: var(--muted); text-underline-offset: 3px; }
-
-/* ---------- Panel de demo (solo para vender) ---------- */
+/* ---------- Panel de paletas (solo para la demo de venta) ---------- */
 .demo-btn {
   position: fixed; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 30;
-  display: flex; align-items: center; gap: 8px; border: 0; cursor: pointer;
-  padding: 12px 18px; border-radius: 999px; background: var(--accent); color: var(--on-accent);
-  font-weight: 700; box-shadow: 0 6px 24px rgba(0,0,0,.22);
+  display: flex; align-items: center; gap: 12px; padding: 12px 18px 12px 14px;
+  background: var(--ink); color: var(--bg); border-radius: 999px; font-size: 14px; letter-spacing: .04em;
+  box-shadow: 0 10px 40px rgba(0,0,0,.35); transition: background-color .6s, color .6s;
 }
-.demo-btn svg { width: 20px; height: 20px; }
-.sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 40; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.demo-btn .dots { display: flex; }
+.demo-btn .dots i { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--ink); margin-left: -4px; }
+.demo-btn .dots i:first-child { margin-left: 0; }
+.scrim { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.45); opacity: 0; pointer-events: none; transition: opacity .3s; }
 .sheet {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; max-width: 560px; margin: 0 auto;
-  background: #FFFFFF; color: #161616; border-radius: 22px 22px 0 0; padding: 22px 20px calc(24px + env(safe-area-inset-bottom));
-  font-family: "Inter Tight", system-ui, sans-serif;
-  transform: translateY(105%); transition: transform .35s cubic-bezier(.2,.8,.2,1); max-height: 88vh; overflow-y: auto;
+  position: fixed; z-index: 50; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto;
+  background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-bottom: 0;
+  padding: 28px 22px calc(26px + env(safe-area-inset-bottom)); transform: translateY(105%);
+  transition: transform .4s cubic-bezier(.2,.8,.2,1), background-color .6s; max-height: 90svh; overflow-y: auto; text-align: left;
 }
-.open .sheet-bg { opacity: 1; pointer-events: auto; }
+.open .scrim { opacity: 1; pointer-events: auto; }
 .open .sheet { transform: none; }
-.sheet h2 { font-size: 20px; margin: 0 0 4px; }
-.sheet .sub { color: #66665F; margin: 0 0 18px; font-size: 14px; }
-.themes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.theme {
-  border: 2px solid #E2E2DC; background: #FFF; border-radius: 14px; padding: 12px; cursor: pointer; text-align: left;
-}
-.theme[aria-pressed="true"] { border-color: #161616; }
-.theme .sw { display: flex; height: 34px; border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
-.theme .sw i { flex: 1; }
-.theme b { display: block; font-size: 15px; }
-.theme small { color: #66665F; font-size: 12.5px; }
-.sheet h3 { font-size: 15px; margin: 22px 0 10px; }
-.accent-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.dot { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px #D0D0C8; cursor: pointer; }
-.dot[aria-pressed="true"] { box-shadow: 0 0 0 2.5px #161616; }
-.accent-row input[type=color] { width: 40px; height: 40px; border: 0; padding: 0; background: none; cursor: pointer; }
-.qr-box { display: flex; gap: 16px; align-items: center; }
-#qr { background: #fff; padding: 8px; border: 1px solid #E2E2DC; border-radius: 10px; width: 136px; height: 136px; flex: none; }
-#qr img, #qr canvas { width: 118px !important; height: 118px !important; }
-.qr-box p { margin: 0 0 10px; font-size: 14px; color: #44443F; }
-.btn2 { border: 1.5px solid #161616; background: #fff; border-radius: 10px; padding: 9px 14px; font-weight: 600; cursor: pointer; }
-.close { position: absolute; right: 14px; top: 14px; border: 0; background: #F0F0EC; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; }
+.sheet h2 { font-family: "Bodoni Moda", Georgia, serif; font-weight: 400; font-size: 28px; margin: 0 0 4px; }
+.sheet .sub { color: var(--muted); font-size: 14.5px; margin: 0 0 22px; }
+.sheet h3 { font-weight: 400; font-size: 13px; letter-spacing: .1em; color: var(--muted); margin: 26px 0 12px; }
+.pals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.pal { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; }
+.pal .sw { width: 54px; height: 54px; border-radius: 50%; position: relative; box-shadow: 0 0 0 1px var(--line); }
+.pal .sw::after { content: ""; position: absolute; inset: 15px; border-radius: 50%; background: #EEEBE5; box-shadow: 0 0 0 2px var(--rim, #D6B26E); }
+.pal[aria-pressed="true"] .sw { box-shadow: 0 0 0 1px var(--bg), 0 0 0 2.5px var(--ink); }
+.metals { display: flex; gap: 12px; }
+.metal { width: 36px; height: 36px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); }
+.metal[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--ink); }
+.qr { display: flex; gap: 18px; align-items: center; }
+#qr { background: #fff; padding: 8px; width: 132px; height: 132px; flex: none; }
+#qr img, #qr canvas { width: 116px !important; height: 116px !important; }
+.qr p { margin: 0 0 12px; font-size: 14.5px; color: var(--muted); }
+.qr .btn { min-height: 44px; padding: 0 18px; font-size: 13.5px; }
+.x { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; font-size: 22px; color: var(--muted); }
 
-/* ---------- Animación de entrada (un solo momento) ---------- */
+/* ---------- Un solo momento de entrada ---------- */
 @media (prefers-reduced-motion: no-preference) {
-  .name span { opacity: 0; transform: translateY(.35em) rotate(4deg); animation: rise .7s cubic-bezier(.2,.8,.2,1) forwards; }
-  .lema, .info { opacity: 0; animation: fade .6s ease forwards; animation-delay: .55s; }
-  @keyframes rise { to { opacity: 1; transform: none; } }
-  @keyframes fade { to { opacity: 1; } }
-}
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  * { transition: none !important; }
-}
-@media (min-width: 760px) {
-  header.hero { padding-top: 72px; }
+  .stage img { animation: plate 2.2s cubic-bezier(.2,.7,.2,1) both; }
+  .monogram { animation: ink 1.6s ease .9s both; }
+  .lema, .to-menu, .place { animation: fade 1.2s ease 1.5s both; }
+  @keyframes plate { from { opacity: 0; transform: scale(1.08) rotate(-8deg); } to { opacity: 1; transform: none; } }
+  @keyframes ink { from { opacity: 0; letter-spacing: .25em; filter: blur(6px); } to { opacity: 1; } }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="seg" role="group" aria-label="Idioma / Language">
-    <button type="button" data-lang="es" aria-pressed="true">ES</button>
-    <button type="button" data-lang="en" aria-pressed="false">EN</button>
-  </div>
-  <div class="seg" role="group" aria-label="Moneda / Currency">
-    <button type="button" data-cur="crc" aria-pressed="true">₡</button>
-    <button type="button" data-cur="usd" aria-pressed="false">$</button>
+<div class="bar" id="bar" aria-hidden="true">
+  <div class="bar-in">
+    <a class="nm" href="#top" id="barName"></a>
+    <nav id="barNav" aria-label="Secciones"></nav>
+    <div class="switch">
+      <button type="button" data-lang="es">ES</button><button type="button" data-lang="en">EN</button><i></i>
+      <button type="button" data-cur="crc">₡</button><button type="button" data-cur="usd">$</button>
+    </div>
   </div>
 </div>
 
-<header class="hero wrap">
-  <h1 class="name" id="name"></h1>
+<header class="cover" id="top">
+  <div class="cover-top">
+    <div class="switch" role="group" aria-label="Idioma">
+      <button type="button" data-lang="es">ES</button><button type="button" data-lang="en">EN</button>
+    </div>
+    <div class="switch" role="group" aria-label="Moneda">
+      <button type="button" data-cur="crc">₡</button><button type="button" data-cur="usd">$</button>
+    </div>
+  </div>
+  <p class="place" id="place"></p>
+  <div class="stage" id="stage">
+    <img id="plate" alt="" width="1600" height="1600" decoding="async" fetchpriority="high">
+    <h1 class="monogram" id="mono"></h1>
+  </div>
   <p class="lema" id="lema"></p>
-  <ul class="info">
-    <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="horario"></span></li>
-    <li><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><a id="ubicacion" target="_blank" rel="noopener"></a></li>
-  </ul>
+  <a class="to-menu" href="#carta"><span id="toMenu"></span><span class="ln"></span></a>
 </header>
 
-<nav class="cats" aria-label="Categorías"><div class="wrap" id="cats"></div></nav>
-
-<main class="wrap">
-  <div class="filters" id="filters" role="group"></div>
-  <div id="feature"></div>
-  <div id="menu"></div>
-  <p class="note" id="nota"></p>
+<main id="carta">
+  <section class="note"><p id="noteTxt"></p><cite id="noteSig"></cite></section>
+  <div id="courses"></div>
+  <section class="tasting" id="tasting"></section>
+  <section class="reserve" id="reservar">
+    <h2 id="resTitle"></h2>
+    <p id="resSub"></p>
+    <a class="btn" id="wa" target="_blank" rel="noopener"></a>
+    <dl class="facts">
+      <div><dt id="hLbl"></dt><dd id="hours"></dd></div>
+      <div><dt id="aLbl"></dt><dd><a id="addr" target="_blank" rel="noopener"></a></dd></div>
+      <div><dt>Instagram</dt><dd><a id="ig" target="_blank" rel="noopener"></a></dd></div>
+    </dl>
+  </section>
 </main>
 
-<footer class="wrap">
-  <a class="cta" id="wa" target="_blank" rel="noopener">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
-    <span id="waTxt"></span>
-  </a>
-  <div class="links">
-    <a id="ig" target="_blank" rel="noopener">Instagram</a>
-    <a id="map" target="_blank" rel="noopener"></a>
-  </div>
+<footer>
+  <p id="legend"></p>
+  <p id="taxes"></p>
 </footer>
 
-<!-- Panel de demo -->
 <div id="demo" hidden>
   <button class="demo-btn" id="demoOpen" type="button" aria-haspopup="dialog">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.4-1.1-.2-.3-.4-.6-.4-1 0-.9.7-1.5 1.6-1.5H16a5 5 0 0 0 5-5C21 6.4 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7.5" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg>
-    Cambiar estilo
+    <span class="dots"><i style="background:#2A0E14"></i><i style="background:#0F1729"></i><i style="background:#0F271F"></i><i style="background:#D6D2CA"></i></span>
+    Cambiar paleta
   </button>
-  <div class="sheet-bg" id="sheetBg"></div>
-  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
-    <button class="close" id="demoClose" type="button" aria-label="Cerrar">×</button>
-    <h2 id="sheetTitle">Elegí el estilo de tu restaurante</h2>
-    <p class="sub">El menú se adapta al instante. Tus platos y precios no cambian.</p>
-    <div class="themes" id="themes"></div>
-    <h3>Color principal</h3>
-    <div class="accent-row" id="accents"></div>
-    <h3>Tu QR para las mesas</h3>
-    <div class="qr-box">
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT">
+    <button class="x" id="demoClose" type="button" aria-label="Cerrar">×</button>
+    <h2 id="sheetT">La identidad de tu casa</h2>
+    <p class="sub">Tocá una paleta y la carta entera cambia. Tus platos y precios se quedan igual.</p>
+    <div class="pals" id="pals"></div>
+    <h3>Filo de la vajilla</h3>
+    <div class="metals" id="metals"></div>
+    <h3>QR para las mesas</h3>
+    <div class="qr">
       <div id="qr"></div>
-      <div>
-        <p>Lo imprimís, lo pegás en la mesa y el cliente ve el menú en su idioma.</p>
-        <button class="btn2" id="qrDl" type="button">Descargar QR</button>
-      </div>
+      <div><p>Se imprime en la mesa o en la cuenta. El turista ve la carta en su idioma.</p>
+      <button class="btn" id="qrDl" type="button">Descargar QR</button></div>
     </div>
   </div>
 </div>
@@ -270,158 +271,157 @@ footer { padding-top: 36px; padding-bottom: 120px; }
 (function () {
   const R = window.RESTAURANTE;
   const $ = (s) => document.querySelector(s);
+  const $$ = (s) => document.querySelectorAll(s);
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   };
-  const params = new URLSearchParams(location.search);
+  const q = new URLSearchParams(location.search);
+
+  const PALETAS = {
+    bordeaux:   { nombre: "Bordeaux",   bg: "#2A0E14", rim: "#D9BF8C" },
+    nuit:       { nombre: "Nuit",       bg: "#0F1729", rim: "#CDAE73" },
+    bouteille:  { nombre: "Bouteille",  bg: "#0F271F", rim: "#CFAA62" },
+    porcelaine: { nombre: "Porcelaine", bg: "#D6D2CA", rim: "#6E1A26" }
+  };
+  const METALES = [
+    { n: "Oro", c: null }, { n: "Plata", c: "#C9CCD1" }, { n: "Cobre", c: "#C48A63" }, { n: "Champán", c: "#E6D3AE" }
+  ];
 
   const T = {
-    es: { feature: "Plato de la casa", all: "Todo", wa: "Reservar por WhatsApp", map: "Cómo llegar",
-          waMsg: "Hola, quiero reservar una mesa en ", empty: "No hay platos con ese filtro.",
-          tags: { vegano: "🌱 Vegano", vegetariano: "🥚 Vegetariano", sinGluten: "🌾 Sin gluten", picante: "🌶️ Picante" } },
-    en: { feature: "House special", all: "All", wa: "Book a table on WhatsApp", map: "Directions",
-          waMsg: "Hi, I'd like to book a table at ", empty: "No dishes match that filter.",
-          tags: { vegano: "🌱 Vegan", vegetariano: "🥚 Vegetarian", sinGluten: "🌾 Gluten-free", picante: "🌶️ Spicy" } }
+    es: { toMenu: "Ver la carta", resT: "Reservar mesa", resS: "Respondemos por WhatsApp en minutos.", wa: "Reservar por WhatsApp",
+          waMsg: "Hola, quisiera reservar una mesa en ", h: "Horario", a: "Dirección", per: "por persona",
+          leg: "v vegetariano   vg vegano   sg sin gluten", taxes: "Precios en colones con impuestos y servicio incluidos.",
+          taxesUsd: "Precios en dólares, aproximados al tipo de cambio del día. Impuestos y servicio incluidos.",
+          mk: { v: "v", vg: "vg", sg: "sg" } },
+    en: { toMenu: "See the menu", resT: "Book a table", resS: "We reply on WhatsApp within minutes.", wa: "Book on WhatsApp",
+          waMsg: "Hello, I'd like to book a table at ", h: "Hours", a: "Address", per: "per person",
+          leg: "v vegetarian   vg vegan   gf gluten-free", taxes: "Prices in colones, taxes and service included.",
+          taxesUsd: "Prices in US dollars at today's exchange rate. Taxes and service included.",
+          mk: { v: "v", vg: "vg", sg: "gf" } }
   };
 
-  const THEMES = {
-    playa:  { es: "Playa",  hint: "Pacífico, surf, fresco", sw: ["#E6EFEA", "#10302B", "#F2643D"], accents: ["#F2643D", "#0F8B8D", "#E8A33D", "#10302B"] },
-    volcan: { es: "Volcán", hint: "La Fortuna, parrilla",   sw: ["#1C1714", "#F1E6D8", "#E8592B"], accents: ["#E8592B", "#C9A15B", "#8FB573", "#D14A63"] },
-    caribe: { es: "Caribe", hint: "Puerto Viejo, color",    sw: ["#FFF1C9", "#17392A", "#D7263D"], accents: ["#D7263D", "#1F8A70", "#F08A24", "#2A5BD7"] },
-    ciudad: { es: "Ciudad", hint: "Café, brunch, San José", sw: ["#F5F5F2", "#161616", "#2E55F0"], accents: ["#2E55F0", "#161616", "#D9472B", "#2F7D5B"] }
-  };
-
-  let lang = store.get("menu-lang") || ((navigator.language || "es").slice(0, 2) === "es" ? "es" : "en");
-  let cur = store.get("menu-cur") || (lang === "en" ? "usd" : "crc");
-  let theme = params.get("tema") || R.tema || "playa";
-  let accent = R.colorAcento || null;
-  let filter = null;
+  let lang = store.get("carta-lang") || ((navigator.language || "es").slice(0, 2) === "es" ? "es" : "en");
+  let cur = store.get("carta-cur") || (lang === "en" ? "usd" : "crc");
+  let paleta = q.get("paleta") || R.paleta || "bordeaux";
+  if (!PALETAS[paleta]) paleta = "bordeaux";
+  let metal = R.metal || null;
 
   const t = (o) => (o && (o[lang] || o.es)) || "";
-  const fmt = (crc) => {
-    if (cur === "usd") {
-      const usd = Math.ceil((crc / R.tipoCambio) * 2) / 2;
-      return "$" + (usd % 1 ? usd.toFixed(2) : usd.toFixed(0));
-    }
-    return "₡" + String(crc).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const tagsHTML = (arr) => arr && arr.length
-    ? '<div class="tags">' + arr.map((k) => '<span class="tag">' + T[lang].tags[k] + "</span>").join("") + "</div>" : "";
+  const price = (crc) => {
+    if (cur === "usd") return "$" + Math.round(crc / R.tipoCambio);
+    return String(crc).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  };
 
-  function applyTheme() {
-    document.documentElement.setAttribute("data-theme", theme);
-    const root = document.documentElement.style;
-    if (accent) root.setProperty("--accent", accent); else root.removeProperty("--accent");
-    if (accent) {
-      const h = accent.replace("#", ""); const n = parseInt(h, 16);
-      const lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
-      root.setProperty("--on-accent", lum > 0.62 ? "#161616" : "#FFFFFF");
-    } else root.removeProperty("--on-accent");
-    document.querySelectorAll(".theme").forEach((b) => b.setAttribute("aria-pressed", b.dataset.t === theme));
-    renderAccents();
+  function applyPaleta() {
+    const html = document.documentElement;
+    html.setAttribute("data-paleta", paleta);
+    if (metal) html.style.setProperty("--metal", metal); else html.style.removeProperty("--metal");
+    const img = $("#plate");
+    const src = "img/" + paleta + ".jpg";
+    if (!img.getAttribute("src")) img.src = src;
+    else if (!img.src.endsWith(src)) {
+      img.style.transition = "opacity .35s"; img.style.opacity = 0;
+      const n = new Image(); n.onload = () => { img.src = src; img.style.opacity = 1; }; n.src = src;
+    }
+    const meta = document.querySelector('meta[name="theme-color"]') || document.head.appendChild(Object.assign(document.createElement("meta"), { name: "theme-color" }));
+    meta.content = PALETAS[paleta].bg;
+    $$(".pal").forEach((b) => b.setAttribute("aria-pressed", b.dataset.p === paleta));
+    $$(".metal").forEach((b) => b.setAttribute("aria-pressed", (b.dataset.m || null) === metal));
   }
 
-  function renderStatic() {
+  function render() {
     document.documentElement.lang = lang;
-    document.title = R.nombre + (lang === "es" ? " | Menú" : " | Menu");
-    $("#name").innerHTML = esc(R.nombre).split("").map((c, i) =>
-      '<span style="animation-delay:' + (i * 45) + 'ms">' + (c === " " ? "&nbsp;" : c) + "</span>").join("");
-    $("#name").setAttribute("aria-label", R.nombre);
+    document.title = R.nombre + (lang === "es" ? ", carta" : ", menu");
+    $("#mono").innerHTML = esc(R.nombre);
+    $("#barName").textContent = R.nombre;
+    $("#place").textContent = t(R.lugar);
     $("#lema").textContent = t(R.lema);
-    $("#horario").textContent = t(R.horario);
-    $("#ubicacion").textContent = t(R.ubicacion); $("#ubicacion").href = R.mapa;
-    $("#nota").textContent = t(R.notaPrecios);
-    $("#waTxt").textContent = T[lang].wa;
-    $("#wa").href = "https://wa.me/" + R.whatsapp + "?text=" + encodeURIComponent(T[lang].waMsg + R.nombre);
-    $("#ig").href = "https://instagram.com/" + R.instagram;
-    $("#map").href = R.mapa; $("#map").textContent = T[lang].map;
-    document.querySelectorAll("[data-lang]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.lang === lang));
-    document.querySelectorAll("[data-cur]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.cur === cur));
+    $("#toMenu").textContent = T[lang].toMenu;
+    $("#noteTxt").textContent = t(R.nota.texto);
+    $("#noteSig").textContent = t(R.nota.firma);
+
+    $("#barNav").innerHTML = R.categorias.map((c) => '<a href="#' + c.id + '" data-id="' + c.id + '">' + esc(t(c.nombre)) + "</a>").join("") +
+      '<a href="#reservar" data-id="reservar">' + T[lang].resT + "</a>";
+
+    const mk = (arr) => (arr || []).map((k) => T[lang].mk[k]).join(" ");
+    $("#courses").innerHTML = R.categorias.map((c) =>
+      '<section class="course" id="' + c.id + '"><h2>' + esc(t(c.nombre)) + '</h2><ul class="dishes">' +
+      c.platos.map((p) => '<li class="dish"><h3>' + esc(t(p.nombre)) +
+        (p.marcas && p.marcas.length ? '<span class="mk">' + mk(p.marcas) + "</span>" : "") + "</h3>" +
+        (p.desc ? "<p>" + esc(t(p.desc)) + "</p>" : "") + '<span class="pr">' + price(p.precio) + "</span></li>").join("") +
+      "</ul></section>").join("");
+
+    const d = R.degustacion;
+    $("#tasting").hidden = !d;
+    if (d) $("#tasting").innerHTML = "<h2>" + esc(t(d.nombre)) + "</h2><p>" + esc(t(d.desc)) + '</p><div class="big">' + price(d.precio) +
+      '</div><div class="per">' + T[lang].per + '</div><div class="pair">' + esc(t(d.maridaje)) + "<b>" + price(d.precioMaridaje) + "</b></div>";
+
+    $("#resTitle").textContent = T[lang].resT;
+    $("#resSub").textContent = T[lang].resS;
+    $("#wa").textContent = T[lang].wa;
+    $("#wa").href = "https://wa.me/" + R.whatsapp + "?text=" + encodeURIComponent(T[lang].waMsg + R.nombre + ".");
+    $("#hLbl").textContent = T[lang].h; $("#hours").textContent = t(R.horario);
+    $("#aLbl").textContent = T[lang].a; $("#addr").textContent = t(R.direccion); $("#addr").href = R.mapa;
+    $("#ig").textContent = "@" + R.instagram; $("#ig").href = "https://instagram.com/" + R.instagram;
+    $("#legend").textContent = T[lang].leg;
+    $("#taxes").textContent = cur === "usd" ? T[lang].taxesUsd : T[lang].taxes;
+
+    $$("[data-lang]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.lang === lang));
+    $$("[data-cur]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.cur === cur));
+    observe();
   }
 
-  function renderMenu() {
-    $("#cats").innerHTML = R.categorias.map((c) => '<a href="#' + c.id + '" data-id="' + c.id + '">' + esc(t(c.nombre)) + "</a>").join("");
-
-    const used = [...new Set(R.categorias.flatMap((c) => c.platos.flatMap((p) => p.etiquetas || [])))]
-      .filter((k) => k !== "picante");
-    $("#filters").setAttribute("aria-label", lang === "es" ? "Filtrar" : "Filter");
-    $("#filters").innerHTML = '<button class="chip" type="button" data-f="" aria-pressed="' + !filter + '">' + T[lang].all + "</button>" +
-      used.map((k) => '<button class="chip" type="button" data-f="' + k + '" aria-pressed="' + (filter === k) + '">' + T[lang].tags[k] + "</button>").join("");
-
-    const d = R.destacado;
-    const showFeat = d && (!filter || (d.etiquetas || []).includes(filter));
-    $("#feature").innerHTML = showFeat ? '<article class="feature">' +
-      '<svg class="sun" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3"><circle cx="50" cy="50" r="20"/>' +
-      Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6; return '<line x1="' + (50 + 28 * Math.cos(a)) + '" y1="' + (50 + 28 * Math.sin(a)) + '" x2="' + (50 + 44 * Math.cos(a)) + '" y2="' + (50 + 44 * Math.sin(a)) + '"/>'; }).join("") +
-      '</svg><p class="kicker">' + T[lang].feature + "</p><h2>" + esc(t(d.nombre)) + '</h2><p class="d">' + esc(t(d.desc)) +
-      '</p><span class="p">' + fmt(d.precio) + "</span></article>" : "";
-
-    let any = false;
-    $("#menu").innerHTML = R.categorias.map((c) => {
-      const items = c.platos.filter((p) => !filter || (p.etiquetas || []).includes(filter));
-      if (!items.length) return "";
-      any = true;
-      return '<section class="cat" id="' + c.id + '"><h2>' + esc(t(c.nombre)) + '</h2><ul class="items">' +
-        items.map((p) => '<li class="item"><div class="row"><h3>' + esc(t(p.nombre)) + '</h3><span class="lead"></span><span class="price">' +
-          fmt(p.precio) + "</span></div>" + (p.desc ? "<p>" + esc(t(p.desc)) + "</p>" : "") + tagsHTML(p.etiquetas) + "</li>").join("") +
-        "</ul></section>";
-    }).join("") + (any ? "" : '<p class="empty">' + T[lang].empty + "</p>");
-    spy();
-  }
-
-  // Resalta la categoría visible
+  // Barra fija + sección activa
   let io;
-  function spy() {
+  function observe() {
     if (io) io.disconnect();
-    io = new IntersectionObserver((es) => {
-      es.forEach((e) => {
-        if (!e.isIntersecting) return;
-        document.querySelectorAll("#cats a").forEach((a) => {
-          const on = a.dataset.id === e.target.id; a.classList.toggle("on", on);
-          if (on) a.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
-        });
-      });
-    }, { rootMargin: "-80px 0px -65% 0px" });
-    document.querySelectorAll("section.cat").forEach((s) => io.observe(s));
+    io = new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting) $$("#barNav a").forEach((a) => a.classList.toggle("on", a.dataset.id === e.target.id));
+    }), { rootMargin: "-40% 0px -55% 0px" });
+    $$(".course, #reservar").forEach((s) => io.observe(s));
   }
 
-  // Eventos
+  // Scroll: el plato se aleja suavemente mientras bajás
+  const stage = $("#stage"), bar = $("#bar");
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let ticking = false;
+  function onScroll() {
+    const y = scrollY, h = innerHeight;
+    bar.classList.toggle("show", y > h * 0.75);
+    bar.setAttribute("aria-hidden", y > h * 0.75 ? "false" : "true");
+    if (!still && y < h * 1.2) {
+      const k = Math.min(y / h, 1);
+      stage.style.transform = "translateY(" + (k * h * 0.18) + "px) scale(" + (1 - k * 0.12) + ") rotate(" + (k * 14) + "deg)";
+      stage.style.opacity = 1 - k * 0.85;
+    }
+    ticking = false;
+  }
+  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+
   document.addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
-    if (b.dataset.lang) { lang = b.dataset.lang; store.set("menu-lang", lang); renderStatic(); renderMenu(); }
-    if (b.dataset.cur) { cur = b.dataset.cur; store.set("menu-cur", cur); renderStatic(); renderMenu(); }
-    if (b.dataset.f !== undefined && b.classList.contains("chip")) { filter = b.dataset.f || null; renderMenu(); }
-    if (b.dataset.t) { theme = b.dataset.t; accent = null; applyTheme(); }
-    if (b.dataset.a) { accent = b.dataset.a; applyTheme(); }
+    if (b.dataset.lang) { lang = b.dataset.lang; store.set("carta-lang", lang); render(); }
+    if (b.dataset.cur) { cur = b.dataset.cur; store.set("carta-cur", cur); render(); }
+    if (b.dataset.p) { paleta = b.dataset.p; applyPaleta(); }
+    if (b.classList.contains("metal")) { metal = b.dataset.m || null; applyPaleta(); }
   });
 
   // Panel de demo
-  function renderAccents() {
-    const box = $("#accents"); if (!box) return;
-    const current = accent || THEMES[theme].accents[0];
-    box.innerHTML = THEMES[theme].accents.map((c) =>
-      '<button class="dot" type="button" style="background:' + c + '" data-a="' + c + '" aria-label="Color ' + c + '" aria-pressed="' + (c.toLowerCase() === current.toLowerCase()) + '"></button>').join("") +
-      '<input type="color" id="picker" value="' + current + '" aria-label="Otro color">';
-    $("#picker").addEventListener("input", (e) => { accent = e.target.value; applyTheme(); });
-  }
-
-  const demoOn = params.get("cliente") !== "1" && R.modoDemo !== false;
-  if (demoOn) {
+  if (q.get("cliente") !== "1" && R.modoDemo !== false) {
     $("#demo").hidden = false;
-    $("#themes").innerHTML = Object.entries(THEMES).map(([k, v]) =>
-      '<button class="theme" type="button" data-t="' + k + '"><span class="sw">' + v.sw.map((c) => '<i style="background:' + c + '"></i>').join("") +
-      "</span><b>" + v.es + "</b><small>" + v.hint + "</small></button>").join("");
+    $("#pals").innerHTML = Object.entries(PALETAS).map(([k, v]) =>
+      '<button class="pal" type="button" data-p="' + k + '"><span class="sw" style="background:' + v.bg + ";--rim:" + v.rim + '"></span>' + v.nombre + "</button>").join("");
+    $("#metals").innerHTML = METALES.map((m) =>
+      '<button class="metal" type="button" data-m="' + (m.c || "") + '" aria-label="' + m.n + '" title="' + m.n + '" style="background:' +
+      (m.c || "linear-gradient(135deg,#E9CF95,#B98F45)") + '"></button>').join("");
     const open = () => { document.body.classList.add("open"); $("#demoClose").focus(); };
     const close = () => { document.body.classList.remove("open"); $("#demoOpen").focus(); };
-    $("#demoOpen").onclick = open; $("#demoClose").onclick = close; $("#sheetBg").onclick = close;
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
-
+    $("#demoOpen").onclick = open; $("#demoClose").onclick = close; $("#scrim").onclick = close;
+    addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
     const url = location.href.split("?")[0] + "?cliente=1";
-    if (window.QRCode) {
-      new QRCode($("#qr"), { text: url, width: 236, height: 236, colorDark: "#161616", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
-    }
+    if (window.QRCode) new QRCode($("#qr"), { text: url, width: 232, height: 232, colorDark: "#111111", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
     $("#qrDl").onclick = () => {
       const c = $("#qr canvas"); if (!c) return;
       const a = document.createElement("a"); a.download = "qr-" + R.nombre.toLowerCase().replace(/\s+/g, "-") + ".png";
@@ -429,7 +429,7 @@ footer { padding-top: 36px; padding-bottom: 120px; }
     };
   }
 
-  renderStatic(); renderMenu(); applyTheme();
+  render(); applyPaleta(); onScroll();
 })();
 </script>
 </body>

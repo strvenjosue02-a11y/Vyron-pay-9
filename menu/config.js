@@ -3,103 +3,93 @@
    Para cada cliente nuevo: cambiá SOLO este archivo.
    ========================================================= */
 window.RESTAURANTE = {
-  nombre: "Pochote",
-  lema: {
-    es: "Cocina de playa, pescado del día y patacones como en casa.",
-    en: "Beach kitchen, catch of the day and patacones like home."
-  },
-  ubicacion: { es: "Santa Teresa, Puntarenas", en: "Santa Teresa, Costa Rica" },
-  horario:   { es: "Todos los días, 12 md a 10 pm", en: "Every day, 12 pm to 10 pm" },
+  nombre: "Salitre",
+  lugar: { es: "Santa Teresa, Costa Rica", en: "Santa Teresa, Costa Rica" },
+  lema: { es: "Cocina de autor frente al Pacífico", en: "Chef's cuisine on the Pacific shore" },
+  horario: { es: "Martes a domingo, de 6 a 11 pm", en: "Tuesday to Sunday, 6 to 11 pm" },
+  direccion: { es: "200 m norte de playa Hermosa, Santa Teresa", en: "200 m north of Hermosa beach, Santa Teresa" },
   whatsapp: "50688888888",          // con 506 adelante, sin espacios
-  instagram: "pochote.cr",
+  instagram: "salitre.cr",
   mapa: "https://maps.google.com/?q=Santa+Teresa+Costa+Rica",
 
-  tema: "playa",                     // playa | volcan | caribe | ciudad
-  colorAcento: null,                 // ej. "#FF6B4A" para forzar un color
+  paleta: "bordeaux",                // bordeaux | nuit | bouteille | porcelaine
+  metal: null,                       // ej. "#C9CCD1" para filos plateados en vez de dorados
   tipoCambio: 505,                   // colones por dólar
-  modoDemo: true,                    // false = oculta el botón de estilos (versión final del cliente)
+  modoDemo: true,                    // false = oculta el panel de paletas (versión final del cliente)
 
-  notaPrecios: {
-    es: "Precios en colones con impuestos incluidos (IVA 13 % y servicio 10 %).",
-    en: "Prices include taxes (13 % VAT and 10 % service)."
-  },
-
-  destacado: {
-    nombre: { es: "Pescado entero frito", en: "Whole fried snapper" },
-    desc: {
-      es: "Pargo rojo de la lancha de esta mañana, patacones, arroz con coco y ensalada de repollo.",
-      en: "Red snapper off this morning's boat, patacones, coconut rice and cabbage slaw."
+  nota: {
+    texto: {
+      es: "Cocinamos con lo que trae la lancha cada mañana. Por eso la carta cambia con el mar.",
+      en: "We cook with whatever the boat brings in each morning, so the menu changes with the sea."
     },
-    precio: 12500,
-    etiquetas: ["sinGluten"]
+    firma: { es: "Andrea Solís, chef", en: "Andrea Solís, chef" }
   },
 
   categorias: [
     {
-      id: "entradas",
-      nombre: { es: "Para compartir", en: "To share" },
+      id: "empezar",
+      nombre: { es: "Para empezar", en: "To begin" },
       platos: [
-        { nombre: { es: "Ceviche de pescado", en: "Fish ceviche" },
-          desc: { es: "Corvina, limón mandarina, culantro y chile dulce.", en: "Sea bass, mandarin lime, cilantro and sweet pepper." },
-          precio: 5800, etiquetas: ["sinGluten"] },
-        { nombre: { es: "Patacones con frijol molido", en: "Patacones with black bean dip" },
-          desc: { es: "Plátano verde frito, frijol molido, pico de gallo y natilla.", en: "Fried green plantain, bean dip, pico de gallo and sour cream." },
-          precio: 4200, etiquetas: ["vegetariano", "sinGluten"] },
-        { nombre: { es: "Chifrijo", en: "Chifrijo" },
-          desc: { es: "Arroz, frijoles, chicharrón, pico de gallo y aguacate.", en: "Rice, beans, crispy pork, pico de gallo and avocado." },
-          precio: 4900, etiquetas: [] },
-        { nombre: { es: "Tacos de pescado", en: "Fish tacos" },
-          desc: { es: "Tres tacos con pescado en tempura, repollo morado y salsa de chile panameño.", en: "Three tempura fish tacos, purple cabbage and Panamanian chili sauce." },
-          precio: 5500, etiquetas: ["picante"] }
+        { nombre: { es: "Ostras de Guanacaste", en: "Guanacaste oysters" },
+          desc: { es: "Mignonette de cas, aceite de culantro", en: "Cas fruit mignonette, cilantro oil" },
+          precio: 14000, marcas: ["sg"] },
+        { nombre: { es: "Tartar de atún aleta amarilla", en: "Yellowfin tuna tartare" },
+          desc: { es: "Palmito, yema curada, crujiente de yuca", en: "Heart of palm, cured yolk, cassava crisp" },
+          precio: 13500, marcas: ["sg"] },
+        { nombre: { es: "Queso Turrialba asado", en: "Roasted Turrialba cheese" },
+          desc: { es: "Miel de jicote, higos, pan de masa madre", en: "Jicote honey, figs, sourdough" },
+          precio: 9800, marcas: ["v"] }
       ]
     },
     {
-      id: "fuertes",
-      nombre: { es: "Platos fuertes", en: "Mains" },
+      id: "platos",
+      nombre: { es: "Platos", en: "Mains" },
       platos: [
-        { nombre: { es: "Casado de pescado", en: "Casado with fish" },
-          desc: { es: "Filete a la plancha, arroz, frijoles, plátano maduro y ensalada.", en: "Grilled fillet, rice, beans, sweet plantain and salad." },
-          precio: 7200, etiquetas: ["sinGluten"] },
-        { nombre: { es: "Arroz con mariscos", en: "Seafood rice" },
-          desc: { es: "Camarón, calamar y mejillón con achiote y culantro.", en: "Shrimp, squid and mussels with annatto and cilantro." },
-          precio: 8900, etiquetas: [] },
-        { nombre: { es: "Sopa de mariscos", en: "Seafood soup" },
-          desc: { es: "Caldo de coco, camarón, pescado y yuca.", en: "Coconut broth, shrimp, fish and cassava." },
-          precio: 7800, etiquetas: ["sinGluten", "picante"] },
-        { nombre: { es: "Bowl de la huerta", en: "Garden bowl" },
-          desc: { es: "Arroz integral, frijoles negros, aguacate, palmito y vinagreta de maracuyá.", en: "Brown rice, black beans, avocado, heart of palm and passion fruit dressing." },
-          precio: 6400, etiquetas: ["vegano", "sinGluten"] }
-      ]
-    },
-    {
-      id: "bebidas",
-      nombre: { es: "Bebidas", en: "Drinks" },
-      platos: [
-        { nombre: { es: "Batido de cas", en: "Cas fruit smoothie" },
-          desc: { es: "En agua o en leche.", en: "With water or milk." },
-          precio: 2200, etiquetas: ["vegano"] },
-        { nombre: { es: "Guaro sour", en: "Guaro sour" },
-          desc: { es: "Guaro Cacique, limón y sirope de tapa de dulce.", en: "Local cane liquor, lime and raw sugar syrup." },
-          precio: 3900, etiquetas: [] },
-        { nombre: { es: "Cerveza nacional", en: "Local beer" },
-          desc: { es: "Imperial, Pilsen o Bavaria.", en: "Imperial, Pilsen or Bavaria." },
-          precio: 2500, etiquetas: [] },
-        { nombre: { es: "Café chorreado", en: "Pour-over coffee" },
-          desc: { es: "Café de Tarrazú hecho en chorreador.", en: "Tarrazú coffee brewed in a traditional cloth drip." },
-          precio: 1800, etiquetas: ["vegano"] }
+        { nombre: { es: "Pargo rojo", en: "Red snapper" },
+          desc: { es: "Beurre blanc de maracuyá, palmito asado", en: "Passion fruit beurre blanc, roasted heart of palm" },
+          precio: 24000, marcas: ["sg"] },
+        { nombre: { es: "Langosta del Caribe", en: "Caribbean lobster" },
+          desc: { es: "Mantequilla de coco y lima, arroz negro", en: "Coconut and lime butter, black rice" },
+          precio: 42000, marcas: ["sg"] },
+        { nombre: { es: "Lomo de res madurado", en: "Dry-aged beef tenderloin" },
+          desc: { es: "Jus de café de Tarrazú, puré de pejibaye", en: "Tarrazú coffee jus, peach palm purée" },
+          precio: 38000, marcas: [] },
+        { nombre: { es: "Risotto de hongos", en: "Mushroom risotto" },
+          desc: { es: "Parmesano añejo, trufa negra", en: "Aged parmesan, black truffle" },
+          precio: 19500, marcas: ["v", "sg"] }
       ]
     },
     {
       id: "postres",
       nombre: { es: "Postres", en: "Desserts" },
       platos: [
-        { nombre: { es: "Tres leches", en: "Tres leches cake" },
-          desc: { es: "La receta de la abuela.", en: "Grandma's recipe." },
-          precio: 3200, etiquetas: ["vegetariano"] },
-        { nombre: { es: "Arroz con leche", en: "Rice pudding" },
-          desc: { es: "Con canela y clavo de olor.", en: "With cinnamon and clove." },
-          precio: 2600, etiquetas: ["vegetariano", "sinGluten"] }
+        { nombre: { es: "Soufflé de cacao de Talamanca", en: "Talamanca cacao soufflé" },
+          desc: { es: "Crema inglesa de vainilla", en: "Vanilla crème anglaise" },
+          precio: 8500, marcas: ["v"] },
+        { nombre: { es: "Tarta tatin de piña", en: "Pineapple tarte tatin" },
+          desc: { es: "Helado de natilla", en: "Sour cream ice cream" },
+          precio: 7800, marcas: ["v"] }
+      ]
+    },
+    {
+      id: "bodega",
+      nombre: { es: "Bodega", en: "Wine" },
+      platos: [
+        { nombre: { es: "Champagne Blanc de Blancs", en: "Champagne Blanc de Blancs" },
+          desc: { es: "Copa", en: "By the glass" }, precio: 18000, marcas: [] },
+        { nombre: { es: "Sancerre", en: "Sancerre" },
+          desc: { es: "Copa, Loira", en: "By the glass, Loire" }, precio: 11000, marcas: [] },
+        { nombre: { es: "Café de Tarrazú", en: "Tarrazú coffee" },
+          desc: { es: "Chorreado en mesa", en: "Pour-over at the table" }, precio: 3500, marcas: ["vg"] }
       ]
     }
-  ]
+  ],
+
+  degustacion: {
+    nombre: { es: "Menú degustación", en: "Tasting menu" },
+    desc: { es: "Siete tiempos que el chef arma según la pesca del día.", en: "Seven courses built around the day's catch." },
+    precio: 75000,
+    maridaje: { es: "Maridaje con vinos franceses", en: "French wine pairing" },
+    precioMaridaje: 45000
+  }
 };
