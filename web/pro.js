@@ -45,7 +45,9 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
   const mo = { lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: pf };
   const m7 = chart.addLineSeries({ ...mo, color: "#e9e9ee" }), m25 = chart.addLineSeries({ ...mo, color: "#8d8f95" });
-  let roundLine = null, hlRefs = [], first = true, data = [], lnRefs = [], faces = [], lines = [];
+  let roundLine = null, hlRefs = [], first = true, data = [], lnRefs = [], faces = [], lines = [], allTr = [];
+  const tip = document.createElement("div"); tip.className = "cp-tip"; box.appendChild(tip);
+  const bucket = (time) => { if (!data.length || time == null) return []; const i = data.findIndex((c) => c.time === time), step = data.length > 1 ? data[Math.min(i + 1, data.length - 1)].time - data[Math.max(i, 0)].time || data[1].time - data[0].time : 300; const end = i >= 0 && i < data.length - 1 ? data[i + 1].time : time + Math.abs(step || 300); return allTr.filter((t) => t.t >= time && t.t < end); };
   box.style.position = "relative";
   const ov = document.createElement("div"); ov.className = "cp-ov"; box.appendChild(ov);
   candle.applyOptions({ autoscaleInfoProvider: (orig) => { const r = orig(); if (!r || !lines.length) return r; const ks = st.k || 1; lines.forEach((l) => { const v = l.price * ks; r.priceRange.minValue = Math.min(r.priceRange.minValue, v); r.priceRange.maxValue = Math.max(r.priceRange.maxValue, v); }); return r; } });
@@ -91,14 +93,18 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     const times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; };
     const marks = (d.marks || []).map((m) => ({ time: snap(m.t), position: m.buy ? "belowBar" : "aboveBar", color: m.buy ? UP : DN, shape: m.buy ? "arrowUp" : "arrowDown", text: m.buy ? "B" : "S" })).sort((a, b) => a.time - b.time);
     candle.setMarkers(marks);
-    faces = d.faces || []; lines = d.lines || []; lnRefs.forEach((r) => candle.removePriceLine(r));
+    allTr = d.trades || []; faces = d.faces || []; lines = d.lines || []; lnRefs.forEach((r) => candle.removePriceLine(r));
     lnRefs = lines.map((l) => candle.createPriceLine({ price: l.price * k, color: l.color, lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "" }));
     drawOv();
     st.last = data[data.length - 1]; showInfo(st.last);
     if (first) { chart.timeScale().fitContent(); first = false; }
   }
-  chart.subscribeCrosshairMove((p) => { const c = p.seriesData?.get(candle) || p.seriesData?.get(line); showInfo(c ? { open: c.open ?? c.value, high: c.high ?? c.value, low: c.low ?? c.value, close: c.close ?? c.value } : st.last); });
-  chart.subscribeClick((p) => { if (!st.draw || !p.point) return; const price = candle.coordinateToPrice(p.point.y); if (price == null) return; hl.push(price / st.k); save(); render(); });
+  chart.subscribeCrosshairMove((p) => {
+    const tr = p.time && p.point ? bucket(p.time) : [];
+    if (!tr.length || st.draw) tip.style.display = "none";
+    else { const top = [...tr].sort((a, b) => b.usd - a.usd).slice(0, 4), bw = box.clientWidth; tip.innerHTML = `<b>${tr.length} ${tr.length === 1 ? "trade" : "trades"}</b>` + top.map((t) => `<div class="${t.buy ? "b" : "s"}">${t.html}<span>${t.name}</span><em>${t.buy ? "+" : "-"}$${t.usd.toFixed(2)}</em></div>`).join("") + (tr.length > 4 ? `<small>+${tr.length - 4}</small>` : "") + `<small>${L.tap || "Click to open profile"}</small>`;
+      tip.style.display = "block"; const x = p.point.x + 18 > bw - 220 ? p.point.x - 230 : p.point.x + 18; tip.style.left = Math.max(6, x) + "px"; tip.style.top = Math.max(6, p.point.y - 20) + "px"; } const c = p.seriesData?.get(candle) || p.seriesData?.get(line); showInfo(c ? { open: c.open ?? c.value, high: c.high ?? c.value, low: c.low ?? c.value, close: c.close ?? c.value } : st.last); });
+  chart.subscribeClick((p) => { if (!st.draw && p.time && onFace) { const tr = bucket(p.time); if (tr.length) { onFace([...tr].sort((a, b) => b.usd - a.usd)[0].who); return; } } if (!st.draw || !p.point) return; const price = candle.coordinateToPrice(p.point.y); if (price == null) return; hl.push(price / st.k); save(); render(); });
 
   el.querySelector(".cp-bar").onclick = (e) => {
     const b = e.target.closest("button"); if (!b) return;
