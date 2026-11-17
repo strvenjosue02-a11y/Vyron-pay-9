@@ -694,13 +694,13 @@ function linesOf(p) {
   if (c.on && c.ref) { out.push({ id: "tp", price: c.ref * (1 + c.tp / 100), color: "#3ddc97", drag: true, title: `TP +${c.tp}%`, fmt: (v) => `TP ${((v / c.ref - 1) * 100 >= 0 ? "+" : "") + ((v / c.ref - 1) * 100).toFixed(0)}%` }); out.push({ id: "sl", price: c.ref * (1 - c.sl / 100), color: "#ff5d5d", drag: true, title: `SL -${c.sl}%`, fmt: (v) => `SL ${((v / c.ref - 1) * 100).toFixed(0)}%` }); }
   return out;
 }
-const sndOn = () => { try { return localStorage.getItem("hf-snd") === "1"; } catch { return false; } };
+const sndOn = () => { try { return localStorage.getItem("hf-snd") !== "0"; } catch { return true; } };
 function beep(buy) { if (!sndOn()) return; try { const c = new (window.AudioContext || window.webkitAudioContext)(), o = c.createOscillator(), g = c.createGain(); o.type = "sine"; o.frequency.value = buy ? 740 : 330; g.gain.setValueAtTime(0.0001, c.currentTime); g.gain.exponentialRampToValueAtTime(0.12, c.currentTime + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.35); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.4); } catch {} }
 function burst(buy) { const h = $("#chartpro"); if (!h) return; const d = document.createElement("div"); d.className = "cp-burst " + (buy ? "b" : "s"); h.appendChild(d); setTimeout(() => d.remove(), 1400); }
 const RX = { rocket: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15c0-5 4-9 9-10 1 5-3 9-8 9M5 15l-2 4 4-2M9 12l3 3"/></svg>', fire: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/></svg>' };
 function react(kind) { const h = $("#chartpro"); if (!h) return; const e = document.createElement("div"); e.className = "cp-rx"; e.style.left = 20 + Math.random() * 60 + "%"; e.innerHTML = RX[kind]; h.appendChild(e); setTimeout(() => e.remove(), 2200); }
 const proOn = () => true; // un solo modo: todo visible
-const oneTap = () => { try { return localStorage.getItem("hf-1tap") === "1"; } catch { return false; } };
+const oneTap = () => { try { return localStorage.getItem("hf-1tap") !== "0"; } catch { return true; } };
 function notify(t) { try { if ("Notification" in window && Notification.permission === "granted") new Notification("Holdfast", { body: t }); } catch {} }
 function creatorHtml(p) {
   const c = p.q.creator, k = parseInt(c.slice(2, 6), 16), filled = 2 + (k % 6), failed = k % 3, trades = (p.trades || []).filter((t) => t.who && t.who.toLowerCase() === c.toLowerCase()), sold = trades.some((t) => !t.buy);
@@ -750,6 +750,11 @@ function holderFlowHtml(p) {
 function toksHtml(p) {
   const it = mkItems().sort((x, y) => y.vol - x.vol);
   return it.map((x) => `<a class="tp-r${x.id === p.id ? " on" : ""}" href="${x.href}" data-q="${esc((x.sym + " " + x.name).toLowerCase())}">${x.mark}<span><b>${esc(x.sym)}</b><small>${esc(x.name)}</small></span><em class="${x.chg >= 0 ? "u" : "d"}">${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(1)}%</em></a>`).join("");
+}
+function liveAlert(p, t) {
+  const h = $("#chartpro"); if (!h || !t.who) return; const d = document.createElement("div"); d.className = "cp-alert " + (t.buy ? "b" : "s");
+  d.innerHTML = `${avatar(t.who, 38)}<div><b>${esc(uname(t.who))}</b><span>${t.buy ? "bought" : "sold"} <em>$${usd(t.usdc)}</em></span></div>`;
+  while (h.querySelectorAll(".cp-alert").length >= 3) h.querySelector(".cp-alert").remove(); const k = h.querySelectorAll(".cp-alert").length, ph = matchMedia("(max-width: 900px)").matches; d.style.top = (ph ? 46 : 60) + k * (ph ? 50 : 58) + "px"; h.appendChild(d); setTimeout(() => d.remove(), 4200); beep(t.buy);
 }
 function vTerminal(p) {
   if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
@@ -870,6 +875,7 @@ function startTerminal(p) {
       const mo = $("#tx-mood"); if (mo) { const dn = p.mk.price < before, base = stats24(p).chg; mo.src = `./assets/mood-${dn ? "down" : "up"}.webp`; mo.classList.remove("pop"); void mo.offsetWidth; mo.classList.add("pop"); clearTimeout(S.moodT); S.moodT = setTimeout(() => { const m2 = $("#tx-mood"); if (m2) m2.src = `./assets/mood-${base > 1 ? "up" : base < -1 ? "down" : "calm"}.webp`; }, 3500); }
       el.classList.remove("flash-up", "flash-dn"); void el.offsetWidth; el.classList.add(p.mk.price > before ? "flash-up" : "flash-dn");
       const n0 = (p.trades || []).length; await loadTrades(p); reTerm();
+      (p.trades || []).slice(n0).slice(-2).forEach((t) => liveAlert(p, t));
       (p.trades || []).slice(n0).filter((t) => t.who && isFol(t.who)).slice(-2).forEach((t) => { toast(`${uname(t.who)} ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`); notify(`${uname(t.who)} ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`); });
       (p.trades || []).slice(n0).filter((t) => isWhale(p, t)).slice(-1).forEach((t) => { burst(t.buy); beep(t.buy); });
       (p.trades || []).slice(n0).filter((t) => isWhale(p, t)).slice(-1).forEach((t) => toast(`Whale ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`));
