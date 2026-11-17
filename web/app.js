@@ -547,10 +547,10 @@ async function traderPng(p, r, rank, opt = {}) {
     if (lt) { g.fillStyle = "#9a9aa2"; g.font = `500 32px ${F}`; g.textAlign = "left"; g.fillText(`${lt.buy ? "Bought" : "Sold"} $${lt.usd.toLocaleString("en-US", { maximumFractionDigits: 2 })} of ${p.q.symbol}`, 72, 236); } }
   // caja de posición
   g.fillStyle = "#0e0e11"; rr(64, 720, W - 128, 312, 40); g.fill(); g.strokeStyle = "#1f1f25"; g.lineWidth = 2; g.stroke();
-  const pr = S.prof?.[r.a.toLowerCase()], ax = 330, ay = 782, AR = 26; g.save(); g.beginPath(); g.arc(ax, ay, AR, 0, 7); g.clip(); let d2 = false;
+  const pr = S.prof?.[r.a.toLowerCase()], ax = 300, ay = 776, AR = 40; g.save(); g.beginPath(); g.arc(ax, ay, AR, 0, 7); g.clip(); let d2 = false;
   if (pr?.photo) { try { const im = await loadImg(pr.photo); const sc = Math.max(2 * AR / im.width, 2 * AR / im.height); g.drawImage(im, ax - im.width * sc / 2, ay - im.height * sc / 2, im.width * sc, im.height * sc); d2 = true; } catch {} }
   if (!d2) { const hh = parseInt(r.a.slice(2, 6), 16) % 360, ag = g.createLinearGradient(ax - AR, ay - AR, ax + AR, ay + AR); ag.addColorStop(0, `hsl(${hh} 70% 55%)`); ag.addColorStop(1, `hsl(${(hh + 140) % 360} 65% 45%)`); g.fillStyle = ag; g.fillRect(ax - AR, ay - AR, 2 * AR, 2 * AR); }
-  g.restore(); g.fillStyle = "#f4f4f1"; g.font = `600 36px ${F}`; g.fillText(uname(r.a).slice(0, 16) + "'s", ax + 40, ay + 12); const nw = g.measureText(uname(r.a).slice(0, 16) + "'s").width; g.fillStyle = "#77777e"; g.fillText(" position", ax + 40 + nw, ay + 12);
+  g.restore(); g.fillStyle = "#f4f4f1"; g.font = `600 36px ${F}`; g.fillText(uname(r.a).slice(0, 16) + "'s", ax + 56, ay + 12); const nw = g.measureText(uname(r.a).slice(0, 16) + "'s").width; g.fillStyle = "#77777e"; g.fillText(" position", ax + 56 + nw, ay + 12);
   g.textAlign = "center"; g.fillStyle = col; g.font = `600 92px ${M}`; g.fillText(`${up ? "+" : "-"}$${Math.abs(r.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}`, W / 2 - 90, 900); g.fillStyle = "#f4f4f1"; g.font = `600 44px ${M}`; g.fillText(`${up ? "▲" : "▼"} ${Math.abs(r.pct).toFixed(2)}%`, W / 2 + 330, 896);
   // tres cifras
   const bt = mine.filter((t) => t.buy), btok = bt.reduce((s2, t) => s2 + Number(t.tok) / 1e18, 0), avg = btok ? r.spent / btok : p.mk.round, sup = p.supply ? Number(p.supply) / 1e18 : 1, mc = (v) => capFmt(v * sup);
@@ -772,7 +772,7 @@ function vTerminal(p) {
   return `<section class="term tx ${up ? "tx-up" : "tx-dn"}${proOn() ? " pro" : ""}">
     <a class="back" href="#/market">All markets</a>
     <header class="tx-top">
-      <div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
+      <a class="tx-back" href="#/market" aria-label="Market">‹</a><div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
       <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-menu-b" data-menu aria-label="Menu">⋯</button><button type="button" class="tx-toks-b" data-toks><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Tokens</button><button type="button" class="tx-info-b" data-info>Info</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
       <div class="tx-px"><small class="tx-cl">Market cap</small><b id="tx-capbig">${capFmt(x.cap)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span><em class="tx-sub">Price <span id="tt-price">${fmtP(m.price)}</span></em></div>
       <div class="tx-chips" id="tx-chips">${chipsHtml(p)}</div>
@@ -813,7 +813,7 @@ function vTerminal(p) {
           <p>Prices can go up or down. Holdfast doesn't control the market.</p></div>
       </aside>
     </div>
-  <div class="tx-bar"><div class="tx-qb">${[5, 10, 25, 50].map((v) => `<button type="button" class="b" data-qbuy="${v}">$${v}</button>`).join("")}<button type="button" class="m" data-sheet="buy" aria-label="Other amount">⋯</button></div><button type="button" class="s" data-sheet="sell">Sell</button></div><div class="tx-sheet-bg" data-sheet-x></div></section>`;
+  <div class="tx-bar"><button type="button" class="b" data-sheet="buy">Buy</button><button type="button" class="s" data-sheet="sell">Sell</button></div><div class="tx-sheet-bg" data-sheet-x></div></section>`;
 }
 function mkItems() {
   const q = (S.mkQ || "").toLowerCase(), ch = (p) => (p.trades ? stats24(p).chg : ((p.mk.price - p.mk.round) / p.mk.round) * 100);

@@ -1737,3 +1737,32 @@ a.mk-row:hover { box-shadow: inset 2px 0 0 #fff; } .tx-feed span.fol, .tx-ca but
   .cp-alert { transform: scale(.88); transform-origin: left top; }
 }
 @media (max-width: 900px) { .term.tx .cp-svg { height: calc(100dvh - 372px) !important; min-height: 340px; } .cy-trades li { grid-template-columns: 78px 1fr auto auto !important; } }
+
+/* ===== CELULAR v3 (como pump.fun): gráfico, dos botones, hoja de monto. Con aire y sin estorbos ===== */
+.tx-back { display: none; }
+@media (max-width: 900px) {
+  .cp-alert, .cp-ov, .cp-fog, .cp-flow, .cp-tip { display: none !important; }
+  .term.tx .cp-tools { display: none !important; } .term.tx .cp-bar { padding: 4px 4px 10px; }
+  .term.tx { padding: 0 2px 150px !important; } .term.tx .back { display: none !important; }
+  .term.tx .tx-top { display: grid !important; grid-template-columns: 28px 40px 1fr auto; align-items: center; column-gap: 10px; row-gap: 10px; padding: 8px 0 6px !important; }
+  .tx-back { display: grid; place-items: center; width: 28px; height: 36px; font-size: 34px; line-height: 1; color: var(--ink-2); text-decoration: none; }
+  .term.tx .coin3d, .term.tx .tx-top > img { width: 40px !important; height: 40px !important; }
+  .term.tx .tx-id h1 { font-size: 22px !important; } .term.tx .tx-px { grid-column: 1 / -1 !important; margin: 4px 0 0 !important; flex-direction: row !important; align-items: baseline !important; gap: 12px !important; } .term.tx .tx-px #tx-capbig { font-size: 40px !important; } .term.tx .tx-px #tt-delta { font-size: 16px !important; }
+  .term.tx .tx-menu-b { justify-self: end; }
+  .term.tx .tx-chart { margin: 8px 0 18px !important; border-radius: 22px !important; background: #08080a !important; box-shadow: inset 0 0 0 1px #17171c !important; padding: 8px 4px 4px !important; }
+  .term.tx .cp-svg { height: clamp(300px, 46dvh, 460px) !important; min-height: 0; }
+  .term.tx .cp-per { display: flex; justify-content: space-between; width: 100%; } .term.tx .cp-per button { flex: 1; padding: 8px 0; font-size: 13px; }
+  .term.tx .term-tabs { margin: 6px 0 12px; gap: 8px; } .term.tx .term-tabs button { padding: 9px 14px; font-size: 14px; }
+  /* dos botones grandes */
+  .term.tx .tx-bar { display: grid !important; grid-template-columns: 1fr 1fr; gap: 12px; left: 14px; right: 14px; bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .term.tx .tx-bar button { min-height: 58px; border: 0; border-radius: 18px; font: 700 18px var(--font); cursor: pointer; } .term.tx .tx-bar .b { background: var(--up); color: #03130b; } .term.tx .tx-bar .s { background: var(--dn); color: #1a0505; }
+  body:has(.demo-bar) .term.tx .tx-bar { bottom: calc(120px + env(safe-area-inset-bottom)); }
+  /* hoja de monto */
+  .term.tx .term-side { padding: 20px 18px calc(24px + env(safe-area-inset-bottom)); gap: 16px; } .term.tx .tx-tpsl, .term.tx .tx-alert, .term.tx .tx-trust, .term.tx .term-side .tx-row2, .term.tx .tx-safe2, .term.tx .cy-1tap, .term.tx .cy-top { display: none !important; }
+  .term-side .tx-amts { grid-template-columns: repeat(3, 1fr) !important; gap: 10px !important; } .term-side .tx-amts button { height: 56px !important; font-size: 18px !important; border-radius: 16px !important; }
+  .term-side .cy-field { height: 76px !important; } .term-side .cy-field input { font-size: 32px !important; }
+  .term-side .panel.cyber .btn.tp-buy, .term-side .panel.cyber .btn.tp-sell { height: 64px !important; font-size: 20px !important; animation: none !important; }
+  /* operaciones con aire */
+  .cy-trades { padding: 0 4px; } .cy-trades li { padding: 12px 2px !important; }
+}
+h1, h2, h3, .tx-px b, .tx-px #tx-capbig, .page-h h1 { text-shadow: none !important; }
