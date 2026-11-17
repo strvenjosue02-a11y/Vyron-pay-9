@@ -1830,3 +1830,24 @@ h1, h2, h3, .tx-px b, .tx-px #tx-capbig, .page-h h1 { text-shadow: none !importa
   .term.tx .cp-per { gap: 4px; flex-wrap: nowrap; } .term.tx .cp-per button { padding: 7px 9px !important; font-size: 12.5px !important; }
   .cp-ln, .cp-face { display: none !important; }
 }
+/* ===== CELULAR: el gráfico manda. Todo lo demás, mínimo ===== */
+@media (max-width: 900px) {
+  .term.tx { top: 60px !important; bottom: calc(122px + env(safe-area-inset-bottom)) !important; padding: 0 10px !important; }
+  body:has(.demo-bar) .term.tx { bottom: calc(166px + env(safe-area-inset-bottom)) !important; }
+  .term.tx .tx-top { grid-template-columns: 22px 34px 1fr auto !important; column-gap: 8px !important; row-gap: 0 !important; padding: 6px 0 4px !important; align-items: center; }
+  .term.tx .coin3d, .term.tx .tx-top > img { width: 34px !important; height: 34px !important; } .tx-back { height: 34px; font-size: 30px; }
+  .term.tx .tx-id h1 { font-size: 19px !important; } .term.tx .tx-id .tx-toks-b { height: 28px; padding: 0 9px; font-size: 12px; margin-left: 6px !important; }
+  .term.tx .tx-px { grid-column: 4 !important; grid-row: 1 !important; margin: 0 !important; flex-direction: column !important; align-items: flex-end !important; gap: 0 !important; } .term.tx .tx-px #tx-capbig { font-size: 24px !important; } .term.tx .tx-px #tt-delta { font-size: 12.5px !important; }
+  .term.tx .tx-strip { padding: 2px 0 !important; } .term.tx .tx-feed span { padding: 4px 9px !important; font-size: 12px !important; }
+  .term.tx .cp-bar { padding: 0 0 4px !important; } .term.tx .cp-per button { padding: 5px 8px !important; font-size: 12px !important; }
+  .term.tx .tx-chart { margin: 0 -10px !important; }
+  .tx-bal { display: flex !important; justify-content: space-between; align-items: baseline; gap: 10px; padding: 4px 4px 2px !important; border-top: 0 !important; } .tx-bal div { display: flex !important; align-items: baseline; gap: 6px; text-align: left !important; } .tx-bal small { font-size: 12px; } .tx-bal b { font-size: 15px !important; } .tx-bal em { font-size: 12px !important; }
+  .term.tx .tx-bar { bottom: calc(68px + env(safe-area-inset-bottom)) !important; gap: 10px !important; } body:has(.demo-bar) .term.tx .tx-bar { bottom: calc(112px + env(safe-area-inset-bottom)) !important; }
+  .term.tx .tx-bar button { min-height: 46px !important; font-size: 16px !important; border-radius: 14px !important; }
+}
+@media (max-width: 900px) {
+  body:has(.term.tx) .tabs { display: none !important; } body:has(.term.tx) { padding-bottom: 0 !important; }
+  .term.tx { bottom: calc(68px + env(safe-area-inset-bottom)) !important; } body:has(.demo-bar) .term.tx { bottom: calc(112px + env(safe-area-inset-bottom)) !important; }
+  .term.tx .tx-bar { bottom: calc(10px + env(safe-area-inset-bottom)) !important; } body:has(.demo-bar) .term.tx .tx-bar { bottom: calc(54px + env(safe-area-inset-bottom)) !important; }
+  .done-ov { bottom: calc(76px + env(safe-area-inset-bottom)) !important; } .share-pop { bottom: calc(76px + env(safe-area-inset-bottom)) !important; }
+}
