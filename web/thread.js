@@ -49,6 +49,23 @@ function post(root, text) {
   const m = load(key) || []; m.push({ id: "m" + nowS() + Math.random().toString(36).slice(2, 6), n: me.n, a: me.a, t: text.trim().slice(0, 200), ts: nowS(), r: {}, re: root.dataset.re || undefined }); save(key, m);
   root.dataset.re = ""; const rp = root.querySelector(".th-rp"); if (rp) rp.hidden = true; refresh(root);
 }
+function reactTo(root, id, emoji) {
+  const key = root.dataset.th, m = load(key) || [], x = m.find((y) => y.id === id); if (!x) return; const mk = "hf-thmy-" + key + x.id + emoji; let had = false; try { had = localStorage.getItem(mk) === "1"; } catch {}
+  x.r = x.r || {}; x.r[emoji] = Math.max(0, (x.r[emoji] || 0) + (had ? -1 : 1)); try { had ? localStorage.removeItem(mk) : localStorage.setItem(mk, "1"); } catch {} save(key, m); refresh(root);
+}
+function replyTo(root, id) {
+  const key = root.dataset.th, x = (load(key) || []).find((y) => y.id === id); if (!x) return; root.dataset.re = x.id; const rp = root.querySelector(".th-rp");
+  if (rp) { rp.hidden = false; rp.innerHTML = `${T("Replying to", "Respondiendo a")} <b>${esc(x.n)}</b> <button type="button" data-thx aria-label="${T("Cancel", "Cancelar")}">✕</button>`; } root.querySelector("textarea")?.focus();
+}
+let MENU = null;
+function closeMenu() { MENU?.remove(); MENU = null; document.querySelectorAll(".th-m.sel").forEach((x) => x.classList.remove("sel")); }
+function openMenu(li) {
+  closeMenu(); const root = li.closest(".th"), id = li.dataset.id, r = li.getBoundingClientRect(); li.classList.add("sel"); try { navigator.vibrate?.(12); } catch {}
+  const mn = document.createElement("div"); mn.className = "th-menu"; mn.innerHTML = `<div class="th-mr">${["🔥", "🚀", "💎", "😂", "❤️"].map((e) => `<button type="button" data-mr="${e}">${e}</button>`).join("")}</div><button type="button" class="th-mi" data-mrep>${T("Reply", "Responder")}</button><button type="button" class="th-mi" data-mcp>${T("Copy text", "Copiar texto")}</button>`;
+  document.body.appendChild(mn); const h = mn.offsetHeight, w = mn.offsetWidth; let top = r.top - h - 8; if (top < 70) top = Math.min(innerHeight - h - 12, r.bottom + 8); mn.style.top = top + "px"; mn.style.left = Math.max(10, Math.min(innerWidth - w - 10, r.left + 10)) + "px"; MENU = mn;
+  mn.onclick = (e) => { const em = e.target.closest("[data-mr]"); if (em) { reactTo(root, id, em.dataset.mr); closeMenu(); return; } if (e.target.closest("[data-mrep]")) { replyTo(root, id); closeMenu(); return; }
+    if (e.target.closest("[data-mcp]")) { const x = (load(root.dataset.th) || []).find((y) => y.id === id); navigator.clipboard?.writeText(x?.t || ""); closeMenu(); } };
+}
 if (!window.__thInit) {
   window.__thInit = 1;
   document.addEventListener("submit", (e) => { const f = e.target.closest("[data-thf]"); if (!f) return; e.preventDefault(); const root = f.closest(".th"), ta = f.querySelector("textarea"); post(root, ta.value); ta.value = ""; ta.style.height = ""; f.querySelector(".th-c").textContent = "0/200"; });
@@ -58,11 +75,23 @@ if (!window.__thInit) {
     const root = e.target.closest(".th"); if (!root) return;
     if (e.target.closest("[data-thc]")) { document.getElementById("connect")?.click(); return; }
     const em = e.target.closest("[data-the]"); if (em) { const ta = root.querySelector("textarea"); ta.value = (ta.value + em.dataset.the).slice(0, 200); ta.dispatchEvent(new Event("input", { bubbles: true })); ta.focus(); return; }
-    const rx = e.target.closest("[data-thr]"); if (rx) { const key = root.dataset.th, m = load(key) || [], x = m.find((y) => y.id === rx.dataset.id); if (!x) return; const mk = "hf-thmy-" + key + x.id; let had = false; try { had = localStorage.getItem(mk) === rx.dataset.thr; } catch {} x.r = x.r || {}; x.r[rx.dataset.thr] = Math.max(0, (x.r[rx.dataset.thr] || 0) + (had ? -1 : 1)); try { had ? localStorage.removeItem(mk) : localStorage.setItem(mk, rx.dataset.thr); } catch {} save(key, m); refresh(root); return; }
-    const re = e.target.closest("[data-thre]"); if (re) { const key = root.dataset.th, x = (load(key) || []).find((y) => y.id === re.dataset.thre); if (!x) return; root.dataset.re = x.id; const rp = root.querySelector(".th-rp"); if (rp) { rp.hidden = false; rp.innerHTML = `${T("Replying to", "Respondiendo a")} <b>${esc(x.n)}</b> <button type="button" data-thx aria-label="${T("Cancel", "Cancelar")}">✕</button>`; } root.querySelector("textarea")?.focus(); return; }
+    const rx = e.target.closest("[data-thr]"); if (rx) { reactTo(root, rx.dataset.id, rx.dataset.thr); return; }
+    const re = e.target.closest("[data-thre]"); if (re) { replyTo(root, re.dataset.thre); return; }
     if (e.target.closest("[data-thx]")) { root.dataset.re = ""; root.querySelector(".th-rp").hidden = true; }
   });
+  let lp = null, sx = 0, sy = 0, lastTap = { id: "", t: 0 };
+  const stop = () => { clearTimeout(lp); lp = null; };
+  document.addEventListener("pointerdown", (e) => {
+    if (MENU && !e.target.closest(".th-menu")) closeMenu();
+    const li = e.target.closest(".th-m"); if (!li || e.target.closest("button, a, textarea")) return; sx = e.clientX; sy = e.clientY; stop(); lp = setTimeout(() => { lp = null; li.dataset.lp = "1"; openMenu(li); }, 420);
+  });
+  document.addEventListener("pointermove", (e) => { if (lp && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) stop(); });
+  document.addEventListener("pointerup", (e) => { stop(); const li = e.target.closest(".th-m"); if (!li || e.target.closest("button, a") || li.dataset.lp) { if (li) delete li.dataset.lp; return; }
+    const n = Date.now(); if (lastTap.id === li.dataset.id && n - lastTap.t < 320) { reactTo(li.closest(".th"), li.dataset.id, "🔥"); lastTap = { id: "", t: 0 }; } else lastTap = { id: li.dataset.id, t: n }; });
+  document.addEventListener("pointercancel", stop); document.addEventListener("scroll", () => { stop(); }, true);
+  document.addEventListener("contextmenu", (e) => { const li = e.target.closest(".th-m"); if (li) { e.preventDefault(); stop(); openMenu(li); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
   // en modo demo la conversación sigue viva
-  setInterval(() => { if (!DEMO) return; document.querySelectorAll(".th").forEach((root) => { const key = root.dataset.th; if (!REG.has(key) || !root.isConnected || Math.random() > 0.45) return; const L = LINES[lang()], b = bot(Math.floor(Math.random() * 8)), m = load(key) || [], me = REG.get(key).me?.(); m.push({ id: "b" + nowS() + Math.random().toString(36).slice(2, 5), n: b.n, a: b.a, t: L[Math.floor(Math.random() * L.length)], ts: nowS(), r: {} }); save(key, m); if (!root.querySelector("textarea:focus")) refresh(root); }); }, 7000);
-  setInterval(() => document.querySelectorAll(".th").forEach((r) => { if (REG.has(r.dataset.th) && !r.querySelector("textarea:focus")) refresh(r); }), 15000);
+  setInterval(() => { if (!DEMO) return; document.querySelectorAll(".th").forEach((root) => { const key = root.dataset.th; if (!REG.has(key) || !root.isConnected || MENU || Math.random() > 0.45) return; const L = LINES[lang()], b = bot(Math.floor(Math.random() * 8)), m = load(key) || [], me = REG.get(key).me?.(); m.push({ id: "b" + nowS() + Math.random().toString(36).slice(2, 5), n: b.n, a: b.a, t: L[Math.floor(Math.random() * L.length)], ts: nowS(), r: {} }); save(key, m); if (!root.querySelector("textarea:focus")) refresh(root); }); }, 7000);
+  setInterval(() => document.querySelectorAll(".th").forEach((r) => { if (REG.has(r.dataset.th) && !MENU && !r.querySelector("textarea:focus")) refresh(r); }), 15000);
 }
