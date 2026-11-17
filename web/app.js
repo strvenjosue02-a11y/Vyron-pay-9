@@ -733,7 +733,7 @@ async function notify(t, title = "Holdfast") {
     new Notification(title, { body: t, icon: "./assets/holdfast-mark.svg" }); return true; } catch { return false; }
 }
 try { navigator.serviceWorker?.register("./sw.js").catch(() => {}); } catch {}
-window.addEventListener("hf-notify", (e) => { const { kind, text } = e.detail || {}; if (kind && !ntOn(kind)) return; toast(text); if (document.hidden) notify(text); });
+window.addEventListener("hf-notify", (e) => { const { kind, text } = e.detail || {}; if (kind && !ntOn(kind)) return; if (kind === "round") hfShake($("#app")); toast(text); if (document.hidden) notify(text); });
 function ntHtml() {
   const sup = "Notification" in window, st = sup ? Notification.permission : "unsupported";
   const msg = st === "granted" ? "Alerts are on. You'll get them here and as system notifications." : st === "denied" ? "Alerts are blocked in your browser. Allow notifications for this site in the browser settings, then try again." : st === "unsupported" ? "This browser can't show system alerts. On iPhone, add Holdfast to your home screen first." : "Turn on alerts to know when a round fills, a trader you follow buys, or a price is hit.";
@@ -1698,7 +1698,7 @@ function commFeedHtml() {
   const q = (S.fdQ || "").toLowerCase(), items = mkItems().filter((x) => !q || x.sym.toLowerCase().includes(q) || x.name.toLowerCase().includes(q)).sort((x, y) => y.vol - x.vol);
   const now = S.now || Date.now() / 1000;
   const rows = items.map((x) => { const p = findTok((t) => t.id === x.id), pv = threadPreview("tok-" + x.id), up = x.chg >= 0, by = p?.q?.creator ? uname(p.q.creator) : "";
-    return `<a class="fd-k" href="${x.href}"><div class="fd-cover">${cmCover(p)}</div><span class="fd-av">${x.mark}</span>
+    return `<a class="fd-k" href="#/c/${x.id}"><div class="fd-cover">${cmCover(p)}</div><span class="fd-av">${x.mark}</span>
       <div class="fd-body"><div class="fd-top"><div class="fd-nm"><b>${esc(x.name)}</b><small>${esc(x.sym)}${by ? ` ${T2("by", "por")} ${esc(by)}` : ""}</small></div><div class="fd-px"><b>${fmtP(x.price)}</b><em class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(1)}%</em></div></div>
       <div class="fd-sp ${up ? "u" : "d"}">${(x.spark || "").replace("<svg ", '<svg preserveAspectRatio="none" ')}</div>
       ${pv ? `<div class="fd-msg"><span class="fd-stk">${pv.who.map((w) => avatar(w, 24)).join("")}</span><p><i>${esc(pv.n)}</i> ${esc(pv.t)}</p><small>${agoS(now - pv.ts)}</small></div>` : `<div class="fd-msg"><p class="mut">${T2("Be the first to write", "Sé el primero en escribir")}</p></div>`}
@@ -1738,14 +1738,17 @@ function route() {
   stopLaunches();
   const m = h.match(/^#\/p\/([\w-]+)/);
   const p = m && S.list.find((x) => x.id === m[1]);
-  const tm = h.match(/^#\/trade\/([\w-]+)/), tp = tm && findTok((x) => x.id === tm[1]);
+  const tm = h.match(/^#\/trade\/([\w-]+)/), tp = tm && findTok((x) => x.id === tm[1]), ccm = h.match(/^#\/c\/([\w-]+)/), cp = ccm && findTok((x) => x.id === ccm[1]);
   const key = tp || h.startsWith("#/market") ? "market" : p ? "home" : h.startsWith("#/launch") ? "launch" : h.startsWith("#/portfolio") ? "portfolio" : h.startsWith("#/studio") ? "studio" : h.startsWith("#/owner") ? "owner" : "home";
   document.querySelectorAll("[data-nav]").forEach((a) => (a.dataset.nav === key ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
   $("#nav-owner").classList.toggle("d-none", !isOwner()); $("#tab-owner").classList.toggle("d-none", !isOwner());
   if (key === "launch" && $("#form")) return; // no borrar lo que el creador está escribiendo
   const keep = $("#amt")?.value;
+  if (cp) { if (!matchMedia("(max-width: 900px)").matches) { location.hash = `#/trade/${cp.id}`; return; }
+    if (cp.lcx && !cp.mk) { if (!cp._ld) { cp._ld = true; Promise.all([loadChain(cp)]).then(() => loadTrades(cp)).then(() => { cp._ld = false; route(); }).catch(() => { cp._ld = false; }); } $("#app").innerHTML = `<div class="page-h"><h1>${esc(cp.q.symbol)}</h1><p>Loading…</p></div>`; return; }
+    renderCommunity(cp); return; }
   if (tp?.lcx && !tp.mk) { if (!tp._ld) { tp._ld = true; Promise.all([loadChain(tp)]).then(() => loadTrades(tp)).then(() => { tp._ld = false; route(); }).catch(() => { tp._ld = false; }); } $("#app").innerHTML = `<div class="page-h"><h1>${esc(tp.q.symbol)}</h1><p>Loading the market…</p></div>`; return; }
-  if (tp && matchMedia("(max-width: 900px)").matches && !/[?&]op=1/.test(h)) { renderCommunity(tp); return; }
+  if (tp && matchMedia("(max-width: 900px)").matches && !/[?&]op=1/.test(h)) { renderTrade(tp); return; }
   if (tp) { const kv = $("#tamt")?.value; $("#app").innerHTML = vTerminal(tp); if (kv && $("#tamt")) $("#tamt").value = kv; startTerminal(tp); return; }
   if (key === "market") { $("#app").innerHTML = vMarket(); bindMarket(); S.list.filter((x) => x.mk && !x.supply).forEach((x) => { try { pub.readContract({ address: x.address, abi: erc20Abi, functionName: "totalSupply" }).then((v) => { x.supply = v; if (location.hash.startsWith("#/market") && document.activeElement?.id !== "mk-q") { $("#app").innerHTML = vMarket(); bindMarket(); } }).catch(() => {}); } catch {} });
   S.list.filter((x) => x.mk && !x.trades).forEach((x) => loadTrades(x).then(() => { if (location.hash.startsWith("#/market") && document.activeElement?.id !== "mk-q") { $("#app").innerHTML = vMarket(); bindMarket(); } })); return; }
@@ -1775,8 +1778,8 @@ function posCard(p, addr) {
 const xCtx = (p) => ({ x: true, seed: true, me: () => (S.me ? { a: S.me, n: uname(S.me) } : null), avatar: (x, z) => avatar(x, z),
   tag: (m) => { const a2 = String(m.a || "").toLowerCase(); if (a2 && p.q.creator && a2 === p.q.creator.toLowerCase()) return `<em class="th-tag c">${T2("Creator", "Creador")}</em>`; const h = (p.holders || []).find((x) => String(x.a).toLowerCase() === a2); return h && p.supply ? `<em class="th-tag">${((Number(h.b) / Number(p.supply)) * 100).toFixed(1)}%</em>` : ""; },
   events: () => [], authors: () => traderBoard(p, "all").slice(0, 8).map((r) => ({ a: r.a, n: uname(r.a) })), card: (m) => posCard(p, m.a), isFol: (x) => isFol(x), toggleFol: (x) => folToggle(x) });
-const cmBody = (p) => {
-  const t = S.cmTab || "posts"; if (t === "posts") return threadHtml("tok-" + p.id, xCtx(p));
+const trBody = (p) => {
+  const t = S.trTab || "trades";
   const old = S.ttab; S.ttab = t === "holders" ? "holders" : "trades"; let h = ""; try { h = termTab(p); } finally { S.ttab = old; } return h;
 };
 function faces4(p) {
@@ -1790,41 +1793,94 @@ function recentHtml(p) {
   return l.map((t) => `<div class="rc ${t.buy ? "b" : "s"}"><span class="rc-a">${avatar(t.who, 18)}</span><b>${esc(uname(t.who))}</b><span class="rc-k">${t.buy ? T2("bought", "compró") : T2("sold", "vendió")}</span><em>$${mny(Number(t.usdc) / 1e6)}</em><small>${agoS(now - t.ts)}</small></div>`).join("");
 }
 const holdN = (p) => (p.holders ? p.holders.filter((h) => !holderLabel(p, h.a) || holderLabel(p, h.a) === "Team").length : null);
-function communityHtml(p) {
-  const x = stats24(p), up = x.chg >= 0, t = S.cmTab || "posts", fav = favs().includes(p.id), hn = holdN(p), lg = logoSrc(p) ? `<img src="${esc(logoSrc(p))}" alt="">` : mark(p, "lg");
+function tradeHtml(p) {
+  const x = stats24(p), up = x.chg >= 0, t = S.trTab || "posts", fav = favs().includes(p.id), hn = holdN(p), lg = logoSrc(p) ? `<img src="${esc(logoSrc(p))}" alt="">` : mark(p, "lg");
   const f0 = (p.trades || []).find((q) => q.ts), age = f0 ? agoS((S.now || Date.now() / 1000) - f0.ts) : "";
   const by = p.q.creator ? uname(p.q.creator) : "";
   return `<section class="cm cx" data-cm="${p.id}">
-    <header class="cx-bar"><a class="cx-bk" href="#/" aria-label="Back">‹</a><span class="cx-av">${lg}</span><b class="cx-nm">${esc(p.q.symbol)}</b>${age ? `<span class="cx-pill">${age}</span>` : ""}<span class="cx-pill" id="cx-hn">${hn ?? "–"} holders</span><button type="button" class="cx-ic${fav ? " on" : ""}" data-cxfav aria-label="Favorite"><svg width="21" height="21" viewBox="0 0 24 24" fill="${fav ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></button><button type="button" class="cx-ic" data-cxsh aria-label="Share"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></header>
+    <header class="cx-bar"><a class="cx-bk" href="#/" aria-label="Back">‹</a><span class="cx-av">${lg}</span><b class="cx-nm">${esc(p.q.symbol)}</b>${age ? `<span class="cx-pill">${age}</span>` : ""}<a class="cx-pill cx-cm" href="#/c/${p.id}">${T2("Community", "Comunidad")}</a><span class="cx-pill" id="cx-hn">${hn ?? "–"} holders</span><button type="button" class="cx-ic${fav ? " on" : ""}" data-cxfav aria-label="Favorite"><svg width="21" height="21" viewBox="0 0 24 24" fill="${fav ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></button><button type="button" class="cx-ic" data-cxsh aria-label="Share"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></header>
     <div class="cx-sum"><div class="cx-t"><h1>${esc(p.q.name)}</h1><small>${esc(p.q.symbol)}${by ? ` ${T2("by", "por")} ${esc(by)}` : ""}</small></div><div class="cx-px"><b id="cm-px">${fmtP(p.mk.price)}</b><em id="cm-ch" class="${up ? "u" : "d"}">${up ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%</em></div></div>
     <div class="cx-chart" id="cm-chart"></div>
     <div class="cx-rc" id="cx-rc">${recentHtml(p)}</div>
-    <div class="cx-tabs" role="tablist">${[["posts", T2("Posts", "Publicaciones")], ["holders", "Holders"], ["trades", T2("Trades", "Operaciones")]].map(([k, n]) => `<button type="button" data-cmt="${k}" aria-selected="${t === k}">${n}</button>`).join("")}</div>
-    <div class="cx-b" id="cm-b">${cmBody(p)}</div>
+    <div class="cx-tabs" role="tablist">${[["trades", T2("Trades", "Operaciones")], ["holders", "Holders"]].map(([k, n]) => `<button type="button" data-cmt="${k}" aria-selected="${t === k}">${n}</button>`).join("")}</div>
+    <div class="cx-b" id="cm-b">${trBody(p)}</div>
     <div class="cx-cta"><a class="cx-buy" data-cxs="buy" href="#/trade/${p.id}?op=1">${T2("Buy", "Comprar")}</a><a class="cx-sell" data-cxs="sell" href="#/trade/${p.id}?op=1">${T2("Sell", "Vender")}</a></div></section>`;
+}
+function renderTrade(p) {
+  clearInterval(S.poll); if (chartOff) { chartOff.destroy(); chartOff = null; }
+  document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
+  $("#app").innerHTML = tradeHtml(p); scrollTo(0, 0);
+  const es = (localStorage.getItem("hf-lang") || "en") === "es", el = $("#cm-chart");
+  if (el && p.mk) chartOff = mountChart(el, { id: p.id, mode: "candle", periods: ["1m", "5m", "15m", "1H"], period: PERIODS[S.period] && ["1m", "5m", "15m", "1H"].includes(S.period) ? S.period : "5m", onPeriod: (k) => (S.period = k),
+    getData: (per) => (p.mk ? { candles: buildCandles(p, per), round: p.mk.round, supply: p.supply ? Number(p.supply) / 1e18 : 0, marks: [], symbol: p.q.symbol, heat: null, faces: faces4(p), lines: [], trades: [] } : { candles: [], round: 0, supply: 0, marks: [] }),
+    onFace: (who) => traderCard(p, who), labels: es ? { flow: "Flujo", net: "Dinero neto que entra", heat: "Calor", faces: "Caras", tap: "Toca para ver el perfil", cap: "Valor total", price: "Precio", candles: "Velas", line: "Línea", ma: "Promedios", draw: "Dibujar", clear: "Borrar", full: "Pantalla completa", exit: "Salir", vol: "Vol" } : {} });
+  el?.querySelector('[data-t="full"]')?.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); location.hash = `#/trade/${p.id}?op=1`; });
+  let last = p.mk.price;
+  const paint = async () => { if (!location.hash.startsWith(`#/trade/${p.id}`) || /[?&]op=1/.test(location.hash)) { clearInterval(S.poll); chartOff?.destroy(); chartOff = null; return; }
+    try { if (!p.trades) await loadTrades(p); await loadHolders(p); } catch {}
+    const x = stats24(p), px = $("#cm-px"); if (px) { px.textContent = fmtP(p.mk.price); if (Math.abs(p.mk.price - last) / (last || 1) > 0.02) hfShake(px); if (p.mk.price !== last) { px.classList.remove("fu", "fd"); void px.offsetWidth; px.classList.add(p.mk.price > last ? "fu" : "fd"); last = p.mk.price; } }
+    const ch = $("#cm-ch"); if (ch) { ch.textContent = `${x.chg >= 0 ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%`; ch.className = x.chg >= 0 ? "u" : "d"; }
+    const rcEl = $("#cx-rc"); if (rcEl) rcEl.innerHTML = recentHtml(p);
+    const hn = holdN(p); if ($("#cx-hn") && hn != null) $("#cx-hn").textContent = hn + " holders"; chartOff?.update();
+    if ((S.trTab || "trades") !== "posts" && $("#cm-b")) $("#cm-b").innerHTML = trBody(p); };
+  paint(); S.poll = setInterval(paint, 4000);
+  const root = $("#app");
+  root.querySelector(".cx-tabs").onclick = (e) => { const b = e.target.closest("[data-cmt]"); if (!b) return; S.trTab = b.dataset.cmt; document.querySelectorAll("[data-cmt]").forEach((y) => y.setAttribute("aria-selected", y === b)); $("#cm-b").innerHTML = trBody(p); };
+  root.querySelectorAll(".cx-cta a").forEach((b) => (b.onclick = () => { S.side = b.dataset.cxs; }));
+  root.querySelector("[data-cxfav]").onclick = (e) => { favToggle(p.id); const on = favs().includes(p.id); e.currentTarget.classList.toggle("on", on); e.currentTarget.querySelector("svg").setAttribute("fill", on ? "currentColor" : "none"); };
+  root.querySelector("[data-cxsh]").onclick = () => { try { navigator.share ? navigator.share({ title: p.q.name, url: location.href }) : navigator.clipboard?.writeText(location.href); } catch {} };
+}
+
+// ===== COMUNIDAD (celular): portada con vida, miembros, reglas y publicaciones. Sin gráfico: el trade vive en Trade. =====
+const joined = (id) => { try { return localStorage.getItem("hf-join-" + id) === "1"; } catch { return false; } };
+const joinToggle = (id) => { try { joined(id) ? localStorage.removeItem("hf-join-" + id) : localStorage.setItem("hf-join-" + id, "1"); } catch {} };
+function hfShake(el) { if (!el) return; el.classList.remove("shk"); void el.offsetWidth; el.classList.add("shk"); try { navigator.vibrate?.([14, 30, 10]); } catch {} setTimeout(() => el.classList.remove("shk"), 440); }
+const kfmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "K" : String(n));
+function activeNow(p) {
+  const now = S.now || Date.now() / 1000, set = new Set(); (p.trades || []).forEach((t) => { if (t.who && t.ts && now - t.ts < 900) set.add(String(t.who).toLowerCase()); });
+  try { JSON.parse(localStorage.getItem("hf-th-tok-" + p.id) || "[]").forEach((m) => { if (now - m.ts < 900) set.add(String(m.a || m.n).toLowerCase()); }); } catch {}
+  return Math.max(1, set.size);
+}
+const ccBody = (p) => {
+  const t = S.ccTab || "posts";
+  if (t === "posts") return threadHtml("tok-" + p.id, xCtx(p));
+  if (t === "members") { const old = S.ttab; S.ttab = "holders"; let h = ""; try { h = termTab(p); } finally { S.ttab = old; } return h; }
+  const c = p.q.creator ? uname(p.q.creator) : "–", f0 = (p.trades || []).find((q) => q.ts), age = f0 ? agoS((S.now || Date.now() / 1000) - f0.ts) : "–";
+  return `<div class="cc-ab"><div><small>${T2("Creator", "Creador")}</small><b>${esc(c)}</b></div><div><small>${T2("Contract", "Contrato")}</small><b>${short(p.address || p.q.creator)}</b></div><div><small>${T2("Liquidity", "Liquidez")}</small><b>${T2("Locked forever", "Bloqueada para siempre")}</b></div><div><small>${T2("Market open", "Mercado abierto")}</small><b>${T2("", "hace ")}${age}${T2(" ago", "")}</b></div></div>`;
+};
+function communityHtml(p) {
+  const src = logoSrc(p) || p.meta?.cover || "", sym = p.q.symbol, hn = holdN(p), me = joined(p.id), x = stats24(p), up = x.chg >= 0, pv = threadPreview("tok-" + p.id), t = S.ccTab || "posts";
+  const tag = (p.meta?.tagline && String(p.meta.tagline).slice(0, 90)) || T2(`The community of ${sym}`, `La comunidad de ${sym}`);
+  const faces = traderBoard(p, "all").slice(0, 5).map((r) => r.a), members = (hn ?? faces.length) + (me ? 1 : 0);
+  const lg = logoSrc(p) ? `<img src="${esc(logoSrc(p))}" alt="">` : mark(p, "lg");
+  const name = esc(p.q.name).split("").map((c, i) => `<span style="--i:${i}">${c === " " ? "&nbsp;" : c}</span>`).join("");
+  return `<section class="cc" data-cc="${p.id}"><div class="cc-hero" id="cc-hero"><i class="cc-bg${src ? "" : " g"}" style="${src ? `background-image:url('${esc(src)}')` : `--c:${esc(p.meta?.color || "#2a2a30")}`}"></i><i class="cc-fog"></i>
+    <a class="cc-bk" href="#/" aria-label="Back">‹</a><button type="button" class="cc-sh" data-ccsh aria-label="Share"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>
+    <div class="cc-med"><i class="cc-glow"></i><i class="cc-ring"></i><i class="cc-ring r2"></i><span class="cc-logo">${lg}</span></div>
+    <h1 class="cc-name">${name}</h1><p class="cc-tag">${esc(tag)}</p>
+    <div class="cc-st"><div><b id="cc-m">${kfmt(members)}</b><small>${T2("members", "miembros")}</small></div><div><b><span class="cc-eq"><i></i><i></i><i></i><i></i></span><span id="cc-a">${activeNow(p)}</span></b><small>${T2("active now", "activos ahora")}</small></div><div><b id="cc-p">${pv ? pv.c : 0}</b><small>${T2("posts", "publicaciones")}</small></div></div>
+    ${faces.length ? `<div class="cc-fc"><span class="cc-stk">${faces.map((a2) => avatar(a2, 30)).join("")}</span><small>${T2("Join the people already here", "Súmate a quienes ya están aquí")}</small></div>` : ""}
+    <div class="cc-ac"><button type="button" class="cc-join${me ? " on" : ""}" data-ccj>${me ? T2("Joined", "Unido") : T2("Join", "Unirme")}</button><a class="cc-px" href="#/trade/${p.id}"><small>Trade</small><span><b id="cc-px">${fmtP(p.mk.price)}</b><em id="cc-ch" class="${up ? "u" : "d"}">${up ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%</em></span></a></div></div>
+    <div class="cc-pin"><span class="cc-pn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M9 3h6l-1 7 3 3H7l3-3z"/></svg>${T2("Community rules", "Reglas de la comunidad")}</span><p>${T2("Be respectful, no spam and never share your keys. Holdfast will never message you first.", "Respeto, cero spam y nunca compartas tus llaves. Holdfast nunca te escribe primero.")}</p></div>
+    <div class="cc-tabs" role="tablist">${[["posts", T2("Posts", "Publicaciones")], ["members", T2("Members", "Miembros")], ["about", T2("About", "Acerca")]].map(([k, n2]) => `<button type="button" data-cct="${k}" aria-selected="${t === k}">${n2}</button>`).join("")}</div>
+    <div class="cc-b" id="cc-b">${ccBody(p)}</div></section>`;
 }
 function renderCommunity(p) {
   clearInterval(S.poll); if (chartOff) { chartOff.destroy(); chartOff = null; }
   document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
   $("#app").innerHTML = communityHtml(p); scrollTo(0, 0);
-  const es = (localStorage.getItem("hf-lang") || "en") === "es", el = $("#cm-chart");
-  if (el && p.mk) chartOff = mountChart(el, { id: p.id, mode: "candle", periods: ["1m", "5m", "15m", "1H"], period: PERIODS[S.period] && ["1m", "5m", "15m", "1H"].includes(S.period) ? S.period : "5m", onPeriod: (k) => (S.period = k),
-    getData: (per) => (p.mk ? { candles: buildCandles(p, per), round: p.mk.round, supply: p.supply ? Number(p.supply) / 1e18 : 0, marks: [], symbol: p.q.symbol, heat: null, faces: faces4(p), lines: [], trades: [] } : { candles: [], round: 0, supply: 0, marks: [] }),
-    onFace: (who) => traderCard(p, who), labels: es ? { flow: "Flujo", net: "Dinero neto que entra", heat: "Calor", faces: "Caras", tap: "Toca para ver el perfil", cap: "Valor total", price: "Precio", candles: "Velas", line: "Línea", ma: "Promedios", draw: "Dibujar", clear: "Borrar", full: "Pantalla completa", exit: "Salir", vol: "Vol" } : {} });
-  let last = p.mk.price;
-  const paint = async () => { if (!location.hash.startsWith(`#/trade/${p.id}`) || /[?&]op=1/.test(location.hash)) { clearInterval(S.poll); chartOff?.destroy(); chartOff = null; return; }
+  if (S.ccScroll) removeEventListener("scroll", S.ccScroll);
+  S.ccScroll = () => { const hr = $("#cc-hero"); if (!hr) return removeEventListener("scroll", S.ccScroll); hr.style.setProperty("--sy", Math.min(500, Math.max(0, scrollY)).toFixed(0)); };
+  addEventListener("scroll", S.ccScroll, { passive: true });
+  const paint = async () => { if (!location.hash.startsWith(`#/c/${p.id}`)) { clearInterval(S.poll); return; }
     try { if (!p.trades) await loadTrades(p); await loadHolders(p); } catch {}
-    const x = stats24(p), px = $("#cm-px"); if (px) { px.textContent = fmtP(p.mk.price); if (p.mk.price !== last) { px.classList.remove("fu", "fd"); void px.offsetWidth; px.classList.add(p.mk.price > last ? "fu" : "fd"); last = p.mk.price; } }
-    const ch = $("#cm-ch"); if (ch) { ch.textContent = `${x.chg >= 0 ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%`; ch.className = x.chg >= 0 ? "u" : "d"; }
-    const rcEl = $("#cx-rc"); if (rcEl) rcEl.innerHTML = recentHtml(p);
-    const hn = holdN(p); if ($("#cx-hn") && hn != null) $("#cx-hn").textContent = hn + " holders"; chartOff?.update();
-    if ((S.cmTab || "posts") !== "posts" && $("#cm-b")) $("#cm-b").innerHTML = cmBody(p); };
-  paint(); S.poll = setInterval(paint, 4000);
+    const x = stats24(p), set = (id, v) => { const e = $("#" + id); if (e) e.textContent = v; }; set("cc-px", fmtP(p.mk.price)); const ch = $("#cc-ch"); if (ch) { ch.textContent = `${x.chg >= 0 ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%`; ch.className = x.chg >= 0 ? "u" : "d"; }
+    set("cc-a", activeNow(p)); const hn = holdN(p); if (hn != null) set("cc-m", kfmt(hn + (joined(p.id) ? 1 : 0))); const pv = threadPreview("tok-" + p.id); if (pv) set("cc-p", pv.c); };
+  paint(); S.poll = setInterval(paint, 5000);
   const root = $("#app");
-  root.querySelector(".cx-tabs").onclick = (e) => { const b = e.target.closest("[data-cmt]"); if (!b) return; S.cmTab = b.dataset.cmt; document.querySelectorAll("[data-cmt]").forEach((y) => y.setAttribute("aria-selected", y === b)); $("#cm-b").innerHTML = cmBody(p); };
-  root.querySelectorAll(".cx-cta a").forEach((b) => (b.onclick = () => { S.side = b.dataset.cxs; }));
-  root.querySelector("[data-cxfav]").onclick = (e) => { favToggle(p.id); const on = favs().includes(p.id); e.currentTarget.classList.toggle("on", on); e.currentTarget.querySelector("svg").setAttribute("fill", on ? "currentColor" : "none"); };
-  root.querySelector("[data-cxsh]").onclick = () => { try { navigator.share ? navigator.share({ title: p.q.name, url: location.href }) : navigator.clipboard?.writeText(location.href); } catch {} };
+  root.querySelector(".cc-tabs").onclick = (e) => { const b = e.target.closest("[data-cct]"); if (!b) return; S.ccTab = b.dataset.cct; document.querySelectorAll("[data-cct]").forEach((y) => y.setAttribute("aria-selected", y === b)); $("#cc-b").innerHTML = ccBody(p); };
+  root.querySelector("[data-ccj]").onclick = (e) => { joinToggle(p.id); const on = joined(p.id), bt = e.currentTarget; bt.classList.toggle("on", on); bt.textContent = on ? T2("Joined", "Unido") : T2("Join", "Unirme"); hfShake(bt); hfShake(root.querySelector(".cc-logo")); const m = $("#cc-m"); if (m) { const hn = holdN(p); m.textContent = kfmt((hn ?? 0) + (on ? 1 : 0)); } };
+  root.querySelector("[data-ccsh]").onclick = () => { try { navigator.share ? navigator.share({ title: p.q.name, url: location.href }) : navigator.clipboard?.writeText(location.href); } catch {} };
 }
 
 function bindAmount(p) {
@@ -2023,3 +2079,12 @@ async function main() {
   if (eth) { const accs = await eth.request({ method: "eth_accounts" }).catch(() => []); if (accs.length) await connect(); }
 }
 main().catch((e) => { console.error(e); toast(e.message, true); });
+
+// Entrada: pantalla corta con la marca que se "descifra" (una vez por sesión, solo celular)
+(function bootSplash() {
+  try { if (!matchMedia("(max-width: 900px)").matches || sessionStorage.getItem("hf-boot") || matchMedia("(prefers-reduced-motion: reduce)").matches) return; sessionStorage.setItem("hf-boot", "1"); } catch { return; }
+  const d = document.createElement("div"); d.id = "boot"; d.innerHTML = '<div><b id="boot-t">HOLDFAST</b><i></i></div>'; document.body.appendChild(d);
+  const W = "HOLDFAST", C = "▓▒░#@%&*+=<>/", t = document.getElementById("boot-t"), t0 = performance.now();
+  (function tick() { const k = Math.min(1, (performance.now() - t0) / 850); t.textContent = W.split("").map((c, i) => (i / W.length < k ? c : C[Math.floor(Math.random() * C.length)])).join(""); if (k < 1) requestAnimationFrame(tick); })();
+  setTimeout(() => d.classList.add("out"), 1150); setTimeout(() => d.remove(), 1750);
+})();
