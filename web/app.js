@@ -492,7 +492,7 @@ const loadImg = (src) => new Promise((ok, no) => { const im = new Image(); im.on
 async function traderPng(p, r, rank) {
   try { await document.fonts.load("700 60px 'Space Grotesk'"); await document.fonts.load("600 60px 'JetBrains Mono'"); } catch {}
   const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
-  const up = r.pnl >= 0, col = up ? "#3ddc97" : "#ff5d5d", F = "'Space Grotesk', sans-serif", M = "'JetBrains Mono', monospace", rr = (x, y, w, h, k) => { g.beginPath(); g.roundRect(x, y, w, h, k); };
+  const up = r.pnl >= 0, col = up ? "#ff4fa3" : "#8f6bff", F = "'Space Grotesk', sans-serif", M = "'JetBrains Mono', monospace", rr = (x, y, w, h, k) => { g.beginPath(); g.roundRect(x, y, w, h, k); };
   // marco blanco + tarjeta negra
   g.fillStyle = "#f4f4f1"; g.fillRect(0, 0, W, H); g.fillStyle = "#050506"; rr(24, 24, W - 48, 1020, 56); g.fill();
   // token
@@ -505,11 +505,11 @@ async function traderPng(p, r, rank) {
   const all = (p.trades || []).filter((t) => t.ts && t.price).sort((x, y) => x.ts - y.ts), mine = all.filter((t) => t.who && t.who.toLowerCase() === r.a.toLowerCase());
   const cx0 = 48, cx1 = W - 48, cy0 = 250, cy1 = 700, pts = all.length ? all : [{ ts: 0, price: p.mk.price }, { ts: 1, price: p.mk.price }];
   const t0 = pts[0].ts, t1 = pts[pts.length - 1].ts || t0 + 1, ps = pts.map((t) => t.price), lo = Math.min(...ps), hi = Math.max(...ps), X = (t) => cx0 + ((t - t0) / (t1 - t0 || 1)) * (cx1 - cx0 - 40), Y = (v) => cy1 - ((v - lo) / (hi - lo || 1)) * (cy1 - cy0 - 70) - 20;
-  const gr = g.createLinearGradient(0, cy0, 0, cy1); gr.addColorStop(0, up ? "rgba(61,220,151,.28)" : "rgba(255,93,93,.28)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+  const gr = g.createLinearGradient(0, cy0, 0, cy1); gr.addColorStop(0, up ? "rgba(255,79,163,.30)" : "rgba(143,107,255,.30)"); gr.addColorStop(1, "rgba(0,0,0,0)");
   const path = () => { g.beginPath(); pts.forEach((t, i) => (i ? g.lineTo(X(t.ts), Y(t.price)) : g.moveTo(X(t.ts), Y(t.price)))); };
   path(); g.lineTo(X(t1), cy1 + 10); g.lineTo(X(t0), cy1 + 10); g.closePath(); g.fillStyle = gr; g.fill();
   path(); g.strokeStyle = col; g.lineWidth = 9; g.lineJoin = "round"; g.lineCap = "round"; g.shadowColor = col; g.shadowBlur = 24; g.stroke(); g.shadowBlur = 0;
-  const mk6 = [...mine].sort((x, y) => Number(y.usdc) - Number(x.usdc)).slice(0, 6); for (const t of mine.filter((q) => mk6.includes(q) || mine.length <= 6)) { const x = X(t.ts), y = Y(t.price), mc = t.buy ? "#3ddc97" : "#ff5d5d"; g.fillStyle = mc; g.beginPath(); g.arc(x, y, 30, 0, 7); g.fill(); g.strokeStyle = "#050506"; g.lineWidth = 6; g.stroke(); g.strokeStyle = "#04130b"; g.lineWidth = 6; g.lineCap = "round"; g.beginPath(); g.moveTo(x - 12, y); g.lineTo(x + 12, y); if (t.buy) { g.moveTo(x, y - 12); g.lineTo(x, y + 12); } g.stroke(); }
+  const mk6 = [...mine].sort((x, y) => Number(y.usdc) - Number(x.usdc)).slice(0, 6); for (const t of mine.filter((q) => mk6.includes(q) || mine.length <= 6)) { const x = X(t.ts), y = Y(t.price), mc = t.buy ? "#ff4fa3" : "#8f6bff"; g.fillStyle = mc; g.beginPath(); g.arc(x, y, 30, 0, 7); g.fill(); g.strokeStyle = "#050506"; g.lineWidth = 6; g.stroke(); g.strokeStyle = "#16040e"; g.lineWidth = 6; g.lineCap = "round"; g.beginPath(); g.moveTo(x - 12, y); g.lineTo(x + 12, y); if (t.buy) { g.moveTo(x, y - 12); g.lineTo(x, y + 12); } g.stroke(); }
   // caja de posición
   g.fillStyle = "#0e0e11"; rr(64, 720, W - 128, 312, 40); g.fill(); g.strokeStyle = "#1f1f25"; g.lineWidth = 2; g.stroke();
   const pr = S.prof?.[r.a.toLowerCase()], ax = 330, ay = 782, AR = 26; g.save(); g.beginPath(); g.arc(ax, ay, AR, 0, 7); g.clip(); let d2 = false;
