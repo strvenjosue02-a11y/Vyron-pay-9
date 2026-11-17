@@ -235,6 +235,7 @@ function tradePanel(p) {
     <div class="under"><span>Balance ${!hasW ? "–" : side === "buy" ? `${usd(S.usdc)} USDC` : `${tok(p.u.balance)} ${esc(p.q.symbol)}`}</span><span class="tx-slip">Slippage ${[0.5, 1, 2].map((v) => `<button type="button" data-slip="${v}" aria-pressed="${(S.slip || 1) === v}">${v}%</button>`).join("")}</span></div>
     <div class="lines cy-sum"><div><span>You receive</span><b id="tout">–</b></div><div><span>Minimum you'll get</span><b id="tmin">–</b></div><div><span>Price impact</span><b id="timp">–</b></div><div><span>Pool fee</span><b>0.3%</b></div></div>
     ${hasW ? `<button class="btn btn-cyber btn-block" data-act="swap" data-testid="swap">${side === "buy" ? `Buy ${esc(p.q.symbol)}` : `Sell ${esc(p.q.symbol)}`}</button>` : `<button class="btn btn-cyber btn-block" data-act="connect">Connect wallet to ${side === "buy" ? "buy" : "sell"}</button>`}
+    <label class="cy-1tap"><input type="checkbox" data-onetap ${oneTap() ? "checked" : ""}><span>One-tap buy: quick amounts buy instantly</span></label>
     <p class="cy-fine">Trades go straight to the Uniswap pool. Holdfast never holds your funds.</p>
   </div>`;
 }
@@ -244,7 +245,7 @@ function bindTrade(p) {
   el.oninput = () => { clearTimeout(quoteT); quoteT = setTimeout(() => quote(p), 250); };
   document.querySelectorAll("[data-pct]").forEach((b) => (b.onclick = () => { if (!S.me) return; const side = S.side || "buy", bal = side === "buy" ? S.usdc : p.u.balance, d = side === "buy" ? 6 : 18;
     const v = (bal * BigInt(b.dataset.pct)) / 100n; el.value = formatUnits(v, d).replace(/(\.\d{0,6})\d*$/, "$1"); el.oninput(); }));
-  document.querySelectorAll("[data-amt]").forEach((b) => (b.onclick = () => { el.value = b.dataset.amt; el.oninput(); }));
+  document.querySelectorAll("[data-amt]").forEach((b) => (b.onclick = () => { el.value = b.dataset.amt; el.oninput(); if (oneTap() && S.me) { clearTimeout(quoteT); quote(p).then(() => document.querySelector("[data-act=swap]")?.click()); } }));
   document.querySelectorAll("[data-slip]").forEach((b) => (b.onclick = () => { S.slip = Number(b.dataset.slip); document.querySelectorAll("[data-slip]").forEach((x) => x.setAttribute("aria-pressed", x === b)); }));
 }
 async function quote(p) {
@@ -529,10 +530,10 @@ function safetyHtml(p) {
 const linksHtml = (p) => { let l = {}; try { l = JSON.parse(p.meta?.links || "{}"); } catch {} return Object.entries(l).filter(([, v]) => /^https?:\/\//.test(v)).map(([k, v]) => `<a class="tx-ln" href="${esc(v)}" target="_blank" rel="noopener">${esc(k)}</a>`).join(""); };
 const tpslGet = (p) => { try { return JSON.parse(localStorage.getItem(`hf-tpsl-${p.id}`) || "{}"); } catch { return {}; } };
 const tpslSet = (p, v) => { try { localStorage.setItem(`hf-tpsl-${p.id}`, JSON.stringify(v)); } catch {} };
-const tpslHtml = (p) => { const c = tpslGet(p); return `<div class="panel tx-tpsl" id="tx-tpsl"><h3>Take profit / Stop loss</h3><div class="tpsl-r"><label>Take profit<span>+<input id="tp-v" type="number" min="1" value="${c.tp || 50}">%</span></label><label>Stop loss<span>-<input id="sl-v" type="number" min="1" max="99" value="${c.sl || 20}">%</span></label></div><button type="button" class="btn ${c.on ? "btn-soft" : "btn-line"} btn-sm btn-block" data-tpsl>${c.on ? `Active from ${fmtP(c.ref)} · tap to turn off` : "Turn on"}</button><p class="fine">When the price gets there I alert you and get the sell ready. You sign with one tap.</p></div>`; };
+const tpslHtml = (p) => { const c = tpslGet(p); return `<div class="panel tx-tpsl" id="tx-tpsl"><h3>Take profit / Stop loss</h3><div class="tpsl-r"><label>Take profit<span>+<input id="tp-v" type="number" min="1" value="${c.tp || 50}">%</span></label><label>Stop loss<span>-<input id="sl-v" type="number" min="1" max="99" value="${c.sl || 20}">%</span></label></div><button type="button" class="btn ${c.on ? "btn-soft" : "btn-line"} btn-sm btn-block" data-tpsl>${c.on ? `Active from ${fmtP(c.ref)} · tap to turn off` : "Turn on"}</button><button type="button" class="tpsl-n" data-notif>Browser alerts</button><p class="fine">When the price gets there I alert you and get the sell ready. You sign with one tap.</p></div>`; };
 function tpslCheck(p) {
   const c = tpslGet(p); if (!c.on || !c.ref || !p.mk) return; const ch = (p.mk.price / c.ref - 1) * 100, hit = ch >= c.tp ? "tp" : ch <= -c.sl ? "sl" : "";
-  if (!hit) return; tpslSet(p, { ...c, on: false }); toast(hit === "tp" ? `Take profit hit: ${p.q.symbol} ${ch >= 0 ? "+" : ""}${ch.toFixed(1)}%. Sell is ready.` : `Stop loss hit: ${p.q.symbol} ${ch.toFixed(1)}%. Sell is ready.`, hit === "sl");
+  if (!hit) return; tpslSet(p, { ...c, on: false }); notify(hit === "tp" ? `${p.q.symbol}: take profit reached` : `${p.q.symbol}: stop loss reached`); toast(hit === "tp" ? `Take profit hit: ${p.q.symbol} ${ch >= 0 ? "+" : ""}${ch.toFixed(1)}%. Sell is ready.` : `Stop loss hit: ${p.q.symbol} ${ch.toFixed(1)}%. Sell is ready.`, hit === "sl");
   const t = $("#tx-tpsl"); if (t) t.outerHTML = tpslHtml(p); document.querySelector('[data-side="sell"]')?.click(); setTimeout(() => document.querySelector('[data-pct="100"]')?.click(), 60); document.querySelector(".term")?.classList.add("sheet");
 }
 const chatGet = (p) => { try { return JSON.parse(localStorage.getItem(`hf-chat-${p.id}`) || "[]"); } catch { return []; } };
@@ -554,7 +555,11 @@ if (!window.__txKeys) {
     const qs = e.target.closest("[data-qsell]"); if (qs) { document.querySelector('[data-side="sell"]')?.click(); setTimeout(() => { document.querySelector(`.tx-q [data-pct="${qs.dataset.qsell}"]`)?.click(); }, 60); document.querySelector(".term")?.classList.add("sheet"); return; }
     const tb = e.target.closest("[data-tpsl]"); if (tb) { const p = curTok(); if (!p || !p.mk) return; const c = tpslGet(p); if (c.on) tpslSet(p, { ...c, on: false }); else tpslSet(p, { on: true, tp: Number($("#tp-v").value) || 50, sl: Number($("#sl-v").value) || 20, ref: p.mk.price }); $("#tx-tpsl").outerHTML = tpslHtml(p); chartOff?.update(); return; }
   });
+  document.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id === "tamt") document.querySelector("[data-act=swap]")?.click(); });
   document.addEventListener("click", (e) => {
+    const cp = e.target.closest("[data-copy]"); if (cp) { navigator.clipboard?.writeText(cp.dataset.copy).then(() => toast("Address copied")).catch(() => toast("Could not copy", true)); return; }
+    const nf = e.target.closest("[data-notif]"); if (nf) { if (!("Notification" in window)) return toast("This browser doesn't support alerts", true); Notification.requestPermission().then((r) => { nf.textContent = r === "granted" ? "Browser alerts on" : "Browser alerts blocked"; if (r === "granted") notify("Alerts are on."); }); return; }
+    const ot = e.target.closest("[data-onetap]"); if (ot) { try { localStorage.setItem("hf-1tap", ot.checked ? "1" : "0"); } catch {} return; }
     const rx = e.target.closest("[data-react]"); if (rx) { react(rx.dataset.react); return; }
     const sn = e.target.closest("[data-snd]"); if (sn) { try { localStorage.setItem("hf-snd", sndOn() ? "0" : "1"); } catch {} sn.setAttribute("aria-pressed", sndOn()); if (sndOn()) beep(true); return; }
     const rpb = e.target.closest("[data-replay]"); if (rpb) { const p = curTok(); if (!p) return; clearInterval(S.rpT); const tot = buildCandles(p, S.period || "5m").length; S.rp = 5; rpb.textContent = "Stop"; S.rpT = setInterval(() => { S.rp += 1; chartOff?.update(); if (S.rp >= tot) { clearInterval(S.rpT); S.rp = 0; rpb.textContent = "Replay"; chartOff?.update(); } }, 140); if (rpb.dataset.on === "1") { clearInterval(S.rpT); S.rp = 0; rpb.textContent = "Replay"; rpb.dataset.on = "0"; chartOff?.update(); } else rpb.dataset.on = "1"; }
@@ -600,6 +605,8 @@ function beep(buy) { if (!sndOn()) return; try { const c = new (window.AudioCont
 function burst(buy) { const h = $("#chartpro"); if (!h) return; const d = document.createElement("div"); d.className = "cp-burst " + (buy ? "b" : "s"); h.appendChild(d); setTimeout(() => d.remove(), 1400); }
 const RX = { rocket: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15c0-5 4-9 9-10 1 5-3 9-8 9M5 15l-2 4 4-2M9 12l3 3"/></svg>', fire: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/></svg>' };
 function react(kind) { const h = $("#chartpro"); if (!h) return; const e = document.createElement("div"); e.className = "cp-rx"; e.style.left = 20 + Math.random() * 60 + "%"; e.innerHTML = RX[kind]; h.appendChild(e); setTimeout(() => e.remove(), 2200); }
+const oneTap = () => { try { return localStorage.getItem("hf-1tap") === "1"; } catch { return false; } };
+function notify(t) { try { if ("Notification" in window && Notification.permission === "granted") new Notification("Holdfast", { body: t }); } catch {} }
 function vTerminal(p) {
   if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
   const m = p.mk, x = stats24(p), up = x.chg >= 0, fav = favs().includes(p.id), alert = (() => { try { return localStorage.getItem(`hf-alert-${p.id}`) || ""; } catch { return ""; } })();
@@ -607,7 +614,7 @@ function vTerminal(p) {
     <a class="back" href="#/market">All markets</a>
     <header class="tx-top">
       <div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
-      <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
+      <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small><div class="tx-ca"><button type="button" data-copy="${p.address}" title="Copy contract address"><span>${short(p.address)}</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button><a href="${CONFIG.explorer}/token/${p.address}" target="_blank" rel="noopener">Explorer</a><a href="${CONFIG.explorer}/address/${p.s.pool}" target="_blank" rel="noopener">Pool</a></div></div>
       <div class="tx-px"><small class="tx-cl">Market cap</small><b id="tx-capbig">${capFmt(x.cap)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span><em class="tx-sub">Price <span id="tt-price">${fmtP(m.price)}</span></em></div>
       <div class="tx-chips" id="tx-chips">${chipsHtml(p)}</div>
       <div class="tx-safe" id="tx-safe">${safetyHtml(p)}${linksHtml(p)}</div>
@@ -617,8 +624,7 @@ function vTerminal(p) {
         <div><dt>24h high</dt><dd id="tx-hi">${fmtP(x.hi)}</dd></div><div><dt>24h low</dt><dd id="tx-lo">${fmtP(x.lo)}</dd></div><div><dt>Round price</dt><dd>${fmtP(m.round)}</dd></div>
       </dl><button type="button" class="tx-more" onclick="this.previousElementSibling.classList.toggle('open');this.textContent=this.previousElementSibling.classList.contains('open')?'Less':'More data'">More data</button>
     </header>
-    <div class="tx-strip"><div class="tx-feed" id="tx-feed" aria-label="Live trades">${feedHtml(p)}</div>
-    <div class="tx-tools"><button type="button" data-replay>Replay</button><button type="button" data-react="rocket" aria-label="Rocket">${RX.rocket}</button><button type="button" data-react="fire" aria-label="Fire">${RX.fire}</button><button type="button" data-snd aria-pressed="${sndOn()}">Sound</button></div></div>
+    
     <div class="term-grid tx-3">
       <nav class="tx-side" id="tx-side" aria-label="Markets"><div class="tx-side-h"><b>Markets</b><button type="button" class="tx-side-x" data-sidex aria-label="Close">✕</button></div>
         <input class="tx-sq" id="tx-sq" type="search" placeholder="Search token" aria-label="Search token">
@@ -626,10 +632,12 @@ function vTerminal(p) {
       <div class="term-main">
         <button type="button" class="tx-side-open" data-sideopen>${ICO.flame} All tokens</button>
         <div class="tx-chart" id="chartpro"></div>
+        <div class="tx-strip"><div class="tx-feed" id="tx-feed" aria-label="Live trades">${feedHtml(p)}</div>
+    <div class="tx-tools"><button type="button" data-replay>Replay</button><button type="button" data-react="rocket" aria-label="Rocket">${RX.rocket}</button><button type="button" data-react="fire" aria-label="Fire">${RX.fire}</button><button type="button" data-snd aria-pressed="${sndOn()}">Sound</button></div></div>
         <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["chat", "Comments"], ["top", "Top traders"], ["whales", "Whales"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${k === "whales" ? ICO.whale + " " : ""}${t}</button>`).join("")}</div>
         <div id="term-tab">${termTab(p)}</div>
       </div>
-      <aside class="term-side"><button type="button" class="tx-sheet-x" data-sheet-x aria-label="Close">✕</button>${posBox(p)}${tradePanel(p)}${tpslHtml(p)}
+      <aside class="term-side"><button type="button" class="tx-sheet-x" data-sheet-x aria-label="Close">✕</button>${tradePanel(p)}${posBox(p)}${tpslHtml(p)}
         <div class="panel tx-alert"><h3>Price alert</h3><div class="tx-al"><span>$</span><input id="alert" type="number" step="any" placeholder="${fmtP(m.price).slice(1)}" value="${esc(alert)}" aria-label="Alert price"><button type="button" class="btn btn-line btn-sm" id="alert-set">${alert ? "Update" : "Set"}</button></div><small>We'll show a notice here when the price crosses it.</small></div>
         <div class="panel tx-trust"><h3>Safety</h3>
           <div><span>${ICO.lock} Liquidity locked until</span><b>${day(p.s.lpUnlock)}</b></div>
@@ -700,14 +708,14 @@ function startTerminal(p) {
       const mo = $("#tx-mood"); if (mo) { const dn = p.mk.price < before, base = stats24(p).chg; mo.src = `./assets/mood-${dn ? "down" : "up"}.webp`; mo.classList.remove("pop"); void mo.offsetWidth; mo.classList.add("pop"); clearTimeout(S.moodT); S.moodT = setTimeout(() => { const m2 = $("#tx-mood"); if (m2) m2.src = `./assets/mood-${base > 1 ? "up" : base < -1 ? "down" : "calm"}.webp`; }, 3500); }
       el.classList.remove("flash-up", "flash-dn"); void el.offsetWidth; el.classList.add(p.mk.price > before ? "flash-up" : "flash-dn");
       const n0 = (p.trades || []).length; await loadTrades(p); reTerm();
-      (p.trades || []).slice(n0).filter((t) => t.who && isFol(t.who)).slice(-2).forEach((t) => toast(`${uname(t.who)} ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`));
+      (p.trades || []).slice(n0).filter((t) => t.who && isFol(t.who)).slice(-2).forEach((t) => { toast(`${uname(t.who)} ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`); notify(`${uname(t.who)} ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`); });
       (p.trades || []).slice(n0).filter((t) => isWhale(p, t)).slice(-1).forEach((t) => { burst(t.buy); beep(t.buy); });
       (p.trades || []).slice(n0).filter((t) => isWhale(p, t)).slice(-1).forEach((t) => toast(`Whale ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`));
       const pb = $("#tx-pos"); if (pb) pb.outerHTML = posBox(p);
       const av = Number(localStorage.getItem(`hf-alert-${p.id}`) || 0);
       if (av && p.alertSide && ((p.alertSide === "up" && p.mk.price >= av) || (p.alertSide === "dn" && p.mk.price <= av))) { toast(`${p.q.symbol} reached $${av}`); p.alertSide = null; }
     }
-  }, Number(new URLSearchParams(location.search).get("poll")) || (CONFIG.demo ? 4000 : 12000));
+  }, Number(new URLSearchParams(location.search).get("poll")) || (CONFIG.demo ? 3000 : 6000));
 }
 
 // ================================================================= estados
