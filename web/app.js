@@ -490,27 +490,40 @@ function boardHtml(p) {
 }
 const loadImg = (src) => new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = src; });
 async function traderPng(p, r, rank) {
-  try { await document.fonts.load("700 60px Space Grotesk"); await document.fonts.load("600 60px 'JetBrains Mono'"); } catch {}
-  const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"), up = r.pnl >= 0, col = up ? "#3ddc97" : "#ff5d5d";
-  g.fillStyle = "#09090b"; g.fillRect(0, 0, W, H);
-  const cg = g.createLinearGradient(0, 0, W, 380); cg.addColorStop(0, "#0e0e11"); cg.addColorStop(1, "#1d1d23"); g.fillStyle = cg; g.fillRect(0, 0, W, 380);
-  let seed = parseInt(r.a.slice(2, 10), 16) || 7; const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
-  for (let i = 0; i < 22; i++) { const x = 24 + i * 47, h = 50 + rnd() * 200, u = rnd() > 0.42; g.fillStyle = u ? "rgba(61,220,151,.55)" : "rgba(255,93,93,.5)"; g.fillRect(x, 330 - h, 26, h); g.fillRect(x + 12, 300 - h, 2, h + 60); }
-  const fd = g.createLinearGradient(0, 180, 0, 380); fd.addColorStop(0, "rgba(9,9,11,0)"); fd.addColorStop(1, "#09090b"); g.fillStyle = fd; g.fillRect(0, 180, W, 200);
-  const cx = 150, cy = 370, R = 96, pr = S.prof?.[r.a.toLowerCase()];
-  g.save(); g.beginPath(); g.arc(cx, cy, R, 0, 7); g.clip();
-  let drew = false; if (pr?.photo) { try { const im = await loadImg(pr.photo); const s = Math.max(2 * R / im.width, 2 * R / im.height); g.drawImage(im, cx - im.width * s / 2, cy - im.height * s / 2, im.width * s, im.height * s); drew = true; } catch {} }
-  if (!drew) { const h = parseInt(r.a.slice(2, 6), 16) % 360, ag = g.createLinearGradient(cx - R, cy - R, cx + R, cy + R); ag.addColorStop(0, `hsl(${h} 70% 55%)`); ag.addColorStop(1, `hsl(${(h + 140) % 360} 65% 45%)`); g.fillStyle = ag; g.fillRect(cx - R, cy - R, 2 * R, 2 * R); }
-  g.restore(); g.lineWidth = 8; g.strokeStyle = "#09090b"; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.stroke(); g.lineWidth = 2; g.strokeStyle = "rgba(255,255,255,.5)"; g.beginPath(); g.arc(cx, cy, R + 4, 0, 7); g.stroke();
-  g.fillStyle = "#f4f4f1"; g.font = "700 64px Space Grotesk, sans-serif"; g.textAlign = "left"; g.fillText(uname(r.a).slice(0, 18), 280, 410);
-  g.fillStyle = "#8b8b93"; g.font = "500 30px Space Grotesk, sans-serif"; g.fillText(`#${rank} on ${p.q.symbol} · ${short(r.a)}`, 280, 458);
-  g.fillStyle = "#8b8b93"; g.font = "500 28px Space Grotesk, sans-serif"; g.fillText("PROFIT / LOSS", 70, 620);
-  g.fillStyle = col; g.font = "600 170px 'JetBrains Mono', monospace"; g.fillText(`${up ? "+" : "-"}$${Math.abs(r.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}`, 62, 780);
-  g.font = "600 60px 'JetBrains Mono', monospace"; g.fillText(`${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%`, 70, 862);
-  const cells = [["BOUGHT", "$" + r.spent.toFixed(2)], ["SOLD", "$" + r.got.toFixed(2)], ["TRADES", `${r.buys + r.sells}`], ["HOLDING", Math.max(0, r.tok).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " " + p.q.symbol], ["WORTH NOW", "$" + r.val.toFixed(2)], ["BEST SALE", r.best > 0 ? "+$" + r.best.toFixed(2) : "-"]];
-  cells.forEach(([k, v], i) => { const x = 60 + (i % 2) * 490, y = 920 + Math.floor(i / 2) * 112; g.fillStyle = "rgba(255,255,255,.05)"; g.beginPath(); g.roundRect(x, y, 470, 100, 20); g.fill(); g.fillStyle = "#8b8b93"; g.font = "500 22px Space Grotesk, sans-serif"; g.fillText(k, x + 24, y + 36); g.fillStyle = "#f4f4f1"; g.font = "600 34px 'JetBrains Mono', monospace"; g.fillText(v.slice(0, 20), x + 24, y + 78); });
-  g.fillStyle = "#f4f4f1"; g.font = "700 40px Space Grotesk, sans-serif"; g.fillText("Holdfast", 60, 1318); g.fillStyle = "#6c6c74"; g.font = "500 26px Space Grotesk, sans-serif"; g.textAlign = "right"; g.fillText(new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }), W - 60, 1314);
-  return new Promise((ok) => c.toBlob(ok, "image/png"));
+  try { await document.fonts.load("700 60px 'Space Grotesk'"); await document.fonts.load("600 60px 'JetBrains Mono'"); } catch {}
+  const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
+  const up = r.pnl >= 0, col = up ? "#3ddc97" : "#ff5d5d", F = "'Space Grotesk', sans-serif", M = "'JetBrains Mono', monospace", rr = (x, y, w, h, k) => { g.beginPath(); g.roundRect(x, y, w, h, k); };
+  // marco blanco + tarjeta negra
+  g.fillStyle = "#f4f4f1"; g.fillRect(0, 0, W, H); g.fillStyle = "#050506"; rr(24, 24, W - 48, 1020, 56); g.fill();
+  // token
+  const lg = logoSrc(p), tx = 76, ty = 76; g.save(); rr(tx, ty, 112, 112, 56); g.clip(); let ok = false;
+  if (lg) { try { const im = await loadImg(lg); g.drawImage(im, tx, ty, 112, 112); ok = true; } catch {} }
+  if (!ok) { g.fillStyle = p.meta?.color || "#222"; g.fillRect(tx, ty, 112, 112); g.fillStyle = "#fff"; g.font = `700 44px ${F}`; g.textAlign = "center"; g.fillText(p.q.symbol.slice(0, 2), tx + 56, ty + 70); }
+  g.restore(); g.textAlign = "left"; g.fillStyle = "#f4f4f1"; g.font = `700 64px ${F}`; g.fillText(p.q.symbol, 220, 140); g.fillStyle = "#77777e"; g.font = `500 36px ${F}`; g.fillText(p.q.name.slice(0, 24), 220, 188);
+  g.textAlign = "right"; g.fillStyle = "#5a5a62"; g.font = `500 32px ${F}`; g.fillText(new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }), W - 76, 140); g.textAlign = "left";
+  // gráfico de línea del token con las compras del trader
+  const all = (p.trades || []).filter((t) => t.ts && t.price).sort((x, y) => x.ts - y.ts), mine = all.filter((t) => t.who && t.who.toLowerCase() === r.a.toLowerCase());
+  const cx0 = 48, cx1 = W - 48, cy0 = 250, cy1 = 700, pts = all.length ? all : [{ ts: 0, price: p.mk.price }, { ts: 1, price: p.mk.price }];
+  const t0 = pts[0].ts, t1 = pts[pts.length - 1].ts || t0 + 1, ps = pts.map((t) => t.price), lo = Math.min(...ps), hi = Math.max(...ps), X = (t) => cx0 + ((t - t0) / (t1 - t0 || 1)) * (cx1 - cx0 - 40), Y = (v) => cy1 - ((v - lo) / (hi - lo || 1)) * (cy1 - cy0 - 70) - 20;
+  const gr = g.createLinearGradient(0, cy0, 0, cy1); gr.addColorStop(0, up ? "rgba(61,220,151,.28)" : "rgba(255,93,93,.28)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+  const path = () => { g.beginPath(); pts.forEach((t, i) => (i ? g.lineTo(X(t.ts), Y(t.price)) : g.moveTo(X(t.ts), Y(t.price)))); };
+  path(); g.lineTo(X(t1), cy1 + 10); g.lineTo(X(t0), cy1 + 10); g.closePath(); g.fillStyle = gr; g.fill();
+  path(); g.strokeStyle = col; g.lineWidth = 9; g.lineJoin = "round"; g.lineCap = "round"; g.shadowColor = col; g.shadowBlur = 24; g.stroke(); g.shadowBlur = 0;
+  const mk6 = [...mine].sort((x, y) => Number(y.usdc) - Number(x.usdc)).slice(0, 6); for (const t of mine.filter((q) => mk6.includes(q) || mine.length <= 6)) { const x = X(t.ts), y = Y(t.price), mc = t.buy ? "#3ddc97" : "#ff5d5d"; g.fillStyle = mc; g.beginPath(); g.arc(x, y, 30, 0, 7); g.fill(); g.strokeStyle = "#050506"; g.lineWidth = 6; g.stroke(); g.strokeStyle = "#04130b"; g.lineWidth = 6; g.lineCap = "round"; g.beginPath(); g.moveTo(x - 12, y); g.lineTo(x + 12, y); if (t.buy) { g.moveTo(x, y - 12); g.lineTo(x, y + 12); } g.stroke(); }
+  // caja de posición
+  g.fillStyle = "#0e0e11"; rr(64, 720, W - 128, 312, 40); g.fill(); g.strokeStyle = "#1f1f25"; g.lineWidth = 2; g.stroke();
+  const pr = S.prof?.[r.a.toLowerCase()], ax = 330, ay = 782, AR = 26; g.save(); g.beginPath(); g.arc(ax, ay, AR, 0, 7); g.clip(); let d2 = false;
+  if (pr?.photo) { try { const im = await loadImg(pr.photo); const sc = Math.max(2 * AR / im.width, 2 * AR / im.height); g.drawImage(im, ax - im.width * sc / 2, ay - im.height * sc / 2, im.width * sc, im.height * sc); d2 = true; } catch {} }
+  if (!d2) { const hh = parseInt(r.a.slice(2, 6), 16) % 360, ag = g.createLinearGradient(ax - AR, ay - AR, ax + AR, ay + AR); ag.addColorStop(0, `hsl(${hh} 70% 55%)`); ag.addColorStop(1, `hsl(${(hh + 140) % 360} 65% 45%)`); g.fillStyle = ag; g.fillRect(ax - AR, ay - AR, 2 * AR, 2 * AR); }
+  g.restore(); g.fillStyle = "#f4f4f1"; g.font = `600 36px ${F}`; g.fillText(uname(r.a).slice(0, 16) + "'s", ax + 40, ay + 12); const nw = g.measureText(uname(r.a).slice(0, 16) + "'s").width; g.fillStyle = "#77777e"; g.fillText(" position", ax + 40 + nw, ay + 12);
+  g.textAlign = "center"; g.fillStyle = col; g.font = `600 92px ${M}`; g.fillText(`${up ? "+" : "-"}$${Math.abs(r.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}`, W / 2 - 90, 900); g.fillStyle = "#f4f4f1"; g.font = `600 44px ${M}`; g.fillText(`${up ? "▲" : "▼"} ${Math.abs(r.pct).toFixed(2)}%`, W / 2 + 330, 896);
+  // tres cifras
+  const bt = mine.filter((t) => t.buy), btok = bt.reduce((s2, t) => s2 + Number(t.tok) / 1e18, 0), avg = btok ? r.spent / btok : p.mk.round, sup = p.supply ? Number(p.supply) / 1e18 : 1, mc = (v) => capFmt(v * sup);
+  g.strokeStyle = "#1f1f25"; g.lineWidth = 2; g.beginPath(); g.moveTo(64, 926); g.lineTo(W - 64, 926); g.moveTo(W / 3 + 21, 926); g.lineTo(W / 3 + 21, 1032); g.moveTo((W / 3) * 2 - 21, 926); g.lineTo((W / 3) * 2 - 21, 1032); g.stroke();
+  [["Invested", "$" + (r.spent >= 1000 ? (r.spent / 1000).toFixed(1) + "K" : r.spent.toFixed(2))], ["Entry", mc(avg)], ["Current", mc(p.mk.price)]].forEach(([k, v], i) => { const x = 64 + ((W - 128) / 3) * (i + 0.5); g.fillStyle = "#77777e"; g.font = `500 28px ${F}`; g.fillText(k, x, 968); g.fillStyle = "#f4f4f1"; g.font = `600 38px ${M}`; g.fillText(v, x, 1012); });
+  // pie
+  g.textAlign = "left"; g.fillStyle = "#050506"; g.font = `700 76px ${F}`; g.fillText("Holdfast", 70, 1190); g.textAlign = "right"; g.fillStyle = "#6a6a72"; g.font = `500 34px ${F}`; g.fillText(`#${rank} on ${p.q.symbol}`, W - 70, 1190);
+  return new Promise((ok2) => c.toBlob(ok2, "image/png"));
 }
 async function traderCard(p, addr) {
   const lc = String(addr).toLowerCase(), r = traderBoard(p, "all").find((x) => x.a.toLowerCase() === lc) || { a: lc, spent: 0, got: 0, buys: 0, sells: 0, tok: 0, best: 0, val: 0, pnl: 0, pct: 0 }, rank = traderBoard(p, "all").findIndex((x) => x.a.toLowerCase() === lc) + 1; 
