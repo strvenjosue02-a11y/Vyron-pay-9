@@ -1,4 +1,4 @@
-// Bot de devoluciones: si una ronda expiró (48 h sin llenarse) o quedó en reembolso, le devuelve el dinero a cada aportante.
+// Bot de devoluciones: si una ronda expiró (24 h sin llenarse) o quedó en reembolso, le devuelve el dinero a cada aportante.
 // El dinero va SIEMPRE al aportante (refundFor), nunca al bot. El bot solo paga el gas.
 // Uso:  RPC_URL=... BOT_KEY=0x... node scripts/refund-bot.mjs   (BOT_KEY es un secreto de GitHub: nadie lo escribe en el chat)
 import { createPublicClient, createWalletClient, http, parseAbiItem } from "viem";

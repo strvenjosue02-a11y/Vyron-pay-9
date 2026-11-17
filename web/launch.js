@@ -37,7 +37,7 @@ export const setLaunchChain = (c) => { CTX = c; };
 const L = [];
 let uid = 1;
 function mk(name, sym, goal, raised, img, live = false) {
-  const l = { dl: now() + 48 * 3600 - (live ? 0 : rnd(3600, 40 * 3600)), id: "l" + uid++, name, sym, goal, raised: live ? goal : raised, img, status: live ? "live" : "open", last: now() - rnd(5, 600), creator: Math.round(rnd(0, 8)), comments: [], ticks: [], rU: 0, rT: 0, p0: goal / 1_000_000 };
+  const l = { dl: now() + 24 * 3600 - (live ? 0 : rnd(1800, 20 * 3600)), id: "l" + uid++, name, sym, goal, raised: live ? goal : raised, img, status: live ? "live" : "open", last: now() - rnd(5, 600), creator: Math.round(rnd(0, 8)), comments: [], ticks: [], rU: 0, rT: 0, p0: goal / 1_000_000 };
   l.comments = [["anon" + Math.floor(rnd(1000, 9999)), T("lfg", "vamos"), now() - rnd(60, 3000)], ["anon" + Math.floor(rnd(1000, 9999)), T("filling fast", "se está llenando"), now() - rnd(10, 500)]];
   if (live) goLive(l, true);
   L.push(l); return l;
@@ -208,7 +208,7 @@ function bindNew() {
     if (CTX && CTX.wallet && CTX.account) { const btn = f.querySelector('button[type="submit"]'); btn.disabled = true; btn.textContent = T("Creating on the network…", "Creando en la red…");
       import("./lcchain.js").then(async (C) => { const p = C.launchParams(CTX.CONFIG, { name, symbol: sym, creator: CTX.account, goal, creatorPct: pct, vestingWeeks: wks }), fromBlock = Number(await CTX.pub.getBlockNumber()), addr = await C.ensureDeployed(CTX.CONFIG, CTX.pub, CTX.wallet, CTX.account, p); const rec = { address: addr, name, symbol: sym, creator: CTX.account, goal, creatorPct: pct, vestingWeeks: wks, fromBlock }; saveRec(rec); fetch("/api/launches", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(rec) }).catch(() => {});
         if (first > 0) await C.deposit(CTX.CONFIG, CTX.pub, CTX.wallet, CTX.account, addr, Math.min(first, goal));
-        const l = mk(name, sym, goal, Math.min(first, goal), img); l.chain = addr; l.dl = now() + 48 * 3600; l.creator = Math.round((first / goal) * 100); location.hash = "#/lc/" + l.id; }).catch((e) => { btn.disabled = false; btn.textContent = T("Launch", "Lanzar"); alert(e.shortMessage || e.message); });
+        const l = mk(name, sym, goal, Math.min(first, goal), img); l.chain = addr; l.dl = now() + 24 * 3600; l.creator = Math.round((first / goal) * 100); location.hash = "#/lc/" + l.id; }).catch((e) => { btn.disabled = false; btn.textContent = T("Launch", "Lanzar"); alert(e.shortMessage || e.message); });
       return; }
     const l = mk(name, sym, goal, Math.min(first, goal), img); l.creator = Math.round((first / goal) * 100); me.usdc -= 1; l.last = now(); location.hash = "#/lc/" + l.id; };
 }

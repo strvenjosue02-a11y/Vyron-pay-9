@@ -25,8 +25,8 @@ const reg = "launches.json", orig = readFileSync(reg, "utf8");
 writeFileSync(reg, JSON.stringify({ launches: [{ address: addr, fromBlock: Number(blk) - 1 }] }));
 try {
   console.log(execFileSync("node", ["scripts/refund-bot.mjs"], { env: { ...process.env, RPC_URL: RPC, BOT_KEY: KEYS[3] }, encoding: "utf8" }).trim());
-  console.log("--- ahora pasan 49 horas ---");
-  await rpc("evm_increaseTime", [49 * 3600]); await rpc("evm_mine", []);
+  console.log("--- ahora pasan 25 horas ---");
+  await rpc("evm_increaseTime", [25 * 3600]); await rpc("evm_mine", []);
   console.log(execFileSync("node", ["scripts/refund-bot.mjs"], { env: { ...process.env, RPC_URL: RPC, BOT_KEY: KEYS[3] }, encoding: "utf8" }).trim());
 } finally { writeFileSync(reg, orig); }
 const after = [await bal(alice.a.address), await bal(bob.a.address), await bal(bot.a.address)];

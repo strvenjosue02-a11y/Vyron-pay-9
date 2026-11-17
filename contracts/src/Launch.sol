@@ -28,7 +28,7 @@ interface IPoolSlot0 {
 /// @title Launch - lanzamiento rápido, todo o nada, con pool bloqueado para siempre.
 /// @notice Este contrato es a la vez el token y la caja de la ronda.
 ///  - SIN dueño, SIN pausa, SIN upgrade, SIN función para mintear a voluntad.
-///  - Meta fija: solo 100, 500 o 2.000 USDC. La ronda se cierra en el instante en que se llena; si en 48 h no se llena, expira.
+///  - Meta fija: solo 100, 500 o 2.000 USDC. La ronda se cierra en el instante en que se llena; si en 24 h no se llena, expira.
 ///  - Mientras NO esté llena, cada quien puede sacar su dinero cuando quiera (withdraw).
 ///  - Al llenarse: el USDC (menos 1% de comisión) va a un pool de Uniswap v3 al MISMO precio que pagaron todos.
 ///    El recibo (NFT) de esa liquidez queda dentro de este contrato y NO existe ninguna función para sacarlo:
@@ -56,7 +56,7 @@ contract Launch is ERC20, ReentrancyGuard {
     uint256 public constant TOKENS_PER_PCT = 10_000_000 ether;   // 1% de referencia = 10M tokens
     uint256 public constant PLATFORM_TOKENS = 15_000_000 ether;  // 1,5% de referencia
     uint256 public constant FEE_BPS = 100;                       // 1% del USDC
-    uint64 public constant ROUND_TIME = 48 hours;                // si en 48 h no se llena, expira y se devuelve todo
+    uint64 public constant ROUND_TIME = 24 hours;                // si en 24 h no se llena, expira y se devuelve todo
     uint24 public constant POOL_FEE = 3000;
     int24 internal constant MIN_TICK = -887220;
     int24 internal constant MAX_TICK = 887220;
@@ -133,7 +133,7 @@ contract Launch is ERC20, ReentrancyGuard {
         usdc.safeTransfer(msg.sender, amt);
     }
 
-    /// @notice true si pasaron 48 h sin llenarse: ya no se aceptan depósitos y a todos se les puede devolver el dinero.
+    /// @notice true si pasaron 24 h sin llenarse: ya no se aceptan depósitos y a todos se les puede devolver el dinero.
     function expired() public view returns (bool) { return state == State.Open && block.timestamp > deadline; }
 
     /// @notice Devuelve el dinero de `who` a `who` (SIEMPRE a él, nunca a quien llama) si la ronda expiró o quedó en reembolso.
