@@ -7,6 +7,7 @@ import { CONFIG } from "./config.js";
 import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
 import { initI18n } from "./i18n.js";
 import { mountChart } from "./pro.js";
+import { mountChart2 } from "./chart2.js";
 import { threadHtml, threadPreview, callHtml } from "./thread.js";
 import { createDemo } from "./demo.js";
 import { setLaunchChain, loadChainLaunches, lcChainLive, showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote, nextClose } from "./launch.js";
@@ -1705,7 +1706,6 @@ function commFeedHtml() {
       <div class="fd-st"><span><small>${T2("Value", "Valor")}</small>$${fdMoney(x.cap)}</span><span><small>${T2("Volume 24h", "Volumen 24h")}</small>$${fdMoney(x.vol)}</span><span><small>${T2("Messages", "Mensajes")}</small>${pv ? pv.c : 0}</span></div></div></a>`; }).join("");
   return `<section class="fd"><header class="fd-h"><h1>${T2("Communities", "Comunidades")}</h1><p>${T2("One community per token. Read, write and trade.", "Una comunidad por token. Lee, escribe y opera.")}</p></header>
     <label class="fd-s"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="fd-q" type="search" placeholder="${T2("Search a token", "Buscar un token")}" value="${esc(S.fdQ || "")}" autocomplete="off"></label>
-    <div class="fd-c"><span class="on">${T2("Tokens", "Tokens")}</span><a href="#/lc">${T2("Rounds filling", "Rondas llenándose")}</a></div>
     <div class="fd-l" id="fd-l">${rows || `<p class="fine">${T2("No tokens yet.", "Todavía no hay tokens.")}</p>`}</div></section>`;
 }
 function renderFeed() {
@@ -1718,7 +1718,7 @@ function renderFeed() {
 
 function route() {
   const h = location.hash || "#/";
-  if (h.startsWith("#/lc")) { document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === (location.hash === "#/lc/new" ? "launch" : "lc") ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current"))); showLaunches($("#app")); return; }
+  if (h.startsWith("#/lc")) { document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "launch" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current"))); showLaunches($("#app")); return; }
   if ((h === "#/" || h === "#" || h === "") && matchMedia("(max-width: 900px)").matches) { renderFeed(); return; }
   if (h === "#/" || h === "#" || h === "") {
     document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
@@ -1838,15 +1838,31 @@ function tradeHtml(p) {
     <div class="cx-b" id="cm-b">${trBody(p)}</div>
     <div class="cx-cta"><a class="cx-buy" data-cxs="buy" href="#/trade/${p.id}?op=1">${T2("Buy", "Comprar")}</a><a class="cx-sell" data-cxs="sell" href="#/trade/${p.id}?op=1">${T2("Sell", "Vender")}</a></div></section>`;
 }
+function openFull(p, gd, PL, es) {
+  if ($("#cz-fs")) return;
+  const d = document.createElement("div"); d.id = "cz-fs"; d.className = "cz-fs";
+  const ic = (s) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${s}</svg>`;
+  const x = stats24(p), up = x.chg >= 0;
+  d.innerHTML = `<header><button type="button" data-fx aria-label="Close">${ic('<path d="M6 6l12 12M18 6L6 18"/>')}</button><b>${esc(p.q.symbol)}</b><span class="px"><b id="fs-px">${fmtP(p.mk.price)}</b><em class="${up ? "u" : "d"}">${up ? "↑" : "↓"} ${Math.abs(x.chg).toFixed(1)}%</em></span></header>
+    <div class="cz-tl">${[["type", T2("Style", "Estilo"), '<path d="M4 18V9M10 18V5M16 18v-7M22 18V8"/>'], ["ma", "MA", '<path d="M3 16c4-8 6 2 9-4s6-4 9-7"/>'], ["rsi", "RSI", '<path d="M3 17l5-6 4 3 5-8 4 4"/>'], ["line", T2("Line", "Línea"), '<path d="M4 19L20 5"/>'], ["clear", T2("Clear", "Borrar"), '<path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13"/>'], ["faces", T2("Faces", "Caras"), '<circle cx="12" cy="9" r="4"/><path d="M5 20c1-4 4-5 7-5s6 1 7 5"/>']].map(([k, n, s]) => `<button type="button" data-tl="${k}">${ic(s)}<span>${n}</span></button>`).join("")}</div>
+    <div class="cz-bd" id="cz-fsc"></div>
+    <div class="cz-cta"><a class="cx-buy" data-cxs="buy" href="#/trade/${p.id}?op=1">${T2("Buy", "Comprar")}</a><a class="cx-sell" data-cxs="sell" href="#/trade/${p.id}?op=1">${T2("Sell", "Vender")}</a></div>`;
+  document.body.appendChild(d); document.documentElement.classList.add("cz-lock");
+  const c = mountChart2($("#cz-fsc"), { es, interactive: true, periods: PL, period: PL.includes(S.period) ? S.period : "5m", getData: gd, onPeriod: (k) => (S.period = k), onFace: (w) => { try { traderCard(p, w); } catch {} } });
+  const iv = setInterval(() => { c.update(); const e = $("#fs-px"); if (e) e.textContent = fmtP(p.mk.price); }, 4000);
+  const close = () => { clearInterval(iv); c.destroy(); d.remove(); document.documentElement.classList.remove("cz-lock"); };
+  d.querySelector("[data-fx]").onclick = close;
+  d.querySelectorAll("[data-tl]").forEach((b) => (b.onclick = () => { const on = c.tool(b.dataset.tl); if (!["clear", "line"].includes(b.dataset.tl)) b.classList.toggle("on", !!on); }));
+  d.querySelectorAll(".cz-cta a").forEach((b) => (b.onclick = () => { S.side = b.dataset.cxs; close(); }));
+}
 function renderTrade(p) {
   clearInterval(S.poll); if (chartOff) { chartOff.destroy(); chartOff = null; }
   document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
   $("#app").innerHTML = tradeHtml(p); scrollTo(0, 0);
   const es = (localStorage.getItem("hf-lang") || "en") === "es", el = $("#cm-chart");
-  if (el && p.mk) chartOff = mountChart(el, { id: p.id, mode: "candle", periods: ["1m", "5m", "15m", "1H"], period: PERIODS[S.period] && ["1m", "5m", "15m", "1H"].includes(S.period) ? S.period : "5m", onPeriod: (k) => (S.period = k),
-    getData: (per) => (p.mk ? { candles: buildCandles(p, per), round: p.mk.round, supply: p.supply ? Number(p.supply) / 1e18 : 0, marks: [], symbol: p.q.symbol, heat: null, faces: faces4(p), lines: [], trades: [] } : { candles: [], round: 0, supply: 0, marks: [] }),
-    onFace: (who) => traderCard(p, who), labels: es ? { flow: "Flujo", net: "Dinero neto que entra", heat: "Calor", faces: "Caras", tap: "Toca para ver el perfil", cap: "Valor total", price: "Precio", candles: "Velas", line: "Línea", ma: "Promedios", draw: "Dibujar", clear: "Borrar", full: "Pantalla completa", exit: "Salir", vol: "Vol" } : {} });
-  el?.querySelector('[data-t="full"]')?.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); location.hash = `#/trade/${p.id}?op=1`; });
+  const PL = ["1m", "5m", "15m", "1H"], gd = (per) => (p.mk ? { candles: buildCandles(p, per), faces: faces4(p) } : { candles: [], faces: [] });
+  const per0 = PL.includes(S.period) ? S.period : "5m";
+  if (el && p.mk) chartOff = mountChart2(el, { es, periods: PL, period: per0, getData: gd, onPeriod: (k) => (S.period = k), onFull: () => openFull(p, gd, PL, es) });
   let last = p.mk.price;
   const paint = async () => { if (!location.hash.startsWith(`#/trade/${p.id}`) || /[?&]op=1/.test(location.hash)) { clearInterval(S.poll); chartOff?.destroy(); chartOff = null; return; }
     try { if (!p.trades) await loadTrades(p); await loadHolders(p); } catch {}
