@@ -1,5 +1,5 @@
 // Guarda la carta en el teléfono para que abra aunque la señal de playa falle.
-const CACHE = "carta-v4";
+const CACHE = "carta-v5";
 const CORE = ["./", "index.html", "config.js", "img/bordeaux.jpg", "img/nuit.jpg", "img/bouteille.jpg", "img/porcelaine.jpg", "img/foto-entrada.jpg", "img/foto-fuerte.jpg", "img/foto-postre.jpg", "img/foto-bodega.jpg", "img/foto-terraza.jpg", "img/foto-cocina.jpg", "img/foto-playa.jpg"];
 
 self.addEventListener("install", (e) => {
