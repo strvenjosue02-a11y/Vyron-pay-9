@@ -92,7 +92,7 @@ export function createDemo({ CONFIG, ABI, ERC20, ROUTER_ABI, QUOTER_ABI }) {
     const by = (id) => list.find((p) => p.id.startsWith(id));
     for (const [id, share] of [["atlas", 1n], ["lumen", 1n]]) { const p = by(id); if (!p) continue; const pr = P(p.address); fund(pr, pr.q.hardcap); finalize(pr);
       for (const b of bots.slice(0, 4)) { const m = pr.contrib.get(L(b)) || 0n; const tk = (m * pr.q.saleTokens) / pr.q.hardcap; add(pr.tok, b, tk); pr.claimed.add(L(b)); }
-      const n = id === "atlas" ? 46 : 20, gain = id === "atlas" ? 1.2 : 0.35;
+      const sx = Number(new URLSearchParams(location.search).get("stress") || 0) ? 9 : 1, n = (id === "atlas" ? 46 : 20) * sx, gain = id === "atlas" ? 1.2 : 0.35;
       for (let i = 0; i < n; i++) { const target = pr.round * (1 + gain * (i / n) + rnd(-0.12, 0.12)), price = Number(pr.rU) / 1e6 / (Number(pr.rT) / 1e18), who = bots[i % 4];
         try { if (price < target) swap(pr, who, CONFIG.usdc, BigInt(Math.floor(rnd(3, 16) * 1e6)), 0n); else { const have = bal(pr.tok, who); if (have > 0n) swap(pr, who, pr.addr, (have * BigInt(Math.floor(rnd(2, 9)))) / 100n, 0n); } } catch {} }
     }

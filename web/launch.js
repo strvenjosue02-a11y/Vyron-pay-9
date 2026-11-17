@@ -46,6 +46,9 @@ mk("Kite", "KITE", 100, 62, "./assets/covers/kite.webp");
 mk("Nova Cat", "NCAT", 500, 40, "");
 mk("Rocket Frog", "RFROG", 100, 0, "", true);
 mk("Moon Bread", "BREAD", 500, 0, "", true);
+{ const sn = Number(new URLSearchParams(location.search).get("stress") || 0);
+  if (sn) { const A = ["Moon", "Pepe", "Doge", "Turbo", "Neon", "Giga", "Pixel", "Ninja", "Cosmic", "Wojak", "Shiba", "Hyper", "Lunar", "Chad", "Rocket", "Panda", "Cyber", "Alpha", "Mega", "Zen"], B = ["Cat", "Frog", "Bread", "Coin", "Dog", "Bear", "Bull", "Ghost", "Duck", "Fish", "Wolf", "Fox", "Banana", "Pizza", "Robot", "Tiger"];
+    for (let i = 0; i < sn; i++) { const nm = A[Math.floor(rnd(0, A.length))] + " " + B[Math.floor(rnd(0, B.length))], g = [100, 500, 2000][Math.floor(rnd(0, 3))]; mk(nm, (nm.replace(" ", "").slice(0, 3) + nm.split(" ")[1].slice(0, 2)).toUpperCase().slice(0, 5), g, Math.round(g * rnd(0.05, 0.95)), "", i % 3 !== 0); } } }
 
 let timer = null, chart = null, cur = "";
 function tick() {
