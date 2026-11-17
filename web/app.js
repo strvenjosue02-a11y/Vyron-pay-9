@@ -324,7 +324,7 @@ async function swap(p) {
 }
 
 // ================================================================= terminal de trading y Market
-const PERIODS = { "1m": [3600, 60], "5m": [6 * 3600, 300], "1H": [3 * 86400, 3600], "1D": [60 * 86400, 86400], "1W": [365 * 86400, 604800], All: [0, 0] };
+const PERIODS = { "1m": [3600, 60], "5m": [6 * 3600, 300], "15m": [12 * 3600, 900], "1H": [3 * 86400, 3600], "4H": [14 * 86400, 14400], "1D": [60 * 86400, 86400], "1W": [365 * 86400, 604800], All: [0, 0] };
 function buildCandles(p, period) {
   const tr = (p.trades || []).filter((t) => t.ts), now = S.now || Math.floor(Date.now() / 1000);
   let [span, step] = PERIODS[period] || PERIODS["5m"];
@@ -676,6 +676,21 @@ function heatHtml(p) {
   <p><b>of tokens are in profit</b><br>The glow inside the chart shows where people bought. Green zones: they are winning. Red zones: they are losing and might sell.</p></div>
   <div class="wr"><h4>Whale radar</h4>${wl.length ? wl.map((t) => `<div class="wr-i ${t.buy ? "b" : "s"}" data-trader="${t.who}">${avatar(t.who, 26)}<b>${esc(uname(t.who))}</b><span>${t.buy ? "bought" : "sold"} $${usd(t.usdc)}</span><small>${agoS((S.now || Date.now() / 1000) - t.ts)}</small></div>`).join("") : `<p class="fine">No whale has traded yet.</p>`}</div>`;
 }
+const ageOf = (p) => { const t = (p.trades || []).filter((x) => x.ts).map((x) => x.ts); if (!t.length) return "–"; const s = Math.max(0, (S.now || Date.now() / 1000) - Math.min(...t)); return s < 3600 ? Math.max(1, Math.round(s / 60)) + "m" : s < 86400 ? Math.round(s / 3600) + "h" : Math.round(s / 86400) + "d"; };
+function dataRowHtml(p) {
+  const x = stats24(p), it = [["Liquidity", "$" + usd(p.mk.poolUsdc)], ["24h volume", "$" + usd(x.vol)], ["Holders", p.holders ? p.holders.length : "–"], ["Age", ageOf(p)], ["24h high", fmtP(x.hi)], ["24h low", fmtP(x.lo)]];
+  return it.map(([k, v]) => `<span><small>${k}</small><b>${v}</b></span>`).join("");
+}
+function guaranteesHtml() {
+  return `<ul class="gar">${["No admin: nobody can change the rules", "Nobody can create new tokens", "Nobody can freeze trading", "Liquidity locked forever", "Team tokens released slowly"].map((t) => `<li><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>${t}</li>`).join("")}</ul>`;
+}
+function acctHtml() {
+  const rows = []; let tot = S.usdc ? Number(S.usdc) / 1e6 : 0, pnl = 0, hasP = false;
+  const add = (p) => { if (!p.mk || !p.u) return; const bal = Number(p.u.balance || 0n) / 1e18; if (bal <= 0) return; const v = bal * p.mk.price, ps = myPos(p); tot += v; if (ps) { pnl += ps.pnl; hasP = true; } rows.push({ p, v, ps }); };
+  S.list.forEach(add); lcLive().map(lcP).forEach(add); try { tot += lcMeBal().usdc; } catch {}
+  return `<div class="ac-box"><button type="button" class="ip-x" data-acx aria-label="Close">✕</button><small>Total balance</small><b class="ac-t">$${tot.toLocaleString("en-US", { maximumFractionDigits: 2 })}</b>${hasP ? `<span class="${pnl >= 0 ? "u" : "d"} ac-p">${pnl >= 0 ? "+" : "-"}$${Math.abs(pnl).toFixed(2)} <i>total profit</i></span>` : ""}
+    <h3>Your positions</h3>${rows.length ? rows.map(({ p, v, ps }) => `<a class="ac-r" href="#/trade/${p.id}" data-acx><span>${mark(p)}<b>${esc(p.q.symbol)}</b></span><span>$${v.toFixed(2)}</span>${ps ? `<em class="${ps.pnl >= 0 ? "u" : "d"}">${ps.pnl >= 0 ? "+" : "-"}$${Math.abs(ps.pnl).toFixed(2)}</em>` : "<em></em>"}</a>`).join("") : `<p class="fine">No tokens yet. Buy one and it shows here.</p>`}</div>`;
+}
 function vTerminal(p) {
   if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
   const m = p.mk, x = stats24(p), up = x.chg >= 0, fav = favs().includes(p.id), alert = (() => { try { return localStorage.getItem(`hf-alert-${p.id}`) || ""; } catch { return ""; } })();
@@ -693,9 +708,11 @@ function vTerminal(p) {
     </header>
     <div class="tx-infop" id="tx-infop"><div class="ip-box"><button type="button" class="ip-x" data-info aria-label="Close">✕</button>
       <h3>Safety</h3><div class="tx-safe" id="tx-safe">${safetyHtml(p)}</div>
+      <h3>Guarantees</h3>${guaranteesHtml()}
       <h3>Creator</h3><div id="tx-creator">${creatorHtml(p)}</div>
       <h3>Contract</h3><div class="tx-ca"><button type="button" data-copy="${p.address}" title="Copy contract address"><span>${short(p.address)}</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button><a href="${CONFIG.explorer}/token/${p.address}" target="_blank" rel="noopener">Explorer</a><a href="${CONFIG.explorer}/address/${p.s.pool}" target="_blank" rel="noopener">Pool</a></div>
       <h3>Links</h3><div class="tx-safe">${linksHtml(p) || `<span class="sf">No links added</span>`}</div></div></div>
+    <div class="tx-data" id="tx-data">${dataRowHtml(p)}</div>
     <div class="tx-trend" id="tx-trend">${trendHtml(p)}</div>
     
     <div class="term-grid tx-3">
@@ -767,7 +784,7 @@ function startTerminal(p) {
     onFace: (who) => traderCard(p, who), onLine: (id, price) => { const c = tpslGet(p); if (!c.ref) return; const pc = (price / c.ref - 1) * 100; tpslSet(p, id === "tp" ? { ...c, tp: Math.max(1, Math.round(pc)) } : { ...c, sl: Math.max(1, Math.min(99, Math.round(-pc))) }); const t = $("#tx-tpsl"); if (t) t.outerHTML = tpslHtml(p); chartOff?.update(); },
     labels: es ? { heat: "Calor", faces: "Caras", tap: "Toca para ver el perfil", cap: "Valor total", price: "Precio", candles: "Velas", line: "Línea", ma: "Promedios", draw: "Dibujar", clear: "Borrar", full: "Pantalla completa", exit: "Salir", vol: "Vol" } : {} });
   const stats = () => { if (!p.mk) return; const x = stats24(p), d = $("#tt-delta"); if (!d) return; d.className = x.chg >= 0 ? "u" : "d"; d.textContent = `${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(2)}% 24h`;
-    $("#tx-hi").textContent = fmtP(x.hi); $("#tx-lo").textContent = fmtP(x.lo); $("#tt-vol").textContent = "$" + usd(x.vol); if (x.cap) $("#tx-capbig").textContent = capFmt(x.cap); const pr = $("#tt-price"); if (pr) pr.textContent = fmtP(p.mk.price); const ch = $("#tx-chips"); if (ch) ch.innerHTML = chipsHtml(p); const fd = $("#tx-feed"); if (fd) fd.innerHTML = feedHtml(p); const rk = $("#tx-rank"); if (rk) rk.innerHTML = rankHtml(p); const pr2 = $("#tx-press"); if (pr2) pr2.innerHTML = pressHtml(p); const sf = $("#tx-safe"); if (sf) sf.innerHTML = safetyHtml(p) + linksHtml(p); const sf2 = $("#tx-safe2"); if (sf2) sf2.innerHTML = safetyHtml(p); tpslCheck(p); const hd = $("#tx-hold"); if (hd && p.holders) hd.textContent = p.holders.length; const sc = document.querySelector(".term.tx"); if (sc) { sc.classList.toggle("tx-up", x.chg >= 0); sc.classList.toggle("tx-dn", x.chg < 0); } };
+    $("#tx-hi").textContent = fmtP(x.hi); $("#tx-lo").textContent = fmtP(x.lo); $("#tt-vol").textContent = "$" + usd(x.vol); if (x.cap) $("#tx-capbig").textContent = capFmt(x.cap); const pr = $("#tt-price"); if (pr) pr.textContent = fmtP(p.mk.price); const ch = $("#tx-chips"); if (ch) ch.innerHTML = chipsHtml(p); const fd = $("#tx-feed"); if (fd) fd.innerHTML = feedHtml(p); const dr = $("#tx-data"); if (dr) dr.innerHTML = dataRowHtml(p); const rk = $("#tx-rank"); if (rk) rk.innerHTML = rankHtml(p); const pr2 = $("#tx-press"); if (pr2) pr2.innerHTML = pressHtml(p); const sf = $("#tx-safe"); if (sf) sf.innerHTML = safetyHtml(p) + linksHtml(p); const sf2 = $("#tx-safe2"); if (sf2) sf2.innerHTML = safetyHtml(p); tpslCheck(p); const hd = $("#tx-hold"); if (hd && p.holders) hd.textContent = p.holders.length; const sc = document.querySelector(".term.tx"); if (sc) { sc.classList.toggle("tx-up", x.chg >= 0); sc.classList.toggle("tx-dn", x.chg < 0); } };
   const reTerm = () => { if (!$("#term-tab")) return; chartOff?.update(); $("#term-tab").innerHTML = termTab(p); stats(); };
   const hl = async () => { if (!p.order) await loadActivity(); await loadHolders(p); stats(); if ((S.ttab || "trades") === "holders") reTerm(); };
   if (!p.trades) loadTrades(p).then(() => { reTerm(); hl(); }); else { reTerm(); if (!p.holders) hl(); }
@@ -1758,7 +1775,7 @@ async function main() {
   if (CONFIG.demo) { try { if (!localStorage.getItem("hf-lang")) localStorage.setItem("hf-lang", "es"); } catch {} DEMO = createDemo({ CONFIG, ABI, ERC20: erc20Abi, ROUTER_ABI, QUOTER_ABI }); pub = DEMO.pub; window.ethereum = DEMO.eth; demoBar(); window.__demo = DEMO; }
   initI18n();
   $("#net span").textContent = CONFIG.chainName;
-  $("#connect").onclick = () => connect().catch((x) => toast(x.shortMessage || x.message, true));
+  $("#connect").onclick = () => { if (S.me) { const o = document.getElementById("acct-ov"); if (o) { o.remove(); return; } const ov = document.createElement("div"); ov.id = "acct-ov"; ov.innerHTML = acctHtml(); document.body.appendChild(ov); ov.onclick = (e) => { if (e.target === ov || e.target.closest("[data-acx]")) ov.remove(); }; return; } connect().catch((x) => toast(x.shortMessage || x.message, true)); };
   window.addEventListener("hashchange", () => { S.tab = "overview"; clearInterval(S.poll); if (!location.hash.startsWith("#/launch")) $("#app").innerHTML = ""; route(); scrollTo(0, 0); });
   await loadCatalog();
   route();
