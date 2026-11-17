@@ -14,6 +14,8 @@ const ago = (t) => { const s = Math.max(1, Math.round(now() - t)); return s < 60
 const hue = (s) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
 
 const me = { usdc: 500, dep: {}, tok: {} };
+let CTX = null; // { CONFIG, pub, wallet, account } cuando hay wallet real conectada: entonces Lanzar despliega el contrato de verdad
+export const setLaunchChain = (c) => { CTX = c; };
 const L = [];
 let uid = 1;
 function mk(name, sym, goal, raised, img, live = false) {
@@ -117,7 +119,8 @@ function newHtml() {
   <div class="two"><div class="f"><label>${T("Name", "Nombre")}</label><input id="lc-n" maxlength="24" placeholder="Rocket Frog"></div><div class="f"><label>${T("Ticker", "Símbolo")}</label><input id="lc-s" maxlength="6" placeholder="RFROG" style="text-transform:uppercase"></div></div>
   <div class="f"><label>${T("Goal", "Meta")}</label><div class="chips">${GOALS.map((g, i) => `<label><input type="radio" name="lc-g" value="${g}" ${i === 1 ? "checked" : ""}><span>$${g}</span></label>`).join("")}</div><small>${T("Everyone gets the same price. If it doesn't fill, everyone takes their money out.", "Todos reciben el mismo precio. Si no se llena, cada quien saca su dinero.")}</small></div>
   <div class="f"><label>${T("You put in first (optional)", "Metes tú primero (opcional)")}</label><div class="chips">${[0, 10, 25, 50].map((v, i) => `<label><input type="radio" name="lc-c" value="${v}" ${i === 0 ? "checked" : ""}><span>${v ? "$" + v : T("None", "Nada")}</span></label>`).join("")}</div><small>${T("Shown publicly on the page.", "Se muestra públicamente en la página.")}</small></div>
-  <ul class="lc-rules"><li>${T("Your tokens: 5% of supply, released over 8 weeks.", "Tus tokens: 5% del total, liberados en 8 semanas.")}</li><li>${T("The pool is locked forever. Nobody can take it out.", "El pool queda bloqueado para siempre. Nadie lo puede sacar.")}</li><li>${T("Launch fee: $1.", "Comisión por lanzar: $1.")}</li></ul>
+  <div class="two"><div class="f"><label>${T("Your share of tokens", "Tu parte de los tokens")}</label><div class="chips">${[0, 5, 10].map((v) => `<label><input type="radio" name="lc-p" value="${v}" ${v === 5 ? "checked" : ""}><span>${v}%</span></label>`).join("")}</div></div><div class="f"><label>${T("Released over", "Se liberan en")}</label><div class="chips">${[4, 8, 12].map((v) => `<label><input type="radio" name="lc-w" value="${v}" ${v === 8 ? "checked" : ""}><span>${v} ${T("wk", "sem")}</span></label>`).join("")}</div></div></div>
+  <ul class="lc-rules"><li>${T("Your tokens are released little by little, so you can't dump them on day one.", "Tus tokens se liberan poco a poco: no puedes venderlos todos el primer día.")}</li><li>${T("The pool is locked forever. Nobody can take it out.", "El pool queda bloqueado para siempre. Nadie lo puede sacar.")}</li><li>${T("Launch fee: $1.", "Comisión por lanzar: $1.")}</li></ul>
   <button class="btn btn-ember btn-block" type="submit">${T("Launch", "Lanzar")}</button></form>`;
 }
 let root = null, img = "";
@@ -161,7 +164,12 @@ function bindNew() {
   document.getElementById("lc-img").onchange = (e) => { const file = e.target.files[0]; if (!file) return; const r = new FileReader(); r.onload = () => { img = r.result; const c = document.getElementById("lc-cov"); c.style.backgroundImage = `url(${img})`; c.classList.add("has"); }; r.readAsDataURL(file); };
   f.onsubmit = (e) => { e.preventDefault(); const name = document.getElementById("lc-n").value.trim(), sym = document.getElementById("lc-s").value.trim().toUpperCase();
     if (name.length < 2 || sym.length < 2) return alert(T("Add a name and a ticker.", "Agrega un nombre y un símbolo.")); if (L.some((x) => x.sym === sym)) return alert(T("That ticker already exists.", "Ese símbolo ya existe."));
-    const goal = Number(f.querySelector('[name="lc-g"]:checked').value), first = Number(f.querySelector('[name="lc-c"]:checked').value);
+    const goal = Number(f.querySelector('[name="lc-g"]:checked').value), first = Number(f.querySelector('[name="lc-c"]:checked').value), pct = Number(f.querySelector('[name="lc-p"]:checked').value), wks = Number(f.querySelector('[name="lc-w"]:checked').value);
+    if (CTX && CTX.wallet && CTX.account) { const btn = f.querySelector('button[type="submit"]'); btn.disabled = true; btn.textContent = T("Creating on the network…", "Creando en la red…");
+      import("./lcchain.js").then(async (C) => { const p = C.launchParams(CTX.CONFIG, { name, symbol: sym, creator: CTX.account, goal, creatorPct: pct, vestingWeeks: wks }), addr = await C.ensureDeployed(CTX.CONFIG, CTX.pub, CTX.wallet, CTX.account, p);
+        if (first > 0) await C.deposit(CTX.CONFIG, CTX.pub, CTX.wallet, CTX.account, addr, Math.min(first, goal));
+        const l = mk(name, sym, goal, Math.min(first, goal), img); l.chain = addr; l.creator = Math.round((first / goal) * 100); location.hash = "#/lc/" + l.id; }).catch((e) => { btn.disabled = false; btn.textContent = T("Launch", "Lanzar"); alert(e.shortMessage || e.message); });
+      return; }
     const l = mk(name, sym, goal, Math.min(first, goal), img); l.creator = Math.round((first / goal) * 100); me.usdc -= 1; l.last = now(); location.hash = "#/lc/" + l.id; };
 }
 export function showLaunches(el) {

@@ -30,7 +30,7 @@ interface IPoolSlot0 { function slot0() external view returns (uint160 sqrtPrice
 ///  - Al llenarse: el USDC (menos 1% de comisión) va a un pool de Uniswap v3 al MISMO precio que pagaron todos.
 ///    El recibo (NFT) de esa liquidez queda dentro de este contrato y NO existe ninguna función para sacarlo:
 ///    el pool es permanente. Solo se pueden cobrar las comisiones de trading (collectFees), mitad plataforma, mitad creador.
-///  - El creador recibe 5% de los tokens con goteo (VestingWallet de OpenZeppelin, 56 días). La plataforma, 1,5% (inmediato).
+///  - El creador elige su parte (0, 5 o 10%) y su goteo (4, 8 o 12 semanas) con el VestingWallet de OpenZeppelin. La plataforma, 1,5% (inmediato).
 ///  - Despliegue perezoso: la dirección existe desde ya (CREATE2) y el primero que deposita lo despliega.
 contract Launch is ERC20, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -45,12 +45,13 @@ contract Launch is ERC20, ReentrancyGuard {
         string symbol;
         uint256 goal;            // 100e6, 500e6 o 2000e6
         address positionManager; // NonfungiblePositionManager de Uniswap v3
+        uint8 creatorPct;        // lo elige el creador: 0, 5 o 10 (% de referencia de los tokens)
+        uint8 vestingWeeks;      // lo elige el creador: 4, 8 o 12 semanas de goteo
     }
 
     uint256 public constant BACKER_TOKENS = 500_000_000 ether;   // lo que reparte la ronda entre quienes aportan
-    uint256 public constant CREATOR_TOKENS = 50_000_000 ether;   // 5% de referencia
+    uint256 public constant TOKENS_PER_PCT = 10_000_000 ether;   // 1% de referencia = 10M tokens
     uint256 public constant PLATFORM_TOKENS = 15_000_000 ether;  // 1,5% de referencia
-    uint64 public constant VESTING = 56 days;
     uint256 public constant FEE_BPS = 100;                       // 1% del USDC
     uint24 public constant POOL_FEE = 3000;
     int24 internal constant MIN_TICK = -887220;
@@ -61,6 +62,8 @@ contract Launch is ERC20, ReentrancyGuard {
     address public immutable creator;
     uint256 public immutable goal;
     INPM public immutable positionManager;
+    uint256 public immutable creatorTokens;
+    uint64 public immutable vestingSeconds;
 
     State public state;
     uint256 public raised;
@@ -86,12 +89,15 @@ contract Launch is ERC20, ReentrancyGuard {
             address(p.usdc) == address(0) || p.platform == address(0) || p.creator == address(0) || p.positionManager == address(0)
                 || (p.goal != 100e6 && p.goal != 500e6 && p.goal != 2000e6) || bytes(p.name).length == 0 || bytes(p.symbol).length == 0
                 || bytes(p.name).length > 32 || bytes(p.symbol).length > 10
+                || (p.creatorPct != 0 && p.creatorPct != 5 && p.creatorPct != 10) || (p.vestingWeeks != 4 && p.vestingWeeks != 8 && p.vestingWeeks != 12)
         ) revert BadParams();
         usdc = p.usdc;
         platform = p.platform;
         creator = p.creator;
         goal = p.goal;
         positionManager = INPM(p.positionManager);
+        creatorTokens = uint256(p.creatorPct) * TOKENS_PER_PCT;
+        vestingSeconds = uint64(p.vestingWeeks) * 7 days;
     }
 
     /// @notice Mete USDC en la ronda. Si con esto se llega a la meta, la ronda se cierra y abre el mercado.
@@ -174,10 +180,14 @@ contract Launch is ERC20, ReentrancyGuard {
         state = State.Live;
         // el recibo (NFT) queda en este contrato y no hay ninguna función para moverlo: el pool es permanente
         usdc.safeTransfer(platform, goal - usedUsdc); // 1% + redondeo
-        VestingWallet vw = new VestingWallet(creator, uint64(block.timestamp), VESTING);
-        vesting = address(vw);
-        _mint(address(vw), CREATOR_TOKENS);
+        address vwAddr;
+        if (creatorTokens > 0) {
+            VestingWallet vw = new VestingWallet(creator, uint64(block.timestamp), vestingSeconds);
+            vwAddr = address(vw);
+            vesting = vwAddr;
+            _mint(vwAddr, creatorTokens);
+        }
         _mint(platform, PLATFORM_TOKENS);
-        emit Filled(p, id, usedUsdc, address(vw));
+        emit Filled(p, id, usedUsdc, vwAddr);
     }
 }

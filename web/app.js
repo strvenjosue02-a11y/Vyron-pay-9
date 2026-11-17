@@ -9,7 +9,7 @@ import { initI18n } from "./i18n.js";
 import { mountCoin } from "./coin3d.js";
 import { mountChart } from "./pro.js";
 import { createDemo } from "./demo.js";
-import { showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote } from "./launch.js";
+import { setLaunchChain, showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote } from "./launch.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, msgProfile, validProfile, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
@@ -1641,6 +1641,7 @@ async function connect() {
     catch (e) { if (e.code !== 4902) throw e; await eth.request({ method: "wallet_addEthereumChain", params: [{ chainId: hex, chainName: CONFIG.chainName, nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, rpcUrls: [CONFIG.rpc], blockExplorerUrls: [CONFIG.explorer] }] }); }
   }
   S.wallet = createWalletClient({ account: S.me, chain, transport: custom(eth) });
+  setLaunchChain({ CONFIG, pub, wallet: S.wallet, account: S.me });
   $("#connect").innerHTML = `<span class="acct"><i></i>${short(S.me)}</span>`; $("#connect").className = "btn btn-soft btn-sm";
   eth.on?.("accountsChanged", () => location.reload()); eth.on?.("chainChanged", () => location.reload());
   if ($("#form")) $("#app").innerHTML = "";

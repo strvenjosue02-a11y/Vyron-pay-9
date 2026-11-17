@@ -5,7 +5,7 @@ export const CONFIG = {
   demo: new URLSearchParams(location.search).has("demo"), // ?demo=1 abre el modo demostración (cadena simulada)
   chainId: 11155111,
   chainName: "Sepolia testnet",
-  rpc: "https://ethereum-sepolia-rpc.publicnode.com",
+  rpc: new URLSearchParams(location.search).get("rpc") || "https://ethereum-sepolia-rpc.publicnode.com", // ?rpc=http://127.0.0.1:8545 para probar contra una copia local
   explorer: "https://sepolia.etherscan.io",
   // USDC de prueba de Circle en Sepolia (se pide gratis en faucet.circle.com)
   usdc: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",

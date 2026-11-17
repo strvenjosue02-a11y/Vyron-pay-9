@@ -37,7 +37,7 @@ contract LaunchTest is Test {
         assertEq(USDC.balanceOf(who), amt);
     }
     function _params(uint256 goal, string memory sym) internal view returns (Launch.Params memory) {
-        return Launch.Params({usdc: USDC, platform: platform, creator: creator, name: "Moon Bread", symbol: sym, goal: goal, positionManager: NPM});
+        return Launch.Params({usdc: USDC, platform: platform, creator: creator, name: "Moon Bread", symbol: sym, goal: goal, positionManager: NPM, creatorPct: 5, vestingWeeks: 8});
     }
     function _init(Launch.Params memory p) internal pure returns (bytes memory) { return abi.encodePacked(type(Launch).creationCode, abi.encode(p)); }
     function _predict(Launch.Params memory p) internal pure returns (address) {
@@ -126,6 +126,22 @@ contract LaunchTest is Test {
         vm.warp(block.timestamp + 40 days);
         vw.release(address(l));
         assertEq(l.balanceOf(creator), 50_000_000 ether, "todo al final");
+    }
+
+    // --- el creador elige: 0% (sin goteo) y 10% a 12 semanas; no se aceptan otros valores
+    function test_creatorChoices() public {
+        Launch.Params memory p = _params(100e6, "BR7"); p.creatorPct = 0;
+        Launch l = _deploy(p);
+        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+        assertEq(l.vesting(), address(0), "sin parte del creador no hay goteo");
+        Launch.Params memory q = _params(100e6, "BR8"); q.creatorPct = 10; q.vestingWeeks = 12;
+        Launch m = _deploy(q);
+        vm.startPrank(bob); USDC.approve(address(m), 100e6); m.deposit(100e6, bob); vm.stopPrank();
+        assertEq(m.balanceOf(m.vesting()), 100_000_000 ether);
+        Launch.Params memory bad = _params(100e6, "BR9"); bad.creatorPct = 7;
+        vm.expectRevert(); new Launch(bad);
+        Launch.Params memory bad2 = _params(100e6, "BR10"); bad2.vestingWeeks = 5;
+        vm.expectRevert(); new Launch(bad2);
     }
 
     // --- no se puede pasar de la meta ni mintear a voluntad
