@@ -771,7 +771,7 @@ function toksHtml(p) {
 function liveAlert(p, t) {
   const h = $("#chartpro"); if (!h || !t.who) return; const d = document.createElement("div"); d.className = "cp-alert " + (t.buy ? "b" : "s");
   d.innerHTML = `${avatar(t.who, 38)}<div><b>${esc(uname(t.who))}</b><span>${t.buy ? "bought" : "sold"} <em>$${usd(t.usdc)}</em></span></div>`;
-  while (h.querySelectorAll(".cp-alert").length >= 3) h.querySelector(".cp-alert").remove(); const k = h.querySelectorAll(".cp-alert").length, ph = matchMedia("(max-width: 900px)").matches; d.style.top = (ph ? 46 : 60) + k * (ph ? 50 : 58) + "px"; h.appendChild(d); setTimeout(() => d.remove(), 4200); beep(t.buy);
+  while (h.querySelectorAll(".cp-alert").length >= 3) h.querySelector(".cp-alert").remove(); const k = h.querySelectorAll(".cp-alert").length, ph = matchMedia("(max-width: 900px)").matches; d.style.top = (ph ? 96 : 60) + k * (ph ? 50 : 58) + "px"; h.appendChild(d); setTimeout(() => d.remove(), 4200); beep(t.buy);
 }
 function vTerminal(p) {
   if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
