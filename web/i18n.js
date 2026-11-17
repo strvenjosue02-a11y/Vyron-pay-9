@@ -70,7 +70,7 @@ const ES = {
   "Scroll to bring them together": "Desliza para unirlas", "For creators": "Para creadores", "Language": "Idioma",
   "Projects": "Proyectos", "Launch": "Lanzar", "Portfolio": "Portafolio", "Owner": "Dueño",
   "Connect wallet": "Conectar wallet", "Sepolia testnet": "Sepolia (prueba)",
-  "Holdfast never holds your money. Every project has its own contract with no admin.": "Holdfast nunca guarda tu dinero. Cada proyecto tiene su propio contrato sin administrador.",
+  "Holdfast never holds your money. Every launch has its own contract with no admin.": "Holdfast nunca guarda tu dinero. Cada lanzamiento tiene su propio contrato sin administrador.",
   "Open source": "Código abierto",
   "Hold fast to what you back.": "Sostén firme lo que apoyas.",
   "Back early-stage projects with USDC. Your money stays locked in a contract no one owns, and the team gets paid in stages, only when backers vote yes.":

@@ -1656,6 +1656,7 @@ function route() {
     { const cv = $("#hx-bg"); if (cv) startHeroBg(cv); }
     showLaunches($("#lc-home")); return;
   }
+  if (/^#\/(projects|p\/|studio|portfolio|launch$)/.test(h)) { location.hash = "#/lc"; return; }
   stopLaunches();
   const m = h.match(/^#\/p\/([\w-]+)/);
   const p = m && S.list.find((x) => x.id === m[1]);

@@ -16,7 +16,8 @@ export default async function handler(req, res) {
     if (addr.toLowerCase() !== b.address.toLowerCase()) return send(res, 400, { error: "That address doesn't match the launch rules." });
     const pub = createPublicClient({ transport: http(process.env.RPC_URL || CONFIG.rpc) });
     if (!(await isDeployed(pub, addr))) return send(res, 400, { error: "That launch doesn't exist on the network yet." });
-    const rec = { address: addr, name: b.name, symbol: b.symbol, creator: getAddress(b.creator), goal: Number(b.goal), creatorPct: Number(b.creatorPct), vestingWeeks: Number(b.vestingWeeks), fromBlock: Number(b.fromBlock) || 0, chainId: CONFIG.chainId, at: Math.floor(Date.now() / 1000) };
+    const img = typeof b.img === "string" && /^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(b.img) && b.img.length <= 120000 ? b.img : "";
+    const rec = { img, address: addr, name: b.name, symbol: b.symbol, creator: getAddress(b.creator), goal: Number(b.goal), creatorPct: Number(b.creatorPct), vestingWeeks: Number(b.vestingWeeks), fromBlock: Number(b.fromBlock) || 0, chainId: CONFIG.chainId, at: Math.floor(Date.now() / 1000) };
     try { await save(`launches/${addr.toLowerCase()}.json`, rec); } catch (e) { if (e.message !== "Ya existe") throw e; }
     send(res, 200, { ok: true, address: addr });
   } catch (e) { send(res, 400, { error: String(e.shortMessage || e.message || "Could not register").slice(0, 200) }); }
