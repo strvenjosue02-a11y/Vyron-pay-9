@@ -1626,3 +1626,15 @@ a.mk-row:hover { box-shadow: inset 2px 0 0 #fff; } .tx-feed span.fol, .tx-ca but
 .term.tx .term-side .pr-x { display: flex; } .term.tx .tx-press { align-items: center; }
 .hf { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 14px; } .hf span { padding: 12px; border-radius: 12px; background: #0a0a0c; box-shadow: inset 0 0 0 1px #1c1c22; display: grid; gap: 2px; } .hf b { font: 700 22px var(--mono); letter-spacing: -0.05em; } .hf small { font-size: 12px; color: var(--ink-3); } .hf b.u { color: var(--up); } .hf b.d { color: var(--dn); }
 @media (max-width: 900px) { .hf { grid-template-columns: 1fr 1fr; } .cp-tools [data-t="rsi"], .cp-tools [data-t="macd"] { display: none; } }
+
+/* ===== Tarjeta dentro del perfil ===== */
+.tc { width: min(460px, calc(100vw - 32px)) !important; } .tc .tc-cover, .tc .tc-h, .tc .tc-pnl, .tc .tc-g, .tc .tc-pos, .tc .tc-tok { display: none !important; }
+.tc-prev { padding-top: 26px; } .tc-prev img { display: block; width: 100%; border-radius: 18px; box-shadow: 0 30px 80px -30px rgba(0,0,0,.8); } .tc-wait { aspect-ratio: 4 / 5; display: grid; place-items: center; border-radius: 18px; background: #0a0a0c; color: var(--ink-3); font-size: 14px; }
+.tc-act { margin-top: 14px; }
+/* ===== Modo Simple (por defecto) y Modo Pro ===== */
+.tx-pro-b { height: 34px; padding: 0 14px; border-radius: 8px; border: 0; background: #f4f4f1; color: #09090b; font: 700 13.5px var(--font); cursor: pointer; margin-left: 8px; } .tx-pro-b[aria-pressed="true"] { background: #0a0a0b; color: #fff; box-shadow: inset 0 0 0 1px #fff; }
+.term.tx:not(.pro) .tx-trend, .term.tx:not(.pro) .tx-data, .term.tx:not(.pro) .tx-chips, .term.tx:not(.pro) .tx-strip, .term.tx:not(.pro) .term-side .tx-row2, .term.tx:not(.pro) .tx-tpsl, .term.tx:not(.pro) .tx-alert, .term.tx:not(.pro) .tx-trust, .term.tx:not(.pro) .cy-1tap, .term.tx:not(.pro) .cp-info, .term.tx:not(.pro) .cp-face, .term.tx:not(.pro) .cp-fog { display: none !important; }
+.term.tx:not(.pro) .cp-tools button:not([data-t="unit"]):not([data-t="full"]):not([data-t="mode"]) { display: none !important; }
+.term.tx:not(.pro) [data-ttab="heat"], .term.tx:not(.pro) [data-ttab="whales"], .term.tx:not(.pro) [data-ttab="holders"], .term.tx:not(.pro) [data-ttab="depth"], .term.tx:not(.pro) [data-ttab="mine"] { display: none !important; }
+.term.tx:not(.pro) .cp-svg { height: clamp(560px, calc(100vh - 190px), 1040px) !important; }
+@media (max-width: 900px) { .term.tx:not(.pro) .cp-svg { height: clamp(440px, 66vh, 680px) !important; } .tx-pro-b { margin-left: 0; } }

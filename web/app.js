@@ -537,7 +537,9 @@ async function traderCard(p, addr) {
     <div class="tc-pos"><span>Position</span><b>${Math.max(0, r.tok).toLocaleString("en-US", { maximumFractionDigits: 0 })} ${esc(p.q.symbol)} · $${r.val.toFixed(2)}</b></div>
     <div class="tc-act"><button type="button" class="btn btn-ember btn-sm" data-dl>Download image</button>${S.me && S.me.toLowerCase() === r.a.toLowerCase() ? "" : `<button type="button" class="btn btn-line btn-sm" data-fol>${isFol(r.a) ? "Following" : "Follow"}</button>`}<button type="button" class="btn btn-line btn-sm" data-sh>Share</button>${S.me && S.me.toLowerCase() === r.a.toLowerCase() ? `<button type="button" class="btn btn-soft btn-sm" data-ed>Edit my profile</button>` : ""}</div>
     ${logoSrc(p) ? `<img class="tc-tok" src="${esc(logoSrc(p))}" alt="">` : ""}</div>`;
-  document.body.appendChild(ov);
+  document.body.appendChild(ov); requestAnimationFrame(() => ov.classList.add("on"));
+  { const box = document.createElement("div"); box.className = "tc-prev"; box.innerHTML = `<div class="tc-wait">Making your card…</div>`; ov.querySelector(".tc-cover").after(box);
+    traderPng(p, r, rank).then((bl) => { const u = URL.createObjectURL(bl); box.innerHTML = `<img src="${u}" alt="Position card">`; }).catch(() => { box.innerHTML = ""; }); }
   const blobOf = () => traderPng(p, r, rank); const fname = `holdfast-${p.q.symbol}-${uname(r.a)}.png`;
   ov.querySelector("[data-dl]").onclick = async () => { const b = await blobOf(), u = URL.createObjectURL(b), l = document.createElement("a"); l.href = u; l.download = fname; l.click(); toast("Image saved"); };
   ov.querySelector("[data-sh]").onclick = async () => { const b = await blobOf(), f = new File([b], fname, { type: "image/png" }); if (navigator.canShare?.({ files: [f] })) { try { await navigator.share({ files: [f], title: `${uname(r.a)} on ${p.q.symbol}` }); } catch {} } else { const u = URL.createObjectURL(b), l = document.createElement("a"); l.href = u; l.download = fname; l.click(); toast("Image saved"); } };
@@ -572,7 +574,7 @@ const pnlReady = (p, x) => x && x.pnl > 0 && (p.trades || []).some((t) => t.who?
 function posBox(p) {
   const x = myPos(p); if (!x) return `<div class="panel tx-pos tx-pos0" id="tx-pos"><h3>Your position</h3><p class="fine">No position yet. Buy ${esc(p.q.symbol)} and your profit shows here live.</p></div>`;
   return `<div class="panel tx-pos" id="tx-pos"><h3>Your position</h3><div class="tx-pos-n"><div><span>You hold</span><b>${x.bal.toLocaleString("en-US", { maximumFractionDigits: 0 })} ${esc(p.q.symbol)}</b></div><div><span>Worth today</span><b>$${x.value.toLocaleString("en-US", { maximumFractionDigits: 2 })}</b></div><div><span>Avg entry</span><b>${fmtP(x.avg)}</b></div></div><div class="tx-qs"><button type="button" data-qsell="50">Sell 50%</button><button type="button" data-qsell="100">Sell all</button></div>
-    <div class="tx-pnl ${x.pnl >= 0 ? "u" : "d"}">${x.pnl >= 0 ? "▲ +" : "▼ "}$${Math.abs(x.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })} (${x.pct >= 0 ? "+" : ""}${x.pct.toFixed(1)}%)<small>vs what you paid</small></div>${pnlReady(p, x) ? `<button type="button" class="btn btn-line btn-sm tx-pnlbtn" data-pnl>My PnL card</button>` : `<p class="tx-pnlhint">Make a winning trade to unlock your PnL card.</p>`}</div>`;
+    <div class="tx-pnl ${x.pnl >= 0 ? "u" : "d"}">${x.pnl >= 0 ? "▲ +" : "▼ "}$${Math.abs(x.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })} (${x.pct >= 0 ? "+" : ""}${x.pct.toFixed(1)}%)<small>vs what you paid</small></div><button type="button" class="btn btn-line btn-sm tx-pnlbtn" data-pnl>Share my position</button></div>`;
 }
 const WORDS = (a) => a;
 function safetyHtml(p) {
@@ -615,6 +617,7 @@ if (!window.__txKeys) {
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id === "tamt") document.querySelector("[data-act=swap]")?.click(); });
   document.addEventListener("click", (e) => {
+    const pb = e.target.closest("[data-pro]"); if (pb) { const on = !proOn(); try { localStorage.setItem("hf-pro", on ? "1" : "0"); } catch {} const t = document.querySelector(".term"); t?.classList.toggle("pro", on); pb.textContent = on ? "Simple" : "Pro"; pb.setAttribute("aria-pressed", on); setTimeout(() => chartOff?.update(), 50); return; }
     if (e.target.closest("[data-info]")) { document.querySelector(".term")?.classList.toggle("info"); return; }
     if (document.querySelector(".term.info") && !e.target.closest(".ip-box") && !e.target.closest(".tx-info-b")) document.querySelector(".term")?.classList.remove("info");
     const cp = e.target.closest("[data-copy]"); if (cp) { navigator.clipboard?.writeText(cp.dataset.copy).then(() => toast("Address copied")).catch(() => toast("Could not copy", true)); return; }
@@ -665,6 +668,7 @@ function beep(buy) { if (!sndOn()) return; try { const c = new (window.AudioCont
 function burst(buy) { const h = $("#chartpro"); if (!h) return; const d = document.createElement("div"); d.className = "cp-burst " + (buy ? "b" : "s"); h.appendChild(d); setTimeout(() => d.remove(), 1400); }
 const RX = { rocket: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15c0-5 4-9 9-10 1 5-3 9-8 9M5 15l-2 4 4-2M9 12l3 3"/></svg>', fire: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/></svg>' };
 function react(kind) { const h = $("#chartpro"); if (!h) return; const e = document.createElement("div"); e.className = "cp-rx"; e.style.left = 20 + Math.random() * 60 + "%"; e.innerHTML = RX[kind]; h.appendChild(e); setTimeout(() => e.remove(), 2200); }
+const proOn = () => { try { return localStorage.getItem("hf-pro") === "1"; } catch { return false; } };
 const oneTap = () => { try { return localStorage.getItem("hf-1tap") === "1"; } catch { return false; } };
 function notify(t) { try { if ("Notification" in window && Notification.permission === "granted") new Notification("Holdfast", { body: t }); } catch {} }
 function creatorHtml(p) {
@@ -715,11 +719,11 @@ function holderFlowHtml(p) {
 function vTerminal(p) {
   if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
   const m = p.mk, x = stats24(p), up = x.chg >= 0, fav = favs().includes(p.id), alert = (() => { try { return localStorage.getItem(`hf-alert-${p.id}`) || ""; } catch { return ""; } })();
-  return `<section class="term tx ${up ? "tx-up" : "tx-dn"}">
+  return `<section class="term tx ${up ? "tx-up" : "tx-dn"}${proOn() ? " pro" : ""}">
     <a class="back" href="#/market">All markets</a>
     <header class="tx-top">
       <div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
-      <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-info-b" data-info>Info</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
+      <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-info-b" data-info>Info</button><button type="button" class="tx-pro-b" data-pro aria-pressed="${proOn()}">${proOn() ? "Simple" : "Pro"}</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
       <div class="tx-px"><small class="tx-cl">Market cap</small><b id="tx-capbig">${capFmt(x.cap)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span><em class="tx-sub">Price <span id="tt-price">${fmtP(m.price)}</span></em></div>
       <div class="tx-chips" id="tx-chips">${chipsHtml(p)}</div>
       <dl class="tx-stats">
@@ -809,7 +813,7 @@ function startTerminal(p) {
   const reTerm = () => { if (!$("#term-tab")) return; chartOff?.update(); $("#term-tab").innerHTML = termTab(p); stats(); };
   const hl = async () => { if (!p.order) await loadActivity(); await loadHolders(p); stats(); if ((S.ttab || "trades") === "holders") reTerm(); };
   if (!p.trades) loadTrades(p).then(() => { reTerm(); hl(); }); else { reTerm(); if (!p.holders) hl(); }
-  document.querySelector(".term-side").addEventListener("click", (e) => { if (e.target.closest("[data-pnl]")) pnlCard(p); });
+  document.querySelector(".term-side").addEventListener("click", (e) => { if (e.target.closest("[data-pnl]")) { if (!S.me) return; traderCard(p, S.me); } });
   $("#term-tab").onclick = (e) => { const bp = e.target.closest("[data-bper]"), tr = e.target.closest("[data-trader]");
     if (bp) { S.bper = bp.dataset.bper; $("#term-tab").innerHTML = termTab(p); return; } if (tr) return traderCard(p, tr.dataset.trader); if (e.target.closest("[data-prof]")) return editProfile(); if (e.target.closest("[data-trmore]")) { S.trN = (S.trN || 10) + 20; $("#term-tab").innerHTML = termTab(p); } };
   $("#share").onclick = () => shareToken(p);

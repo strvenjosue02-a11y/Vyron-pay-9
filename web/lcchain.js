@@ -44,10 +44,10 @@ export async function ensureDeployed(CONFIG, pub, wallet, account, params) {
 /** Lee todo lo que la pantalla necesita de la ronda. */
 export async function readLaunch(pub, addr, who) {
   const c = (functionName, args) => ({ address: addr, abi: LAUNCH_ABI, functionName, args });
-  const base = await pub.multicall({ allowFailure: false, contracts: [c("state"), c("raised"), c("goal"), c("pool"), c("lpTokenId"), c("vesting"), c("symbol"), c("name"), c("creator")] });
-  const [state, raised, goal, pool, lpTokenId, vesting, symbol, name, creator] = base;
+  const base = await pub.multicall({ allowFailure: false, contracts: [c("state"), c("raised"), c("goal"), c("pool"), c("lpTokenId"), c("vesting"), c("symbol"), c("name"), c("creator"), c("deadline"), c("expired")] });
+  const [state, raised, goal, pool, lpTokenId, vesting, symbol, name, creator, deadline, expired] = base;
   const mine = who ? await pub.readContract(c("contributed", [who])) : 0n;
-  return { state: ["open", "live", "refund"][state], raised, goal, pool, lpTokenId, vesting, symbol, name, creator, mine };
+  return { state: ["open", "live", "refund"][state], raised, goal, pool, lpTokenId, vesting, symbol, name, creator, deadline: Number(deadline), expired, mine };
 }
 
 /** Aprobar USDC (si hace falta) y meter dinero. Si con eso se llena, el contrato abre el mercado. */
@@ -61,7 +61,8 @@ export async function deposit(CONFIG, pub, wallet, account, addr, amountUsdc, to
 
 const call = (name) => async (pub, wallet, account, addr) => { const h = await wallet.writeContract({ account, address: addr, abi: LAUNCH_ABI, functionName: name }); return pub.waitForTransactionReceipt({ hash: h }); };
 export const withdraw = call("withdraw");      // sacar mi dinero mientras no se llene
-export const claim = call("claim");            // reclamar mis tokens al llenarse
+export const claim = call("claim");
+export async function refundFor(pub, wallet, account, addr, who) { const h = await wallet.writeContract({ account, address: addr, abi: LAUNCH_ABI, functionName: "refundFor", args: [who] }); return pub.waitForTransactionReceipt({ hash: h }); } // cualquiera puede llamarla: el dinero va SIEMPRE al aportante            // reclamar mis tokens al llenarse
 export const collectFees = call("collectFees"); // comisiones del pool: mitad plataforma, mitad creador
 export async function releaseVesting(pub, wallet, account, addr, vesting) {
   const { vestingWalletAbi } = await import("./launch-abi.js");

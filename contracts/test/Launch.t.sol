@@ -144,6 +144,25 @@ contract LaunchTest is Test {
         vm.expectRevert(); new Launch(bad2);
     }
 
+    // --- si en 48 h no se llena: expira y cualquiera devuelve el dinero A CADA APORTANTE
+    function test_expiry_anyoneRefundsToTheDepositor() public {
+        Launch l = _deploy(_params(500e6, "BR11"));
+        vm.startPrank(alice); USDC.approve(address(l), 120e6); l.deposit(120e6, alice); vm.stopPrank();
+        vm.startPrank(bob); USDC.approve(address(l), 80e6); l.deposit(80e6, bob); vm.stopPrank();
+        vm.prank(trader); vm.expectRevert(); l.refundFor(alice); // antes de tiempo: no
+        vm.warp(block.timestamp + 48 hours + 1);
+        assertTrue(l.expired());
+        vm.prank(bob); vm.expectRevert(); l.deposit(1e6, bob); // ya no se aceptan depositos
+        uint256 trBefore = USDC.balanceOf(trader);
+        vm.prank(trader); l.refundFor(alice);                   // un tercero llama
+        assertEq(USDC.balanceOf(alice), 5_000e6, "alice recupera todo");
+        assertEq(USDC.balanceOf(trader), trBefore, "el que llama no recibe nada");
+        vm.prank(trader); l.refundFor(bob);
+        assertEq(USDC.balanceOf(bob), 5_000e6);
+        assertEq(l.raised(), 0);
+        vm.prank(trader); vm.expectRevert(); l.refundFor(alice); // no se devuelve dos veces
+    }
+
     // --- no se puede pasar de la meta ni mintear a voluntad
     function test_cannotExceedGoal() public {
         Launch l = _deploy(_params(100e6, "BR5"));

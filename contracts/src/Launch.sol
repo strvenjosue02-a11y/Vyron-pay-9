@@ -25,7 +25,7 @@ interface IPoolSlot0 { function slot0() external view returns (uint160 sqrtPrice
 /// @title Launch - lanzamiento rápido, todo o nada, con pool bloqueado para siempre.
 /// @notice Este contrato es a la vez el token y la caja de la ronda.
 ///  - SIN dueño, SIN pausa, SIN upgrade, SIN función para mintear a voluntad.
-///  - Meta fija: solo 100, 500 o 2.000 USDC. Sin plazo: la ronda se cierra en el instante en que se llena.
+///  - Meta fija: solo 100, 500 o 2.000 USDC. La ronda se cierra en el instante en que se llena; si en 48 h no se llena, expira.
 ///  - Mientras NO esté llena, cada quien puede sacar su dinero cuando quiera (withdraw).
 ///  - Al llenarse: el USDC (menos 1% de comisión) va a un pool de Uniswap v3 al MISMO precio que pagaron todos.
 ///    El recibo (NFT) de esa liquidez queda dentro de este contrato y NO existe ninguna función para sacarlo:
@@ -53,6 +53,7 @@ contract Launch is ERC20, ReentrancyGuard {
     uint256 public constant TOKENS_PER_PCT = 10_000_000 ether;   // 1% de referencia = 10M tokens
     uint256 public constant PLATFORM_TOKENS = 15_000_000 ether;  // 1,5% de referencia
     uint256 public constant FEE_BPS = 100;                       // 1% del USDC
+    uint64 public constant ROUND_TIME = 48 hours;                // si en 48 h no se llena, expira y se devuelve todo
     uint24 public constant POOL_FEE = 3000;
     int24 internal constant MIN_TICK = -887220;
     int24 internal constant MAX_TICK = 887220;
@@ -64,6 +65,7 @@ contract Launch is ERC20, ReentrancyGuard {
     INPM public immutable positionManager;
     uint256 public immutable creatorTokens;
     uint64 public immutable vestingSeconds;
+    uint64 public immutable deadline;
 
     State public state;
     uint256 public raised;
@@ -74,6 +76,7 @@ contract Launch is ERC20, ReentrancyGuard {
 
     event Deposited(address indexed from, address indexed to, uint256 amount, uint256 raised);
     event Withdrawn(address indexed who, uint256 amount, uint256 raised);
+    event Refunded(address indexed who, uint256 amount, address indexed by);
     event Filled(address pool, uint256 lpTokenId, uint256 usdcInPool, address vesting);
     event Refunding(address pool);
     event Claimed(address indexed who, uint256 tokens);
@@ -83,6 +86,8 @@ contract Launch is ERC20, ReentrancyGuard {
     error BadParams();
     error ZeroAmount();
     error TooMuch();
+    error Expired();
+    error NotExpired();
 
     constructor(Params memory p) ERC20(p.name, p.symbol) {
         if (
@@ -98,11 +103,13 @@ contract Launch is ERC20, ReentrancyGuard {
         positionManager = INPM(p.positionManager);
         creatorTokens = uint256(p.creatorPct) * TOKENS_PER_PCT;
         vestingSeconds = uint64(p.vestingWeeks) * 7 days;
+        deadline = uint64(block.timestamp) + ROUND_TIME;
     }
 
     /// @notice Mete USDC en la ronda. Si con esto se llega a la meta, la ronda se cierra y abre el mercado.
     function deposit(uint256 amount, address to) external nonReentrant {
         if (state != State.Open) revert WrongState();
+        if (block.timestamp > deadline) revert Expired();
         if (amount == 0 || to == address(0)) revert ZeroAmount();
         if (raised + amount > goal) revert TooMuch();
         usdc.safeTransferFrom(msg.sender, address(this), amount);
@@ -121,6 +128,21 @@ contract Launch is ERC20, ReentrancyGuard {
         if (state == State.Open) raised -= amt;
         emit Withdrawn(msg.sender, amt, raised);
         usdc.safeTransfer(msg.sender, amt);
+    }
+
+    /// @notice true si pasaron 48 h sin llenarse: ya no se aceptan depósitos y a todos se les puede devolver el dinero.
+    function expired() public view returns (bool) { return state == State.Open && block.timestamp > deadline; }
+
+    /// @notice Devuelve el dinero de `who` a `who` (SIEMPRE a él, nunca a quien llama) si la ronda expiró o quedó en reembolso.
+    ///         Cualquiera puede llamarla (un bot nuestro lo hace gratis): la persona no tiene que hacer nada.
+    function refundFor(address who) external nonReentrant {
+        if (!(expired() || state == State.Refund)) revert NotExpired();
+        uint256 amt = contributed[who];
+        if (amt == 0) revert ZeroAmount();
+        contributed[who] = 0;
+        if (state == State.Open) raised -= amt;
+        emit Refunded(who, amt, msg.sender);
+        usdc.safeTransfer(who, amt);
     }
 
     /// @notice Cuando la ronda se llenó, cada aportante reclama sus tokens. Mismo precio para todos.

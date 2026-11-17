@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Share my position": "Compartir mi posición", "Making your card…": "Preparando tu tarjeta…", "Pro": "Pro", "Simple": "Simple",
   "Your share of tokens": "Tu parte de los tokens", "Released over": "Se liberan en", "wk": "sem", "Creating on the network…": "Creando en la red…",
   "buyers": "compradores", "sellers": "vendedores", "trades/min": "operaciones/min", "new holders (24h)": "holders nuevos (24h)", "sold everything": "vendieron todo", "sold some": "vendieron una parte", "still holding": "siguen con tokens",
   "Age": "Edad", "Guarantees": "Garantías", "No admin: nobody can change the rules": "Sin admin: nadie puede cambiar las reglas", "Nobody can create new tokens": "Nadie puede crear tokens nuevos", "Nobody can freeze trading": "Nadie puede congelar las operaciones", "Liquidity locked forever": "Liquidez bloqueada para siempre", "Team tokens released slowly": "Tokens del equipo con goteo", "Total balance": "Balance total", "Your positions": "Tus posiciones", "total profit": "de ganancia total", "No tokens yet. Buy one and it shows here.": "Aún no tienes tokens. Compra uno y aparece aquí.", "24h high": "Máximo 24h", "24h low": "Mínimo 24h",
