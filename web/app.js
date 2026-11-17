@@ -6,7 +6,6 @@ import {
 import { CONFIG } from "./config.js";
 import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
 import { initI18n } from "./i18n.js";
-import { mountCoin } from "./coin3d.js";
 import { mountChart } from "./pro.js";
 import { createDemo } from "./demo.js";
 import { setLaunchChain, loadChainLaunches, lcChainLive, showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote } from "./launch.js";
@@ -862,9 +861,7 @@ let chartOff = null;
 function startTerminal(p) {
   if (!p.mk || !$("#chartpro")) return;
   if (coinOff) { coinOff(); coinOff = null; } if (chartOff) { chartOff.destroy(); chartOff = null; }
-  const weak = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 3 || matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (weak) $("#coin3d").innerHTML = logoSrc(p) ? `<img src="${esc(logoSrc(p))}" alt="" class="coin-flat">` : "";
-  else mountCoin($("#coin3d"), { logo: logoSrc(p), color: p.meta.color, symbol: p.q.symbol }).then((off) => (coinOff = off)).catch(() => {});
+  { const c3 = $("#coin3d"); if (c3) c3.innerHTML = logoSrc(p) ? `<img src="${esc(logoSrc(p))}" alt="" class="coin-flat">` : mark(p, "lg"); } // logo fijo: sin moneda 3D
   if (!logoSrc(p) && $("#coin3d")) $("#coin3d").innerHTML = mark(p, "lg");
   bindTrade(p);
   const es = (localStorage.getItem("hf-lang") || "en") === "es";
