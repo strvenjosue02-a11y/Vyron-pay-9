@@ -112,5 +112,6 @@ if (!window.__thInit) {
 export function threadPreview(key) {
   if (DEMO) seed(key);
   const m = (load(key) || []).filter((x) => x.t && !x.g && !String(x.t).startsWith("[")); const x = m[m.length - 1];
-  return x ? { n: x.n, t: x.t, ts: x.ts, c: m.length } : null;
+  const who = []; for (let k = m.length - 1; k >= 0 && who.length < 3; k--) if (!who.includes(m[k].a || m[k].n)) who.push(m[k].a || m[k].n);
+  return x ? { n: x.n, t: x.t, ts: x.ts, c: m.length, who } : null;
 }

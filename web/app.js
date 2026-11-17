@@ -1692,11 +1692,18 @@ function startHero() {
   heroOff = () => clearInterval(tm);
 }
 // Celular: la web app abre directo en las comunidades (una por token)
+const cmCover = (p) => { const src = p ? (logoSrc(p) || p.meta?.cover || "") : ""; return src ? `<i class="fd-cv" style="background-image:url('${esc(src)}')"></i>` : `<i class="fd-cv g" style="--c:${esc(p?.meta?.color || "#26262a")}"></i>`; };
+const fdMoney = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2) + "M" : v >= 1e3 ? (v / 1e3).toFixed(1) + "K" : v.toFixed(0));
 function commFeedHtml() {
   const q = (S.fdQ || "").toLowerCase(), items = mkItems().filter((x) => !q || x.sym.toLowerCase().includes(q) || x.name.toLowerCase().includes(q)).sort((x, y) => y.vol - x.vol);
-  const rows = items.map((x) => { const pv = threadPreview("tok-" + x.id), up = x.chg >= 0;
-    return `<a class="fd-r" href="${x.href}"><span class="fd-av">${x.mark}</span><div class="fd-m"><b>${esc(x.name)}</b><small>${pv ? `<i>${esc(pv.n)}</i> ${esc(pv.t)}` : T2("Be the first to write", "Sé el primero en escribir")}</small></div><div class="fd-p"><b>${fmtP(x.price)}</b><em class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(1)}%</em></div></a>`; }).join("");
-  return `<section class="fd"><header class="fd-h"><h1>${T2("Communities", "Comunidades")}</h1><p>${T2("One thread per token. Tap one to read, write and trade.", "Un hilo por cada token. Toca uno para leer, escribir y operar.")}</p></header>
+  const now = S.now || Date.now() / 1000;
+  const rows = items.map((x) => { const p = findTok((t) => t.id === x.id), pv = threadPreview("tok-" + x.id), up = x.chg >= 0, by = p?.q?.creator ? uname(p.q.creator) : "";
+    return `<a class="fd-k" href="${x.href}"><div class="fd-cover">${cmCover(p)}</div><span class="fd-av">${x.mark}</span>
+      <div class="fd-body"><div class="fd-top"><div class="fd-nm"><b>${esc(x.name)}</b><small>${esc(x.sym)}${by ? ` ${T2("by", "por")} ${esc(by)}` : ""}</small></div><div class="fd-px"><b>${fmtP(x.price)}</b><em class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(1)}%</em></div></div>
+      <div class="fd-sp ${up ? "u" : "d"}">${(x.spark || "").replace("<svg ", '<svg preserveAspectRatio="none" ')}</div>
+      ${pv ? `<div class="fd-msg"><span class="fd-stk">${pv.who.map((w) => avatar(w, 24)).join("")}</span><p><i>${esc(pv.n)}</i> ${esc(pv.t)}</p><small>${agoS(now - pv.ts)}</small></div>` : `<div class="fd-msg"><p class="mut">${T2("Be the first to write", "Sé el primero en escribir")}</p></div>`}
+      <div class="fd-st"><span><small>${T2("Value", "Valor")}</small>$${fdMoney(x.cap)}</span><span><small>${T2("Volume 24h", "Volumen 24h")}</small>$${fdMoney(x.vol)}</span><span><small>${T2("Messages", "Mensajes")}</small>${pv ? pv.c : 0}</span></div></div></a>`; }).join("");
+  return `<section class="fd"><header class="fd-h"><h1>${T2("Communities", "Comunidades")}</h1><p>${T2("One community per token. Read, write and trade.", "Una comunidad por token. Lee, escribe y opera.")}</p></header>
     <label class="fd-s"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="fd-q" type="search" placeholder="${T2("Search a token", "Buscar un token")}" value="${esc(S.fdQ || "")}" autocomplete="off"></label>
     <div class="fd-c"><span class="on">${T2("Tokens", "Tokens")}</span><a href="#/lc">${T2("Rounds filling", "Rondas llenándose")}</a></div>
     <div class="fd-l" id="fd-l">${rows || `<p class="fine">${T2("No tokens yet.", "Todavía no hay tokens.")}</p>`}</div></section>`;
