@@ -699,7 +699,7 @@ function beep(buy) { if (!sndOn()) return; try { const c = new (window.AudioCont
 function burst(buy) { const h = $("#chartpro"); if (!h) return; const d = document.createElement("div"); d.className = "cp-burst " + (buy ? "b" : "s"); h.appendChild(d); setTimeout(() => d.remove(), 1400); }
 const RX = { rocket: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15c0-5 4-9 9-10 1 5-3 9-8 9M5 15l-2 4 4-2M9 12l3 3"/></svg>', fire: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/></svg>' };
 function react(kind) { const h = $("#chartpro"); if (!h) return; const e = document.createElement("div"); e.className = "cp-rx"; e.style.left = 20 + Math.random() * 60 + "%"; e.innerHTML = RX[kind]; h.appendChild(e); setTimeout(() => e.remove(), 2200); }
-const proOn = () => { try { return localStorage.getItem("hf-pro") === "1"; } catch { return false; } };
+const proOn = () => true; // un solo modo: todo visible
 const oneTap = () => { try { return localStorage.getItem("hf-1tap") === "1"; } catch { return false; } };
 function notify(t) { try { if ("Notification" in window && Notification.permission === "granted") new Notification("Holdfast", { body: t }); } catch {} }
 function creatorHtml(p) {
@@ -758,7 +758,7 @@ function vTerminal(p) {
     <a class="back" href="#/market">All markets</a>
     <header class="tx-top">
       <div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
-      <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-menu-b" data-menu aria-label="Menu">⋯</button><button type="button" class="tx-toks-b" data-toks><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Tokens</button><button type="button" class="tx-info-b" data-info>Info</button><button type="button" class="tx-pro-b" data-pro aria-pressed="${proOn()}">${proOn() ? "Simple" : "Pro"}</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
+      <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-menu-b" data-menu aria-label="Menu">⋯</button><button type="button" class="tx-toks-b" data-toks><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Tokens</button><button type="button" class="tx-info-b" data-info>Info</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
       <div class="tx-px"><small class="tx-cl">Market cap</small><b id="tx-capbig">${capFmt(x.cap)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span><em class="tx-sub">Price <span id="tt-price">${fmtP(m.price)}</span></em></div>
       <div class="tx-chips" id="tx-chips">${chipsHtml(p)}</div>
       <dl class="tx-stats">
@@ -772,11 +772,11 @@ function vTerminal(p) {
       <h3>Creator</h3><div id="tx-creator">${creatorHtml(p)}</div>
       <h3>Contract</h3><div class="tx-ca"><button type="button" data-copy="${p.address}" title="Copy contract address"><span>${short(p.address)}</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button><a href="${CONFIG.explorer}/token/${p.address}" target="_blank" rel="noopener">Explorer</a><a href="${CONFIG.explorer}/address/${p.s.pool}" target="_blank" rel="noopener">Pool</a></div>
       <h3>Links</h3><div class="tx-safe">${linksHtml(p) || `<span class="sf">No links added</span>`}</div></div></div>
-    <div class="tx-toksp" id="tx-toksp"><div class="tp-box"><input id="tp-q" type="search" placeholder="Search token" autocomplete="off" aria-label="Search token"><div class="tp-list" id="tp-list">${toksHtml(p)}</div></div></div>
     <div class="tx-data" id="tx-data">${dataRowHtml(p)}</div>
     <div class="tx-trend" id="tx-trend">${trendHtml(p)}</div>
     
     <div class="term-grid tx-3">
+    <div class="tx-toksp" id="tx-toksp"><div class="tp-box"><input id="tp-q" type="search" placeholder="Search token" autocomplete="off" aria-label="Search token"><div class="tp-list" id="tp-list">${toksHtml(p)}</div></div></div>
       <nav class="tx-side" id="tx-side" aria-label="Markets"><div class="tx-side-h"><b>Markets</b><button type="button" class="tx-side-x" data-sidex aria-label="Close">✕</button></div>
         <input class="tx-sq" id="tx-sq" type="search" placeholder="Search token" aria-label="Search token">
         ${S.list.filter((x) => x.mk).map((x) => { const c = x.trades ? stats24(x).chg : ((x.mk.price - x.mk.round) / x.mk.round) * 100; return `<a href="#/trade/${x.id}" class="tx-si${x.id === p.id ? " on" : ""}">${logoSrc(x) ? `<img src="${esc(logoSrc(x))}" alt="">` : `<i></i>`}<span><b>${esc(x.q.symbol)}</b><small>${fmtP(x.mk.price)}</small></span><em class="${Math.abs(c) < 0.05 ? "" : c >= 0 ? "u" : "d"}">${c >= 0 ? "+" : ""}${c.toFixed(1)}%</em></a>`; }).join("")}<p class="tx-none" id="tx-none" style="display:none">No token found.</p></nav>

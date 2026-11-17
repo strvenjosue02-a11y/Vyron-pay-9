@@ -1679,3 +1679,23 @@ a.mk-row:hover { box-shadow: inset 2px 0 0 #fff; } .tx-feed span.fol, .tx-ca but
 .term.tx.tx-dn .tx-chart { box-shadow: inset 0 0 0 1px #1a1a1f, 0 30px 80px -40px rgba(255,93,93,.18) !important; }
 .cp-svg canvas { image-rendering: auto; }
 @media (max-width: 900px) { .term.tx .tx-chart { border-radius: 22px !important; margin: 8px 0 0 !important; } }
+/* ===== Pulido final: Inicio, celular y Proyectos con la identidad nueva ===== */
+#lc-home .cat-bar .btn { display: none; }
+.hero .stage, .hero .noir { display: none !important; }
+.hero { grid-template-columns: 1fr !important; padding: 56px 0 28px; } .hero h1, .hero h1.glitch { font-family: var(--display) !important; font-weight: 650 !important; letter-spacing: -0.05em !important; max-width: 12ch; } .hero h1 em { font-family: var(--display) !important; font-style: normal !important; color: #8d8f95 !important; -webkit-text-fill-color: #8d8f95 !important; } .hero h1.glitch::before, .hero h1.glitch::after { display: none !important; }
+.hero-promise svg { stroke: #fff; }
+@media (max-width: 760px) {
+  .cat-bar { display: flex !important; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 8px; } .cat-tabs { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; } .cat-tabs::-webkit-scrollbar { display: none; } .cat-bar > .btn { flex: none; }
+  .deck .pcard .pc-img { aspect-ratio: 16 / 10 !important; } .deck { gap: 14px !important; } .pc-body { padding: 14px 16px 16px !important; } .pc-body h3 { font-size: 20px !important; }
+  .page-h h1 { font-size: 36px !important; } .page-h p { font-size: 15px; }
+  .hero { padding: 36px 0 20px; } .hero h1 { font-size: 46px !important; }
+}
+
+/* ===== Un solo modo + lista de tokens siempre visible a la izquierda ===== */
+.tx-pro-b { display: none !important; }
+@media (min-width: 1200px) {
+  .term-grid.tx-3 { grid-template-columns: 250px minmax(0, 1fr) 360px !important; gap: 16px; }
+  .tx-toksp { display: block !important; position: sticky !important; top: 76px; inset: auto !important; z-index: 1 !important; background: none !important; backdrop-filter: none !important; padding: 0 !important; align-self: start; }
+  .tx-toksp .tp-box { width: 100% !important; max-height: calc(100vh - 100px) !important; box-shadow: inset 0 0 0 1px #1a1a1f !important; background: #08080a !important; border-radius: 18px !important; }
+  .tx-toks-b { display: none !important; }
+}
