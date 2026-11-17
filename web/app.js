@@ -588,15 +588,20 @@ async function traderCard(p, addr, opt = {}) {
   const ed = ov.querySelector("[data-ed]"); if (ed) ed.onclick = () => { ov.remove(); editProfile(); }; requestAnimationFrame(() => ov.classList.add("on"));
   ov.onclick = (e) => { if (e.target === ov || e.target.closest("[data-px]")) { ov.classList.remove("on"); setTimeout(() => ov.remove(), 250); } };
 }
-async function editProfile() {
+function welcomeProfile() {
+  try { if (!S.me || S.prof?.[S.me.toLowerCase()] || localStorage.getItem("hf-skip-" + S.me.toLowerCase())) return; } catch { return; }
+  setTimeout(() => editProfile(true), 600);
+}
+async function editProfile(first) {
   const cur = S.prof?.[S.me.toLowerCase()], ov = document.createElement("div"); ov.className = "pnl-ov";
-  ov.innerHTML = `<div class="tc"><button type="button" class="tc-x" data-px aria-label="Close">✕</button><h3 style="margin:0 0 12px">My trader profile</h3>
+  ov.innerHTML = `<div class="tc"><button type="button" class="tc-x" data-px aria-label="Close">✕</button><h3 style="margin:0 0 ${first ? 4 : 12}px">${first ? "Welcome. Choose your name" : "My trader profile"}</h3>${first ? `<p class="fine" style="margin:0 0 12px">This is how others will see you. You can skip it and change it later.</p>` : ""}
     <label class="tc-ph"><span id="pf-prev">${avatar(S.me, 72)}</span><input id="pf-photo" type="file" accept="image/png,image/jpeg,image/webp"><small>Tap to choose a photo</small></label>
     <div class="f"><label for="pf-name">Username</label><input id="pf-name" maxlength="20" value="${esc(cur?.name || uname(S.me))}"></div>
-    <p class="fine">Optional and public. Signing is free and moves no money.</p><button type="button" class="btn btn-ember btn-block" id="pf-save">Sign and save</button></div>`;
+    <p class="fine">Optional and public. Signing is free and moves no money.</p><button type="button" class="btn btn-ember btn-block" id="pf-save">Sign and save</button>${first ? `<button type="button" class="btn btn-line btn-block" id="pf-skip" style="margin-top:8px">Skip for now</button>` : ""}</div>`;
   document.body.appendChild(ov); requestAnimationFrame(() => ov.classList.add("on")); let photo = cur?.photo || "";
   ov.querySelector("#pf-photo").onchange = (e) => pickImage(e, 96, 24000, (u) => { photo = u; ov.querySelector("#pf-prev").innerHTML = `<img class="ava" src="${u}" style="width:72px;height:72px;object-fit:cover" alt="">`; });
   ov.onclick = async (e) => { if (e.target === ov || e.target.closest("[data-px]")) { ov.classList.remove("on"); setTimeout(() => ov.remove(), 250); return; }
+    if (e.target.closest("#pf-skip")) { try { localStorage.setItem("hf-skip-" + S.me.toLowerCase(), "1"); } catch {} ov.classList.remove("on"); setTimeout(() => ov.remove(), 250); return; }
     if (!e.target.closest("#pf-save")) return; const name = ov.querySelector("#pf-name").value.trim(), err = validProfile(name, photo); if (err) return toast(err, true); let sig;
     const ok = await flow("Save profile", ["Sign with your wallet", "Save"], [async () => { sig = await sign(msgProfile(S.me, name, keccak256(toBytes(photo)))); }, async () => api("./api/profile", { address: S.me, name, photo, signature: sig })], "Profile saved");
     if (ok) { ov.remove(); const old = findTok((x) => location.hash.endsWith(x.id)), tr = old?.trades, hd = old?.tHead, hl = old?.holders;
@@ -1714,6 +1719,7 @@ async function connect() {
   eth.on?.("accountsChanged", () => location.reload()); eth.on?.("chainChanged", () => location.reload());
   if ($("#form")) $("#app").innerHTML = "";
   await refresh();
+  welcomeProfile();
 }
 const sign = (message) => S.wallet.signMessage({ account: S.me, message });
 

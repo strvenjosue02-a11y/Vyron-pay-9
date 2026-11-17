@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Welcome. Choose your name": "Bienvenido. Elige tu nombre", "This is how others will see you. You can skip it and change it later.": "Así te verán los demás. Puedes saltarlo y cambiarlo después.", "Skip for now": "Saltar por ahora", "Recent": "Recientes", "NEW": "NUEVO",
   "You hold": "Tienes", "Worth": "Vale",
   "Purchase done": "Compra realizada", "Sale done": "Venta realizada",
   "Share card": "Compartir tarjeta", "Bought": "Compraste", "Sold": "Vendiste", "of": "de",

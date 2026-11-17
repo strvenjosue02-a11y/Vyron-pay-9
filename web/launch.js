@@ -12,6 +12,7 @@ const usd = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2) + "M" : v >= 1e4 ? (v / 1e3)
 const SUBN = (n) => String(n).replace(/\d/g, (d) => "\u2080\u2081\u2082\u2083\u2084\u2085\u2086\u2087\u2088\u2089"[d]);
 const tinyP = (x) => { if (!(x > 0)) return "0"; const z = Math.floor(-Math.log10(x)); const m = (x * Math.pow(10, z + 1)).toPrecision(3).replace(".", "").slice(0, 3); return z > 4 ? `0.0${SUBN(z)}${m}` : x.toFixed(z + 3); };
 const fmtP = (x) => (x >= 0.01 ? "$" + x.toLocaleString("en-US", { maximumFractionDigits: 4 }) : x >= 1e-4 ? "$" + x.toPrecision(3) : "$" + tinyP(x));
+const born = (l) => l.born ?? (l.dl ? l.dl - 24 * 3600 : l.last);
 const ago = (t) => { const s = Math.max(1, Math.round(now() - t)); return s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)}m` : `${Math.round(s / 3600)}h`; };
 const hue = (s) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
 
@@ -39,7 +40,7 @@ let uid = 1;
 function mk(name, sym, goal, raised, img, live = false) {
   const l = { dl: now() + 24 * 3600 - (live ? 0 : rnd(1800, 20 * 3600)), id: "l" + uid++, name, sym, goal, raised: live ? goal : raised, img, status: live ? "live" : "open", last: now() - rnd(5, 600), creator: Math.round(rnd(0, 8)), comments: [], ticks: [], rU: 0, rT: 0, p0: goal / 1_000_000 };
   l.comments = [["anon" + Math.floor(rnd(1000, 9999)), T("lfg", "vamos"), now() - rnd(60, 3000)], ["anon" + Math.floor(rnd(1000, 9999)), T("filling fast", "se está llenando"), now() - rnd(10, 500)]];
-  if (live) goLive(l, true);
+  if (live) { l.born = now() - rnd(3600, 20 * 3600); goLive(l, true); }
   L.push(l); return l;
 }
 function goLive(l, seed = false) {
@@ -96,12 +97,12 @@ const art = (l, cls = "") => (l.img ? `<img class="${cls}" src="${esc(l.img)}" a
 const bar = (l) => `<div class="meter"><b style="width:${Math.min(100, (l.raised / l.goal) * 100)}%"></b></div>`;
 
 function listHtml() {
-  const f = window.__lcf || "all", rows = L.filter((l) => (f === "all" || (f === "live" ? l.status === "live" : l.status === "open")) && (!window.__lcq || (l.name + " " + l.sym).toLowerCase().includes(window.__lcq.toLowerCase()))).sort((a, b) => b.last - a.last);
+  const f = window.__lcf || "new", rows = L.filter((l) => (f === "new" || (f === "live" ? l.status === "live" : l.status === "open")) && (!window.__lcq || (l.name + " " + l.sym).toLowerCase().includes(window.__lcq.toLowerCase()))).sort((a, b) => f === "new" ? born(b) - born(a) : b.last - a.last);
   return `<div class="page-h"><h1>${T("Launches", "Lanzamientos")}</h1><p>${T("Rounds fill in minutes. If one doesn't fill, take your money out. When it fills, trading opens.", "Las rondas se llenan en minutos. Si no se llena, sacas tu dinero. Al llenarse, se abre el mercado.")}</p></div>
-  <div class="cat-bar"><div class="cat-tabs">${[["all", T("Active", "Activos")], ["open", T("Filling", "Llenándose")], ["live", T("Live", "En vivo")]].map(([k, t]) => `<button type="button" data-lcf="${k}" aria-selected="${f === k}">${t}</button>`).join("")}</div></div>
+  <div class="cat-bar"><div class="cat-tabs">${[["new", T("Recent", "Recientes")], ["open", T("Filling", "Llenándose")], ["live", T("Live", "En vivo")]].map(([k, t]) => `<button type="button" data-lcf="${k}" aria-selected="${f === k}">${t}</button>`).join("")}</div></div>
   <label class="cat-search lc-sq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="lc-q" type="search" placeholder="${T("Search by name or ticker", "Buscar por nombre o ticker")}" value="${esc(window.__lcq || "")}" autocomplete="off"></label>
   <div class="deck">${rows.map((l) => { const live = l.status === "live", ch = live && l.ticks.length ? (price(l) / l.p0 - 1) * 100 : 0;
-    return `<a class="pcard" href="${live ? "#/trade/lc-" + l.id : "#/lc/" + l.id}"><div class="pc-img">${art(l)}<span class="pc-tick">${esc(l.sym)}</span>${live ? `<span class="lc-live">${T("LIVE", "EN VIVO")}</span>` : ""}</div>
+    return `<a class="pcard" href="${live ? "#/trade/lc-" + l.id : "#/lc/" + l.id}"><div class="pc-img">${art(l)}<span class="pc-tick">${esc(l.sym)}</span>${now() - born(l) < 3600 ? `<span class="pc-new">${T("NEW", "NUEVO")}</span>` : ""}<span class="pc-age">${T("", "hace ")}${ago(born(l))}${T(" ago", "")}</span>${live ? `<span class="lc-live">${T("LIVE", "EN VIVO")}</span>` : ""}</div>
       <div class="pc-body"><h3>${esc(l.name)}</h3>${live ? `<div class="lc-px"><b>${fmtP(price(l))}</b><em class="${ch >= 0 ? "u" : "d"}">${ch >= 0 ? "+" : ""}${ch.toFixed(0)}%</em></div>` : bar(l)}
       <dl class="pc-stats"><div><dt>${live ? T("Pool", "Pool") : T("Raised", "Recaudado")}</dt><dd>$${usd(live ? l.rU : l.raised)}</dd></div><div><dt>${T("Goal", "Meta")}</dt><dd>$${usd(l.goal)}</dd></div><div><dt>${live ? T("Activity", "Actividad") : T("Time left", "Tiempo")}</dt><dd>${live ? ago(l.last) : isExp(l) ? T("Expired", "Expiró") : clock(l.dl - now())}</dd></div></dl></div></a>`; }).join("")}</div>`;
 }
