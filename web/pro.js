@@ -33,7 +33,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   const pf = { type: "custom", minMove: 1e-10, formatter: (p) => fmtN(p, st.cap) };
   const chart = createChart(box, {
     autoSize: true,
-    layout: { background: { type: "solid", color: "transparent" }, textColor: "#8d8f95", fontSize: 12, fontFamily: "Inter Tight, system-ui, sans-serif" },
+    layout: { background: { type: "solid", color: "transparent" }, textColor: "#8d8f95", fontSize: 12, fontFamily: "JetBrains Mono, ui-monospace, monospace" },
     grid: { vertLines: { color: "rgba(255,255,255,.04)" }, horzLines: { color: "rgba(255,255,255,.05)" } },
     crosshair: { mode: CrosshairMode.Normal, vertLine: { color: "rgba(255,255,255,.35)", style: 3 }, horzLine: { color: "rgba(255,255,255,.35)", style: 3 } },
     rightPriceScale: { borderColor: "rgba(255,255,255,.08)", scaleMargins: { top: 0.08, bottom: 0.25 } },
@@ -61,7 +61,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   function drawOv() {
     const times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; }, groups = new Map();
     if (st.faces) faces.forEach((f, i) => { const k = snap(f.t) + (f.buy ? "b" : "s"); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(i); });
-    ov.innerHTML = [...groups.values()].map((ix) => { const f = faces[ix[0]]; return `<button type="button" class="cp-face ${f.buy ? "b" : "s"}" data-fi="${ix[0]}" title="${ix.length > 1 ? ix.length + " traders" : (f.name || "")}">${f.html}${ix.length > 1 ? `<b class="cp-more">+${ix.length - 1}</b>` : ""}</button>`; }).join("") + lines.map((l, i) => `<div class="cp-ln ${l.drag ? "dr" : ""}" data-li="${i}" style="--c:${l.color}">${l.drag ? "<i></i>" : ""}<span>${l.title}</span></div>`).join("");
+    ov.innerHTML = [...groups.values()].map((ix) => { const f = faces[ix[0]]; return `<button type="button" class="cp-face ${f.buy ? "b" : "s"}${f.whale ? " w" : ""}" data-fi="${ix[0]}" title="${ix.length > 1 ? ix.length + " traders" : (f.name || "")}">${f.html}${ix.length > 1 ? `<b class="cp-more">+${ix.length - 1}</b>` : ""}</button>`; }).join("") + lines.map((l, i) => `<div class="cp-ln ${l.drag ? "dr" : ""}" data-li="${i}" style="--c:${l.color}">${l.drag ? "<i></i>" : ""}<span>${l.title}</span></div>`).join("");
     place();
   }
   ov.addEventListener("click", (e) => { const b = e.target.closest("[data-fi]"); if (b && onFace) onFace(faces[Number(b.dataset.fi)].who); });
@@ -92,7 +92,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     if (roundLine) candle.removePriceLine(roundLine);
     roundLine = d.round ? candle.createPriceLine({ price: d.round * k, color: "rgba(255,255,255,.35)", lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "" }) : null;
     hlRefs.forEach((r) => candle.removePriceLine(r));
-    hlRefs = hl.map((p) => candle.createPriceLine({ price: p * k, color: "#ffd166", lineWidth: 1, lineStyle: 0, axisLabelVisible: true, title: "" }));
+    hlRefs = hl.map((p) => candle.createPriceLine({ price: p * k, color: "#f4f4f1", lineWidth: 1, lineStyle: 0, axisLabelVisible: true, title: "" }));
     const times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; };
     const marks = (d.marks || []).map((m) => ({ time: snap(m.t), position: m.buy ? "belowBar" : "aboveBar", color: m.buy ? UP : DN, shape: m.buy ? "arrowUp" : "arrowDown", text: m.buy ? "B" : "S" })).sort((a, b) => a.time - b.time);
     candle.setMarkers(marks);

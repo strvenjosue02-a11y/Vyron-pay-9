@@ -1293,7 +1293,7 @@ a.pcard .pc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8
 /* ===== Nueva estética: neutra, moderna, sin rosa. Verde = sube/ganas, rojo = baja/pierdes ===== */
 :root { --paper: #09090b; --surface: #111114; --surface-2: #17171b; --track: #212126; --ink: #f4f4f1; --ink-2: #a1a1a8; --ink-3: #6c6c74; --on-ink: #09090b; --rule: #1f1f24; --rule-2: #33333a;
   --ember: #f4f4f1; --ember-ink: #f4f4f1; --ember-soft: rgba(255,255,255,.06); --up: #3ddc97; --dn: #ff5d5d; --ok: #3ddc97; --bad: #ff5d5d;
-  --display: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+  --display: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
 body { font-feature-settings: "ss01" 1, "tnum" 1; letter-spacing: -0.005em; }
 h1, h2, h3, .page-h h1, .p-head h1, .pc-body h3, .block h2 { font-family: var(--display) !important; font-style: normal !important; font-weight: 650 !important; letter-spacing: -0.035em !important; }
 .mk-p, .tx-px b, .lc-px b, .lc-big b, .pc-stats dd, .tx-stats dd, .tc-pnl, #tt-price, .mk-row > span:nth-child(n+3) { font-family: var(--mono); letter-spacing: -0.03em; }
@@ -1522,3 +1522,33 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 60; pointer-event
 .term.tx .tx-stats, .term.tx .tx-more { display: none !important; } .term.tx .tx-top { min-height: 0 !important; margin-bottom: 0 !important; }
 .term.tx .term-side .tx-row2 { grid-template-columns: 1fr !important; } .term.tx .term-side .rk { min-height: 48px; } .term.tx .term-side .tx-press { min-height: 48px; }
 .term.tx .term-side .rk-m small { display: none; } .term.tx .term-side .rk p { font-size: 13px; }
+
+/* ===== IDENTIDAD HOLDFAST v1: negro puro, hilo de luz, letra técnica. Color solo en sube/baja ===== */
+:root { --paper: #000; --surface: #0a0a0b; --surface-2: #101012; --track: #1a1a1d; --rule: #19191c; --rule-2: #2a2a2e; --ink: #f2f2ee; --ink-2: #a3a3a8; --ink-3: #6a6a70;
+  --display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif; --font: "Space Grotesk", ui-sans-serif, system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Menlo, monospace; --warn: #a3a3a8; --warn-soft: rgba(255,255,255,.05); }
+body { background: #000; font-feature-settings: "tnum" 1; letter-spacing: 0; } body::after { display: none; }
+h1, h2, h3, .page-h h1 { font-weight: 600 !important; letter-spacing: -0.045em !important; text-transform: none; }
+.panel, .tx-stats > div, .tx-chart, .mk-list, .rk, .tx-press, .ip-box, .tc, .pcard { background: #0a0a0b !important; background-image: none !important; box-shadow: inset 0 0 0 1px #1c1c20 !important; border-radius: 14px; }
+.term.tx::before { display: none; } .tx-chart { padding: 0; border-radius: 14px; }
+/* el hilo de luz: lo activo se marca con una línea blanca fina */
+.cat-tabs button[aria-selected="true"], .term-tabs button[aria-selected="true"], .cp-per button[aria-selected="true"], .cy-toggle button[aria-selected="true"], .links a[aria-current="page"], .tabs a[aria-current="page"], .cp-tools button[aria-pressed="true"] { background: transparent !important; color: #fff !important; box-shadow: inset 0 -2px 0 #fff !important; border-radius: 0 !important; }
+.cy-toggle { background: transparent !important; box-shadow: inset 0 -1px 0 #1c1c20 !important; border-radius: 0 !important; } .cy-toggle button { border-radius: 0 !important; background: transparent !important; }
+.cat-tabs, .cp-per, .cp-tools { background: transparent !important; box-shadow: none !important; }
+.btn-ember, .btn-cyber, .btn-dark { border-radius: 10px !important; letter-spacing: .01em; } .btn { border-radius: 10px; }
+.sf, .tx-ln, .tx-chips span, .tx-trend a, .tx-feed span, .mk-filters button, .tx-tools button, .tx-ca button, .tx-ca a, .tx-info-b, .tx-share { border-radius: 8px !important; background: #0a0a0b !important; box-shadow: inset 0 0 0 1px #1f1f23 !important; }
+.sf.ok { color: var(--up); } .sf.bad { color: var(--dn); } .sf.mid { color: var(--ink-2); box-shadow: inset 0 0 0 1px #1f1f23 !important; background: #0a0a0b !important; }
+.sf.ok, .sf.bad { background: #0a0a0b !important; box-shadow: inset 0 0 0 1px #1f1f23 !important; }
+.tx-feed span.fol { box-shadow: inset 0 0 0 1px #fff !important; } .cp-ln:not(.dr) { background: #fff; }
+.tx-px #tx-capbig, .mk-p, #tt-price, .cr-n b, .rk-m b, .rk-b b, .tx-press b { font-family: var(--mono); font-weight: 600; letter-spacing: -0.06em; }
+.mk-row > span, .tx-chips span, .tx-stats dd { font-family: var(--mono); font-size: 13.5px; }
+.mk-list .mk-row { border-top: 1px solid #141417; } a.mk-row:hover { background: #0e0e10; box-shadow: inset 2px 0 0 #fff; }
+.mk-new { background: transparent !important; color: #fff !important; box-shadow: inset 0 0 0 1px #3a3a40; border-radius: 4px; letter-spacing: .08em; }
+.lc-live { background: transparent !important; box-shadow: inset 0 0 0 1px #3a3a40; color: #fff !important; }
+.hx::before { display: none !important; }
+/* radar de ballenas en el gráfico */
+.cp-face.w { width: 30px !important; height: 30px !important; opacity: 1; box-shadow: 0 0 0 2px #fff, 0 0 0 5px rgba(255,255,255,.15), 0 6px 16px rgba(0,0,0,.6) !important; animation: wpulse 2.4s ease-in-out infinite; } .cp-face.w .ava { width: 26px !important; height: 26px !important; }
+@keyframes wpulse { 50% { box-shadow: 0 0 0 2px #fff, 0 0 0 9px rgba(255,255,255,0), 0 6px 16px rgba(0,0,0,.6); } }
+/* mapa de calor */
+.ht { display: grid; gap: 3px; margin-bottom: 18px; } .ht-h { display: flex; gap: 18px; align-items: center; margin-bottom: 10px; } .ht-h b { font: 700 40px var(--mono); letter-spacing: -0.06em; display: block; line-height: 1; } .ht-h small { color: var(--ink-3); font-size: 12px; } .ht-h p { margin: 0; font-size: 13px; color: var(--ink-2); max-width: 520px; }
+.ht-r { display: grid; grid-template-columns: 96px 1fr 56px; gap: 10px; align-items: center; font: 500 12px var(--mono); color: var(--ink-3); } .ht-r i { height: 11px; background: #0f0f11; border-radius: 3px; overflow: hidden; } .ht-r b { display: block; height: 100%; border-radius: 3px; } .ht-r b.g { background: var(--up); opacity: .8; } .ht-r b.r { background: var(--dn); opacity: .8; } .ht-r b.n { background: #fff; } .ht-r.now span { color: #fff; } .ht-r em { font-style: normal; text-align: right; }
+.wr h4 { margin: 0 0 8px; font: 600 12px var(--font); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); } .wr-i { display: grid; grid-template-columns: 26px 1fr auto auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13.5px; } .wr-i:hover { background: #0e0e10; } .wr-i span { font-family: var(--mono); } .wr-i.b span { color: var(--up); } .wr-i.s span { color: var(--dn); } .wr-i small { color: var(--ink-3); } .wr-i .ava { border-radius: 50%; }

@@ -401,6 +401,7 @@ function depthRows(p) {
 }
 function termTab(p) {
   const t = S.ttab || "trades";
+  if (t === "heat") return heatHtml(p);
   if (t === "chat") return chatHtml(p);
   if (t === "holders") return p.holders ? (p.holders.length ? `${holdBar(p)}${(() => { const top = p.holders.find((h) => !holderLabel(p, h.a)), sh = top && p.supply ? Number((top.b * 10000n) / p.supply) / 100 : 0; return sh > 20 ? `<div class="note warn" style="margin-bottom:12px">One wallet holds ${sh.toFixed(1)}% of the supply. If it sells, the price can drop fast.</div>` : ""; })()}<ul class="hold">${p.holders.map((h, i) => `<li><span class="rk">${i + 1}</span>${avatar(h.a, 26)}<span class="addr">${short(h.a)}</span><span class="hl">${holderLabel(p, h.a)}</span><b>${p.supply ? ((Number(h.b) / Number(p.supply)) * 100).toFixed(2) : "–"}%</b></li>`).join("")}</ul>` : `<p class="prose">No holders yet.</p>`) : `<p class="prose">Loading holders…</p>`;
   if (t === "depth") return `<p class="fine" style="margin:0 0 12px">How much it takes to move the price. Small pools move fast: check before large trades.</p>
@@ -489,7 +490,7 @@ function boardHtml(p) {
 }
 const loadImg = (src) => new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = src; });
 async function traderPng(p, r, rank) {
-  try { await document.fonts.load("700 60px Geist"); await document.fonts.load("600 60px 'Geist Mono'"); } catch {}
+  try { await document.fonts.load("700 60px Space Grotesk"); await document.fonts.load("600 60px 'JetBrains Mono'"); } catch {}
   const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"), up = r.pnl >= 0, col = up ? "#3ddc97" : "#ff5d5d";
   g.fillStyle = "#09090b"; g.fillRect(0, 0, W, H);
   const cg = g.createLinearGradient(0, 0, W, 380); cg.addColorStop(0, "#0e0e11"); cg.addColorStop(1, "#1d1d23"); g.fillStyle = cg; g.fillRect(0, 0, W, 380);
@@ -501,14 +502,14 @@ async function traderPng(p, r, rank) {
   let drew = false; if (pr?.photo) { try { const im = await loadImg(pr.photo); const s = Math.max(2 * R / im.width, 2 * R / im.height); g.drawImage(im, cx - im.width * s / 2, cy - im.height * s / 2, im.width * s, im.height * s); drew = true; } catch {} }
   if (!drew) { const h = parseInt(r.a.slice(2, 6), 16) % 360, ag = g.createLinearGradient(cx - R, cy - R, cx + R, cy + R); ag.addColorStop(0, `hsl(${h} 70% 55%)`); ag.addColorStop(1, `hsl(${(h + 140) % 360} 65% 45%)`); g.fillStyle = ag; g.fillRect(cx - R, cy - R, 2 * R, 2 * R); }
   g.restore(); g.lineWidth = 8; g.strokeStyle = "#09090b"; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.stroke(); g.lineWidth = 2; g.strokeStyle = "rgba(255,255,255,.5)"; g.beginPath(); g.arc(cx, cy, R + 4, 0, 7); g.stroke();
-  g.fillStyle = "#f4f4f1"; g.font = "700 64px Geist, sans-serif"; g.textAlign = "left"; g.fillText(uname(r.a).slice(0, 18), 280, 410);
-  g.fillStyle = "#8b8b93"; g.font = "500 30px Geist, sans-serif"; g.fillText(`#${rank} on ${p.q.symbol} · ${short(r.a)}`, 280, 458);
-  g.fillStyle = "#8b8b93"; g.font = "500 28px Geist, sans-serif"; g.fillText("PROFIT / LOSS", 70, 620);
-  g.fillStyle = col; g.font = "600 170px 'Geist Mono', monospace"; g.fillText(`${up ? "+" : "-"}$${Math.abs(r.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}`, 62, 780);
-  g.font = "600 60px 'Geist Mono', monospace"; g.fillText(`${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%`, 70, 862);
+  g.fillStyle = "#f4f4f1"; g.font = "700 64px Space Grotesk, sans-serif"; g.textAlign = "left"; g.fillText(uname(r.a).slice(0, 18), 280, 410);
+  g.fillStyle = "#8b8b93"; g.font = "500 30px Space Grotesk, sans-serif"; g.fillText(`#${rank} on ${p.q.symbol} · ${short(r.a)}`, 280, 458);
+  g.fillStyle = "#8b8b93"; g.font = "500 28px Space Grotesk, sans-serif"; g.fillText("PROFIT / LOSS", 70, 620);
+  g.fillStyle = col; g.font = "600 170px 'JetBrains Mono', monospace"; g.fillText(`${up ? "+" : "-"}$${Math.abs(r.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}`, 62, 780);
+  g.font = "600 60px 'JetBrains Mono', monospace"; g.fillText(`${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%`, 70, 862);
   const cells = [["BOUGHT", "$" + r.spent.toFixed(2)], ["SOLD", "$" + r.got.toFixed(2)], ["TRADES", `${r.buys + r.sells}`], ["HOLDING", Math.max(0, r.tok).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " " + p.q.symbol], ["WORTH NOW", "$" + r.val.toFixed(2)], ["BEST SALE", r.best > 0 ? "+$" + r.best.toFixed(2) : "-"]];
-  cells.forEach(([k, v], i) => { const x = 60 + (i % 2) * 490, y = 920 + Math.floor(i / 2) * 112; g.fillStyle = "rgba(255,255,255,.05)"; g.beginPath(); g.roundRect(x, y, 470, 100, 20); g.fill(); g.fillStyle = "#8b8b93"; g.font = "500 22px Geist, sans-serif"; g.fillText(k, x + 24, y + 36); g.fillStyle = "#f4f4f1"; g.font = "600 34px 'Geist Mono', monospace"; g.fillText(v.slice(0, 20), x + 24, y + 78); });
-  g.fillStyle = "#f4f4f1"; g.font = "700 40px Geist, sans-serif"; g.fillText("Holdfast", 60, 1318); g.fillStyle = "#6c6c74"; g.font = "500 26px Geist, sans-serif"; g.textAlign = "right"; g.fillText(new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }), W - 60, 1314);
+  cells.forEach(([k, v], i) => { const x = 60 + (i % 2) * 490, y = 920 + Math.floor(i / 2) * 112; g.fillStyle = "rgba(255,255,255,.05)"; g.beginPath(); g.roundRect(x, y, 470, 100, 20); g.fill(); g.fillStyle = "#8b8b93"; g.font = "500 22px Space Grotesk, sans-serif"; g.fillText(k, x + 24, y + 36); g.fillStyle = "#f4f4f1"; g.font = "600 34px 'JetBrains Mono', monospace"; g.fillText(v.slice(0, 20), x + 24, y + 78); });
+  g.fillStyle = "#f4f4f1"; g.font = "700 40px Space Grotesk, sans-serif"; g.fillText("Holdfast", 60, 1318); g.fillStyle = "#6c6c74"; g.font = "500 26px Space Grotesk, sans-serif"; g.textAlign = "right"; g.fillText(new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }), W - 60, 1314);
   return new Promise((ok) => c.toBlob(ok, "image/png"));
 }
 async function traderCard(p, addr) {
@@ -637,8 +638,8 @@ function holdBar(p) {
   return `<div class="hmap"><div class="hm-b">${seg.map((g, i) => `<i class="${g.k}" style="flex:${Math.max(g.v, 0.4)};opacity:${1 - i * 0.07}" title="${esc(g.l)} ${g.v.toFixed(1)}%"></i>`).join("")}<i class="r" style="flex:${Math.max(rest, 0.4)}" title="Others ${rest.toFixed(1)}%"></i></div><div class="hm-l">${seg.slice(0, 4).map((g) => `<span>${esc(g.l)} <b>${g.v.toFixed(1)}%</b></span>`).join("")}</div></div>`;
 }
 function facesOf(p) {
-  const b = traderBoard(p, "all").slice(0, 5).map((r) => r.a.toLowerCase()), set = new Set(b); if (S.me) set.add(S.me.toLowerCase()); (JSON.parse(localStorage.getItem("hf-follow") || "[]")).forEach((x) => set.add(x));
-  return (p.trades || []).filter((t) => t.ts && t.who && set.has(t.who.toLowerCase())).slice(-9).map((t) => ({ t: t.ts, price: t.price, buy: t.buy, who: t.who, name: `${uname(t.who)} ${t.buy ? "bought" : "sold"} $${usd(t.usdc)}`, html: avatar(t.who, 26) }));
+  const wh = new Set((p.trades || []).filter((t) => t.who && isWhale(p, t)).map((t) => t.who.toLowerCase())), b = traderBoard(p, "all").slice(0, 5).map((r) => r.a.toLowerCase()), set = new Set(b); wh.forEach((x) => set.add(x)); if (S.me) set.add(S.me.toLowerCase()); (JSON.parse(localStorage.getItem("hf-follow") || "[]")).forEach((x) => set.add(x));
+  return (p.trades || []).filter((t) => t.ts && t.who && set.has(t.who.toLowerCase())).slice(-10).map((t) => ({ t: t.ts, price: t.price, buy: t.buy, who: t.who, whale: isWhale(p, t), name: `${uname(t.who)} ${t.buy ? "bought" : "sold"} $${usd(t.usdc)}`, html: avatar(t.who, 26) }));
 }
 function linesOf(p) {
   const out = [], x = myPos(p), c = tpslGet(p); if (x && x.avg) out.push({ id: "entry", price: x.avg, color: "#f4f4f1", title: `Entry ${x.pnl >= 0 ? "+" : "-"}$${Math.abs(x.pnl).toFixed(2)}` });
@@ -659,6 +660,17 @@ function creatorHtml(p) {
 function trendHtml(p) {
   const it = mkItems().filter((x) => x.id !== p.id).sort((x, y) => y.chg - x.chg).slice(0, 10);
   return `<span class="tr-l">Trending</span>` + it.map((x) => `<a href="${x.href}"><b>${esc(x.sym)}</b><em class="${x.chg >= 0 ? "u" : "d"}">${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(0)}%</em></a>`).join("");
+}
+function heatHtml(p) {
+  const tr = (p.trades || []).filter((t) => t.who), cur = p.mk.price; if (!tr.length) return `<p class="prose">No trades yet.</p>`;
+  const px = [...tr.map((t) => t.price), cur], lo = Math.min(...px), hi = Math.max(...px), N = 28, step = (hi - lo) / N || 1, bk = Array(N).fill(0);
+  for (const t of tr) { const i = Math.min(N - 1, Math.floor((t.price - lo) / step)), q = Number(t.tok) / 1e18; bk[i] += t.buy ? q : -q; }
+  const w = bk.map((v) => Math.max(0, v)), mx = Math.max(...w, 1e-9), tot = w.reduce((x, y) => x + y, 0) || 1, ci = Math.min(N - 1, Math.floor((cur - lo) / step));
+  const inP = w.reduce((s2, v, i) => s2 + (i < ci ? v : 0), 0) / tot * 100;
+  const rows = w.map((v, i) => ({ v, i })).reverse().map(({ v, i }) => `<div class="ht-r${i === ci ? " now" : ""}"><span>${fmtP(lo + step * (i + 0.5))}</span><i><b class="${i < ci ? "g" : i > ci ? "r" : "n"}" style="width:${(v / mx) * 100}%"></b></i><em>${tot ? ((v / tot) * 100).toFixed(1) : 0}%</em></div>`).join("");
+  const wl = tr.filter((t) => isWhale(p, t)).slice(-6).reverse();
+  return `<div class="ht"><div class="ht-h"><div><b class="${inP >= 50 ? "u" : "d"}">${inP.toFixed(0)}%</b><small>of tokens are in profit</small></div><p>Each bar is a price; the longer, the more tokens were bought there. Green = bought below today's price (winning). Red = bought above (losing).</p></div>${rows}</div>
+  <div class="wr"><h4>Whale radar</h4>${wl.length ? wl.map((t) => `<div class="wr-i ${t.buy ? "b" : "s"}" data-trader="${t.who}">${avatar(t.who, 26)}<b>${esc(uname(t.who))}</b><span>${t.buy ? "bought" : "sold"} $${usd(t.usdc)}</span><small>${agoS((S.now || Date.now() / 1000) - t.ts)}</small></div>`).join("") : `<p class="fine">No whale has traded yet.</p>`}</div>`;
 }
 function vTerminal(p) {
   if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
@@ -691,7 +703,7 @@ function vTerminal(p) {
         <div class="tx-chart" id="chartpro"></div>
         <div class="tx-strip"><div class="tx-feed" id="tx-feed" aria-label="Live trades">${feedHtml(p)}</div>
     <div class="tx-tools"><button type="button" data-replay>Replay</button><button type="button" data-react="rocket" aria-label="Rocket">${RX.rocket}</button><button type="button" data-react="fire" aria-label="Fire">${RX.fire}</button><button type="button" data-snd aria-pressed="${sndOn()}">Sound</button></div></div>
-        <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["chat", "Comments"], ["top", "Top traders"], ["whales", "Whales"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${k === "whales" ? ICO.whale + " " : ""}${t}</button>`).join("")}</div>
+        <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["heat", "Heatmap"], ["chat", "Comments"], ["top", "Top traders"], ["whales", "Whales"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${k === "whales" ? ICO.whale + " " : ""}${t}</button>`).join("")}</div>
         <div id="term-tab">${termTab(p)}</div>
       </div>
       <aside class="term-side"><button type="button" class="tx-sheet-x" data-sheet-x aria-label="Close">✕</button><div class="tx-safe tx-safe2" id="tx-safe2">${safetyHtml(p)}</div><div class="tx-row2"><div id="tx-rank">${rankHtml(p)}</div><div class="tx-press" id="tx-press">${pressHtml(p)}</div></div>${tradePanel(p)}${posBox(p)}${tpslHtml(p)}
