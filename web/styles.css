@@ -1471,3 +1471,9 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 60; pointer-event
 .cp-tip .ava { width: 22px !important; height: 22px !important; border-radius: 50%; } .cp-tip small { display: block; margin-top: 6px; color: var(--ink-3); font-size: 11.5px; }
 @media (max-width: 1000px) { .cp-tip { display: none !important; } }
 .cp-tip .ava { flex: none; } .cp-tip div .ava { object-fit: cover; }
+
+/* caras más pequeñas, suaves y agrupadas */
+.cp-face { width: 24px !important; height: 24px !important; opacity: .8; } .cp-face:hover { opacity: 1; } .cp-face .ava { width: 20px !important; height: 20px !important; margin: 2px !important; }
+.cp-more { position: absolute; right: -10px; top: -8px; min-width: 20px; height: 18px; padding: 0 5px; border-radius: 999px; background: #f4f4f1; color: #09090b; font: 700 11px var(--mono); display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.cp-tools [data-t="faces"][aria-pressed="false"] { opacity: .55; }
+@media (max-width: 1000px) { .cp-tools [data-t="faces"] { display: none; } }

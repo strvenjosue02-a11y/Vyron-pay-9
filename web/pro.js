@@ -14,7 +14,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   const L = { candles: "Candles", line: "Line", ma: "MA", draw: "Line", clear: "Clear", full: "Full screen", exit: "Exit", vol: "Vol", price: "Price", cap: "Market cap", ...labels };
   const key = `hf-hl-${id}`;
   let hl = []; try { hl = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
-  const st = { cap: false, mode: "candle", ma: !matchMedia("(max-width: 1000px)").matches, draw: false, period, k: 1, last: null };
+  const st = { faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: "candle", ma: !matchMedia("(max-width: 1000px)").matches, draw: false, period, k: 1, last: null };
   el.classList.add("cp");
   el.innerHTML = `<div class="cp-bar">
       <div class="cp-per" role="tablist">${periods.map((k) => `<button type="button" data-per="${k}" aria-selected="${k === period}">${k}</button>`).join("")}</div>
@@ -22,6 +22,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
         <button type="button" data-t="unit" title="Price / Market cap">${L.price}</button>
         <button type="button" data-t="mode">${L.candles}</button>
         <button type="button" data-t="ma" aria-pressed="${st.ma}">${L.ma}</button>
+        <button type="button" data-t="faces" aria-pressed="${st.faces}">${L.faces || "Faces"}</button>
         <button type="button" data-t="draw" aria-pressed="false">${L.draw}</button>
         <button type="button" data-t="clear" title="${L.clear}">⌫</button>
         <button type="button" data-t="full" title="${L.full}" class="cp-full">⛶</button>
@@ -54,11 +55,13 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   function place() {
     if (!data.length) return; const ts = chart.timeScale(), times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; }, k = st.k;
     const stack = {}; ov.querySelectorAll("[data-fi]").forEach((n) => { const f = faces[Number(n.dataset.fi)], x = ts.timeToCoordinate(snap(f.t)), y = candle.priceToCoordinate(f.price * k);
-      if (x == null || y == null) { n.style.display = "none"; return; } const key = Math.round(x / 22) + (f.buy ? "b" : "s"), o = stack[key] || 0; stack[key] = o + 1; n.style.display = ""; n.style.left = x - 15 + "px"; n.style.top = y + (f.buy ? 12 + o * 30 : -42 - o * 30) + "px"; });
+      if (x == null || y == null) { n.style.display = "none"; return; } const key = Math.round(x / 22) + (f.buy ? "b" : "s"), o = stack[key] || 0; stack[key] = o + 1; n.style.display = ""; n.style.left = x - 15 + "px"; const late = times.indexOf(snap(f.t)) >= times.length - 2 ? 22 : 0; n.style.top = y + (f.buy ? 12 + late + o * 30 : -42 - late - o * 30) + "px"; });
     ov.querySelectorAll("[data-li]").forEach((n) => { if (n.dataset.drag === "1" && n.classList.contains("drag")) return; const l = lines[Number(n.dataset.li)], y = candle.priceToCoordinate(l.price * k); if (y == null) { n.style.display = "none"; return; } n.style.display = ""; n.style.top = y - 13 + "px"; });
   }
   function drawOv() {
-    ov.innerHTML = faces.map((f, i) => `<button type="button" class="cp-face ${f.buy ? "b" : "s"}" data-fi="${i}" title="${f.name || ""}">${f.html}</button>`).join("") + lines.map((l, i) => `<div class="cp-ln ${l.drag ? "dr" : ""}" data-li="${i}" style="--c:${l.color}">${l.drag ? "<i></i>" : ""}<span>${l.title}</span></div>`).join("");
+    const times = data.map((c) => c.time), snap = (t) => { let r = times[0]; for (const x of times) { if (x <= t) r = x; else break; } return r; }, groups = new Map();
+    if (st.faces) faces.forEach((f, i) => { const k = snap(f.t) + (f.buy ? "b" : "s"); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(i); });
+    ov.innerHTML = [...groups.values()].map((ix) => { const f = faces[ix[0]]; return `<button type="button" class="cp-face ${f.buy ? "b" : "s"}" data-fi="${ix[0]}" title="${ix.length > 1 ? ix.length + " traders" : (f.name || "")}">${f.html}${ix.length > 1 ? `<b class="cp-more">+${ix.length - 1}</b>` : ""}</button>`; }).join("") + lines.map((l, i) => `<div class="cp-ln ${l.drag ? "dr" : ""}" data-li="${i}" style="--c:${l.color}">${l.drag ? "<i></i>" : ""}<span>${l.title}</span></div>`).join("");
     place();
   }
   ov.addEventListener("click", (e) => { const b = e.target.closest("[data-fi]"); if (b && onFace) onFace(faces[Number(b.dataset.fi)].who); });
@@ -113,6 +116,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     if (t === "unit") { st.cap = !st.cap; b.textContent = st.cap ? L.cap : L.price; }
     if (t === "mode") { st.mode = st.mode === "candle" ? "line" : "candle"; b.textContent = st.mode === "candle" ? L.candles : L.line; }
     if (t === "ma") { st.ma = !st.ma; b.setAttribute("aria-pressed", st.ma); }
+    if (t === "faces") { st.faces = !st.faces; b.setAttribute("aria-pressed", st.faces); try { localStorage.setItem("hf-faces", st.faces ? "1" : "0"); } catch {} }
     if (t === "draw") { st.draw = !st.draw; b.setAttribute("aria-pressed", st.draw); }
     if (t === "clear") { hl = []; save(); }
     if (t === "full") {
