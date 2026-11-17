@@ -35,18 +35,19 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   const chart = createChart(box, {
     autoSize: true,
     layout: { background: { type: "solid", color: "transparent" }, textColor: "#8d8f95", fontSize: 12, fontFamily: "JetBrains Mono, ui-monospace, monospace" },
-    grid: { vertLines: { color: "rgba(255,255,255,.04)" }, horzLines: { color: "rgba(255,255,255,.05)" } },
-    crosshair: { mode: CrosshairMode.Normal, vertLine: { color: "rgba(255,255,255,.35)", style: 3 }, horzLine: { color: "rgba(255,255,255,.35)", style: 3 } },
-    rightPriceScale: { borderColor: "rgba(255,255,255,.08)", scaleMargins: { top: 0.08, bottom: 0.25 } },
-    timeScale: { borderColor: "rgba(255,255,255,.08)", timeVisible: true, secondsVisible: false, rightOffset: 4 },
+    grid: { vertLines: { visible: false }, horzLines: { color: "rgba(255,255,255,.035)" } },
+    watermark: { visible: true, text: "", fontSize: 120, horzAlign: "center", vertAlign: "center", color: "rgba(255,255,255,.035)", fontFamily: "Space Grotesk, sans-serif", fontStyle: "bold" },
+    crosshair: { mode: CrosshairMode.Normal, vertLine: { color: "rgba(255,255,255,.28)", style: 2, width: 1, labelBackgroundColor: "#1c1c20" }, horzLine: { color: "rgba(255,255,255,.28)", style: 2, width: 1, labelBackgroundColor: "#1c1c20" } },
+    rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.1, bottom: 0.26 } },
+    timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false, rightOffset: 10, barSpacing: 11, minBarSpacing: 2 },
     localization: { priceFormatter: (p) => fmtN(p, st.cap) },
   });
-  const candle = chart.addCandlestickSeries({ upColor: UP, downColor: DN, borderVisible: false, wickUpColor: UP, wickDownColor: DN, priceFormat: pf });
+  const candle = chart.addCandlestickSeries({ upColor: UP, downColor: DN, borderVisible: false, wickUpColor: UP + "cc", wickDownColor: DN + "cc", priceFormat: pf });
   const line = chart.addAreaSeries({ lineColor: UP, topColor: "rgba(61,220,151,.22)", bottomColor: "rgba(61,220,151,0)", lineWidth: 2, visible: false, priceFormat: pf });
   const vol = chart.addHistogramSeries({ priceFormat: { type: "volume" }, priceScaleId: "vol", lastValueVisible: false, priceLineVisible: false });
   chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
-  const mo = { lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: pf };
-  const m7 = chart.addLineSeries({ ...mo, color: "#e9e9ee" }), m25 = chart.addLineSeries({ ...mo, color: "#8d8f95" });
+  const mo = { lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: pf };
+  const m7 = chart.addLineSeries({ ...mo, color: "rgba(255,255,255,.75)" }), m25 = chart.addLineSeries({ ...mo, color: "rgba(255,255,255,.3)" });
   let roundLine = null, hlRefs = [], first = true, data = [], lnRefs = [], faces = [], lines = [], allTr = [], heat = [];
   const fog = document.createElement("div"); fog.className = "cp-fog";
   const tip = document.createElement("div"); tip.className = "cp-tip"; box.appendChild(tip);
@@ -92,8 +93,9 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     const d = getData(st.period); st.k = st.cap && d.supply ? d.supply : 1; const k = st.k;
     data = (d.candles || []).filter((c) => c.t).map((c) => ({ time: c.t, open: c.o * k, high: c.h * k, low: c.l * k, close: c.c * k }));
     if (!data.length) return;
+    chart.applyOptions({ watermark: { text: d.symbol || "" } });
     candle.setData(data); line.setData(data.map((c) => ({ time: c.time, value: c.close })));
-    vol.setData((d.candles || []).filter((c) => c.t).map((c) => ({ time: c.t, value: c.v, color: (c.c >= c.o ? UP : DN) + "55" })));
+    vol.setData((d.candles || []).filter((c) => c.t).map((c) => ({ time: c.t, value: c.v, color: (c.c >= c.o ? UP : DN) + "38" })));
     const ma7 = maOf(data, 7), ma25 = maOf(data, 25); m7.setData(st.ma ? ma7 : []); m25.setData(st.ma ? ma25 : []);
     candle.applyOptions({ visible: st.mode === "candle" }); line.applyOptions({ visible: st.mode === "line" });
     if (roundLine) candle.removePriceLine(roundLine);

@@ -1577,3 +1577,21 @@ a.mk-row:hover { box-shadow: inset 2px 0 0 var(--brand); } .tx-feed span.fol, .t
 .meter { height: 10px !important; border-radius: 999px; background: #17171c !important; overflow: hidden; } .meter b { background: var(--brand-grad) !important; border-radius: 999px; box-shadow: 0 0 18px rgba(138,107,255,.7) !important; }
 .ht2 { display: flex; align-items: center; gap: 22px; padding: 18px; border-radius: 20px; background: #0a0a0c; box-shadow: inset 0 0 0 1px #1c1c22; margin-bottom: 16px; } .ht2-m { position: relative; flex: none; } .ht2-m b { position: absolute; inset: 0; display: grid; place-items: center; font: 700 22px var(--mono); letter-spacing: -0.05em; } .ht2 p { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 560px; } .ht2 p b { color: var(--ink); font-size: 16px; }
 @media (max-width: 900px) { .cp-fog { right: 56px; } .cp-tools [data-t="heat"] { display: none; } }
+
+/* ===== Identidad v3: blanco y negro, sin color de marca. Niebla sutil. Gráfico y Mercado pulidos ===== */
+:root { --brand: #f4f4f1; --brand-2: #ffffff; --brand-grad: #f4f4f1; }
+.btn-ember, .btn-cyber, .btn-dark, .panel.cyber .btn, .term-side .panel.cyber .btn { background: #f4f4f1 !important; color: #09090b !important; box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 8px 24px -12px rgba(255,255,255,.35) !important; }
+.btn-ember:hover, .btn-cyber:hover, .btn-dark:hover { background: #fff !important; filter: none; }
+.btn-line:hover { box-shadow: inset 0 0 0 1px #fff !important; }
+.cat-tabs button[aria-selected="true"], .term-tabs button[aria-selected="true"], .cp-per button[aria-selected="true"], .links a[aria-current="page"], .tabs a[aria-current="page"], .cp-tools button[aria-pressed="true"] { box-shadow: inset 0 -2px 0 #fff !important; }
+a.mk-row:hover { box-shadow: inset 2px 0 0 #fff; } .tx-feed span.fol, .tx-ca button:hover, .tx-trend a:hover { box-shadow: inset 0 0 0 1px #fff !important; } .mk-filters button[aria-pressed="true"] { background: #f4f4f1 !important; color: #09090b !important; box-shadow: none !important; }
+.cp-face.w { box-shadow: 0 0 0 2px #fff, 0 0 0 5px rgba(255,255,255,.18), 0 6px 16px rgba(0,0,0,.6) !important; } .cp-ln:not(.dr) { background: #fff; color: #09090b; }
+.hx-t h1 em { color: #fff !important; -webkit-text-fill-color: #fff !important; } .mk-new { box-shadow: inset 0 0 0 1px #4a4a52 !important; color: #fff !important; }
+.pcard { box-shadow: inset 0 0 0 1px #1c1c22 !important; } .pcard:hover { box-shadow: inset 0 0 0 1px #fff !important; transform: translateY(-3px); }
+.meter b { background: #f4f4f1 !important; box-shadow: none !important; }
+/* niebla sutil: casi invisible hasta pasar el mouse */
+.cp-fog { opacity: .35; transition: opacity .35s; } .cp-svg:hover .cp-fog { opacity: 1; }
+/* Mercado con más aire y fotos grandes */
+.mk-row { min-height: 68px; padding: 12px 24px !important; } .mk-row .mk-mark, .mk-row .mark { width: 44px !important; height: 44px !important; } .mk-tok b { font-size: 16px; letter-spacing: -0.02em; } .mk-tok small { font-size: 13px; }
+.mk-list { border-radius: 22px !important; } .mk-head { min-height: 46px; } a.mk-row:hover { background: #0d0d10; }
+@media (max-width: 760px) { .mk-row { border-radius: 20px; padding: 16px 18px !important; } .mk-row .mk-mark, .mk-row .mark { width: 46px !important; height: 46px !important; } }
