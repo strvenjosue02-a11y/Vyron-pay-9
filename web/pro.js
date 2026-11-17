@@ -3,7 +3,7 @@
 // cambio Precio <-> Valor total, vista Velas/Línea y pantalla completa.
 import { createChart, CrosshairMode } from "https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.mjs";
 
-const UP = "#e8508f", DN = "#8f6be8";
+const UP = "#3ddc97", DN = "#ff5d5d";
 const fmtN = (x, cap) => {
   if (cap && x >= 1000) return x >= 1e9 ? (x / 1e9).toFixed(2) + "B" : x >= 1e6 ? (x / 1e6).toFixed(2) + "M" : (x / 1e3).toFixed(1) + "K";
   return x >= 0.01 ? x.toLocaleString("en-US", { maximumFractionDigits: 4 }) : x.toPrecision(3);

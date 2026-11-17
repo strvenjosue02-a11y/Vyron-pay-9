@@ -303,8 +303,8 @@ function candlesSvg(p, period) {
   const line = cs.map((c, i) => `${i ? "L" : "M"}${(i * bw + bw / 2).toFixed(1)} ${y(c.c).toFixed(1)}`).join(" ");
   const yp = y(p.mk.price), ticks = [hi, (hi + lo) / 2, lo].map((v) => `<span style="top:${(y(v) / H) * 100}%">${fmtP(v)}</span>`).join("");
   return `<div class="cd-wrap"><svg class="cd" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Candlestick chart">
-    <defs><linearGradient id="cdA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff2e88" stop-opacity=".28"/><stop offset="1" stop-color="#ff2e88" stop-opacity="0"/></linearGradient>
-      <linearGradient id="cdB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7ab8"/><stop offset="1" stop-color="#ff2e88"/></linearGradient></defs>
+    <defs><linearGradient id="cdA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3ddc97" stop-opacity=".28"/><stop offset="1" stop-color="#3ddc97" stop-opacity="0"/></linearGradient>
+      <linearGradient id="cdB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3ddc97"/><stop offset="1" stop-color="#3ddc97"/></linearGradient></defs>
     ${grid}<path d="${line} L${W - bw / 2} ${PH} L${bw / 2} ${PH}Z" fill="url(#cdA)"/>${vols}
     <line x1="0" x2="${W}" y1="${y(p.mk.round)}" y2="${y(p.mk.round)}" class="cd-round"/>${body}<path d="${line}" class="cd-line"/>
     <line x1="0" x2="${W}" y1="${yp}" y2="${yp}" class="cd-now"/></svg>
@@ -316,7 +316,7 @@ function spark(p) {
   const lo = Math.min(...pts), hi = Math.max(...pts), W = 120, H = 36;
   const d = pts.map((v, i) => `${i ? "L" : "M"}${((i / (pts.length - 1)) * W).toFixed(1)} ${(H - ((v - lo) / (hi - lo || 1)) * H).toFixed(1)}`).join(" ");
   const ly = (H - ((pts[pts.length - 1] - lo) / (hi - lo || 1)) * H).toFixed(1), id = "sg" + Math.random().toString(36).slice(2, 7);
-  return `<svg class="spark" viewBox="-2 -4 ${W + 6} ${H + 8}" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff2e88" stop-opacity=".35"/><stop offset="1" stop-color="#ff2e88" stop-opacity="0"/></linearGradient></defs><path class="sa" d="${d} L${W} ${H} L0 ${H}Z" style="fill:url(#${id});stroke:none;filter:none"/><path d="${d}"/><circle cx="${W}" cy="${ly}" r="2.6" class="spark-dot"/></svg>`;
+  return `<svg class="spark" viewBox="-2 -4 ${W + 6} ${H + 8}" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3ddc97" stop-opacity=".35"/><stop offset="1" stop-color="#3ddc97" stop-opacity="0"/></linearGradient></defs><path class="sa" d="${d} L${W} ${H} L0 ${H}Z" style="fill:url(#${id});stroke:none;filter:none"/><path d="${d}"/><circle cx="${W}" cy="${ly}" r="2.6" class="spark-dot"/></svg>`;
 }
 const vol24 = (p) => (p.trades || []).filter((t) => t.ts > (S.now || 0) - 86400).reduce((a, t) => a + t.usdc, 0n);
 async function loadHolders(p) {
@@ -371,7 +371,7 @@ const ICO = {
 const whaleMin = (p) => Math.max(25, (Number(p.mk?.poolUsdc || 0n) / 1e6) * 0.05); // compra/venta >= 5% del pool
 const isWhale = (p, t) => Number(t.usdc) / 1e6 >= whaleMin(p);
 async function pnlCard(p) {
-  const x = myPos(p); if (!pnlReady(p, x)) return toast("Make a winning trade first.", true); const up = x.pnl >= 0, col = up ? "#e8508f" : "#8f6be8", W = 1200, H = 675;
+  const x = myPos(p); if (!pnlReady(p, x)) return toast("Make a winning trade first.", true); const up = x.pnl >= 0, col = up ? "#3ddc97" : "#ff5d5d", W = 1200, H = 675;
   const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
   g.fillStyle = "#09090b"; g.fillRect(0, 0, W, H);
   const img = logoSrc(p) && await new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = logoSrc(p); });
@@ -403,9 +403,9 @@ async function shareToken(p) {
   x.fillStyle = "#fff"; x.font = "600 48px 'Inter Tight', sans-serif"; x.fillText(`${p.q.symbol} / USDC`, 185, 105);
   x.fillStyle = "#8d8f95"; x.font = "400 26px 'Inter Tight', sans-serif"; x.fillText(p.q.name, 185, 145);
   x.fillStyle = "#fff"; x.font = "700 92px 'Inter Tight', sans-serif"; x.fillText(fmtP(p.mk.price), 60, 300);
-  x.fillStyle = up ? "#e8508f" : "#8f6be8"; x.font = "600 40px 'Inter Tight', sans-serif"; x.fillText(`${up ? "+" : ""}${st.chg.toFixed(2)}% 24h`, 60, 360);
+  x.fillStyle = up ? "#3ddc97" : "#ff5d5d"; x.font = "600 40px 'Inter Tight', sans-serif"; x.fillText(`${up ? "+" : ""}${st.chg.toFixed(2)}% 24h`, 60, 360);
   const cs = buildCandles(p, "5m"), lo = Math.min(...cs.map((k) => k.l)), hi = Math.max(...cs.map((k) => k.h)), cw = 560 / cs.length;
-  cs.forEach((k, i) => { const yy = (v) => 560 - ((v - lo) / (hi - lo || 1)) * 300, X = 600 + i * cw + cw / 2, col = k.c >= k.o ? "#e8508f" : "#8f6be8";
+  cs.forEach((k, i) => { const yy = (v) => 560 - ((v - lo) / (hi - lo || 1)) * 300, X = 600 + i * cw + cw / 2, col = k.c >= k.o ? "#3ddc97" : "#ff5d5d";
     x.strokeStyle = col; x.lineWidth = 1.5; x.beginPath(); x.moveTo(X, yy(k.h)); x.lineTo(X, yy(k.l)); x.stroke(); x.fillStyle = col; const t = yy(Math.max(k.o, k.c)); x.fillRect(X - Math.max(1.5, cw * 0.25), t, Math.max(3, cw * 0.5), Math.max(2, Math.abs(yy(k.o) - yy(k.c)))); });
   x.fillStyle = "#8d8f95"; x.font = "400 24px 'Inter Tight', sans-serif"; x.fillText(`Liquidity $${usd(p.mk.poolUsdc)}  ·  Volume 24h $${usd(st.vol)}`, 60, 520);
   x.fillStyle = "#fff"; x.font = "600 30px 'Inter Tight', sans-serif"; x.fillText("Holdfast", 60, 585); x.fillStyle = "#77757a"; x.font = "400 22px 'Inter Tight', sans-serif"; x.fillText("Back it. Hold it. Trade it.", 210, 585);
@@ -898,8 +898,8 @@ async function backerCard(p) {
   const c = document.createElement("canvas"); c.width = 900; c.height = 1260; const x = c.getContext("2d");
   const g = x.createLinearGradient(0, 0, 0, 1260); g.addColorStop(0, "#1a1b1f"); g.addColorStop(1, "#0f1012");
   x.fillStyle = g; x.beginPath(); x.roundRect(0, 0, 900, 1260, 48); x.fill();
-  const rim = x.createLinearGradient(0, 0, 900, 1260); ["#ff2e88", "#ffd36b", "#4fd1c5", "#7868e6", "#e0335c"].forEach((col, i) => rim.addColorStop(i / 4, col));
-  x.strokeStyle = r.k === "legendary" ? rim : r.k === "common" ? "#393b40" : "#ff2e88"; x.lineWidth = 8; x.beginPath(); x.roundRect(4, 4, 892, 1252, 46); x.stroke();
+  const rim = x.createLinearGradient(0, 0, 900, 1260); ["#f2f2ef", "#ffd36b", "#4fd1c5", "#7868e6", "#e0335c"].forEach((col, i) => rim.addColorStop(i / 4, col));
+  x.strokeStyle = r.k === "legendary" ? rim : r.k === "common" ? "#393b40" : "#f2f2ef"; x.lineWidth = 8; x.beginPath(); x.roundRect(4, 4, 892, 1252, 46); x.stroke();
   x.save(); x.beginPath(); x.roundRect(48, 120, 804, 600, 32); x.clip();
   x.fillStyle = p.meta.color; x.globalAlpha = .25; x.fillRect(48, 120, 804, 600); x.globalAlpha = 1;
   const sun = x.createLinearGradient(0, 200, 0, 680); sun.addColorStop(0, "#ffb27a"); sun.addColorStop(.5, p.meta.color); sun.addColorStop(1, "#3a1440");
