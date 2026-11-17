@@ -1714,3 +1714,26 @@ a.mk-row:hover { box-shadow: inset 2px 0 0 #fff; } .tx-feed span.fol, .tx-ca but
 .cp-alert .ava { border-radius: 50%; } .cp-alert div { display: grid; line-height: 1.15; } .cp-alert b { font-size: 15px; } .cp-alert span { font-size: 14px; color: var(--ink-2); } .cp-alert em { font: 700 17px var(--mono); font-style: normal; } .cp-alert.b em { color: var(--up); } .cp-alert.s em { color: var(--dn); }
 @keyframes alin { from { opacity: 0; transform: translateX(-40px) scale(.9); } } @keyframes alout { to { opacity: 0; transform: translateX(-20px); } }
 @media (max-width: 900px) { .term.tx .cp-svg { height: clamp(440px, 66vh, 680px) !important; } .cp-alert { left: 8px; padding: 8px 14px 8px 8px; } .cp-alert:nth-of-type(1) { top: 46px; } .cp-alert:nth-of-type(2) { top: 94px; } .cp-alert:nth-of-type(3) { top: 142px; } }
+
+/* ===== CELULAR RÁPIDO: encabezado de una línea, gráfico completo, barra de montos de un toque ===== */
+.share-pop { position: fixed; z-index: 5000; left: 12px; right: 12px; bottom: calc(150px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 16px; background: #f4f4f1; color: #09090b; box-shadow: 0 20px 60px rgba(0,0,0,.6); animation: alin .3s ease-out; max-width: 520px; margin: 0 auto; } .share-pop span { flex: 1; font-size: 14px; } .share-pop button { border: 0; border-radius: 10px; background: #09090b; color: #fff; height: 36px; padding: 0 14px; font: 600 14px var(--font); cursor: pointer; } .share-pop i { font-style: normal; cursor: pointer; color: #6c6c74; padding: 4px 6px; }
+@media (min-width: 901px) { .share-pop { bottom: 24px; left: auto; right: 24px; width: 420px; } }
+@media (max-width: 900px) {
+  .term.tx { padding-bottom: 150px !important; }
+  .term.tx .tx-top { display: flex !important; align-items: center; gap: 10px; padding: 0 0 6px !important; flex-wrap: nowrap; }
+  .term.tx .coin3d, .term.tx .tx-top > img { width: 34px !important; height: 34px !important; flex: none; }
+  .term.tx .tx-id { flex: none; } .term.tx .tx-id h1 { font-size: 21px; gap: 6px; flex-wrap: nowrap; } .term.tx .tx-id h1 > span, .term.tx .tx-id > small { display: none !important; } .term.tx .tx-fav { display: none; }
+  .term.tx .tx-px { margin: 0 0 0 auto !important; display: flex !important; flex-direction: column; align-items: flex-end; gap: 0; grid-column: auto !important; } .term.tx .tx-px #tx-capbig { font-size: 26px !important; line-height: 1; } .term.tx .tx-px #tt-delta { font-size: 13px !important; }
+  .term.tx .tx-menu-b { flex: none; }
+  .term.tx .tx-chart { margin: 0 -10px !important; border-radius: 0 !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; }
+  .term.tx .cp-svg { height: calc(100dvh - 300px) !important; min-height: 380px; }
+  .term.tx .cp-bar { padding: 0 8px; } .term.tx .cp-per button { padding: 6px 7px; font-size: 13px; }
+  /* barra inferior: montos de un toque + vender */
+  .term.tx .tx-bar { display: grid !important; grid-template-columns: 1fr 88px; gap: 8px; left: 8px; right: 8px; bottom: calc(66px + env(safe-area-inset-bottom)); }
+  .tx-qb { display: grid; grid-template-columns: repeat(4, 1fr) 40px; gap: 6px; } .tx-bar button { min-height: 52px; border: 0; border-radius: 14px; font: 700 17px var(--mono); cursor: pointer; } .tx-bar .b { background: var(--up); color: #03130b; } .tx-bar .b:active, .tx-bar .b.busy { filter: brightness(1.25); transform: scale(.96); } .tx-bar .m { background: #17171b; color: #fff; font-size: 20px; padding: 0; } .tx-bar .s { background: var(--dn); color: #1a0505; font-family: var(--font); }
+  body:has(.demo-bar) .term.tx .tx-bar { bottom: calc(110px + env(safe-area-inset-bottom)); }
+  /* operaciones: una línea por operación */
+  .cy-trades li { display: grid !important; grid-template-columns: 56px 1fr auto auto; gap: 8px; padding: 9px 4px !important; font-size: 13px; align-items: center; } .cy-trades li > span:nth-child(3) ~ span { color: var(--ink-3); } .cy-trades li .addr.who { display: none; }
+  .cp-alert { transform: scale(.88); transform-origin: left top; }
+}
+@media (max-width: 900px) { .term.tx .cp-svg { height: calc(100dvh - 372px) !important; min-height: 340px; } .cy-trades li { grid-template-columns: 78px 1fr auto auto !important; } }

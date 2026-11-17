@@ -133,11 +133,17 @@ function lcQuoteUi(p) {
   const mn = r.out * (1 - (S.slip || 1) / 100); if ($("#tmin")) $("#tmin").textContent = side === "buy" ? `${fT(mn)} ${p.q.symbol}` : `${fU(mn)} USDC`;
   $("#timp").textContent = `${r.imp.toFixed(2)}%`; $("#timp").classList.toggle("warn", r.imp > 5);
 }
+function offerShare(p, kind, usdAmt) {
+  document.querySelectorAll(".share-pop").forEach((x) => x.remove()); if (!S.me) return;
+  const d = document.createElement("div"); d.className = "share-pop"; d.innerHTML = `<span>${kind === "buy" ? "Bought" : "Sold"} <b>$${usdAmt}</b> of ${esc(p.q.symbol)}</span><button type="button">Share card</button><i aria-label="Close">✕</i>`;
+  d.querySelector("button").onclick = () => { d.remove(); traderCard(p, S.me, { last: { buy: kind === "buy", usd: usdAmt } }); }; d.querySelector("i").onclick = () => d.remove();
+  document.body.appendChild(d); setTimeout(() => d.remove(), 9000);
+}
 async function swapLc(p) {
   lcQuoteUi(p); const q = S.quote; if (!q) return toast("Enter an amount to trade.", true);
   const l = lcGet(p.lc), mb = lcMeBal();
   if (q.side === "buy" ? q.lc > mb.usdc + 1e-9 : q.lc > (mb.tok[l.id] || 0) + 1e-9) return toast("Not enough balance.", true);
-  lcSwap(l, q.side, q.lc, S.me); syncLc(p, l); S.quote = null; toast("Trade done");
+  lcSwap(l, q.side, q.lc, S.me); syncLc(p, l); S.quote = null; toast("Trade done"); offerShare(p, q.side, q.lc.toFixed(2));
   const box = $(".cyber"); if (box) { box.outerHTML = tradePanel(p); bindTrade(p); } const h = posBox(p), el = $("#tx-pos"); if (el) el.outerHTML = h; chartOff?.update();
 }
 // ---- lanzamientos REALES (contrato Launch) llenos: misma terminal, leyendo el pool de Uniswap de verdad
@@ -346,7 +352,7 @@ async function swap(p) {
   fns.push(() => S.wallet.writeContract({ address: CONFIG.swapRouter, abi: ROUTER_ABI, functionName: "exactInputSingle",
     args: [{ tokenIn, tokenOut, fee: 3000, recipient: S.me, amountIn: q.amt, amountOutMinimum: (q.out * BigInt(Math.round(10000 - (S.slip || 1) * 100))) / 10000n, sqrtPriceLimitX96: 0n }] }));
   const ok = await flow(q.side === "buy" ? "Buy" : "Sell", labels, fns, "Trade done");
-  if (ok) { await refresh(); await loadTrades(p); const h = posBox(p), el = $("#tx-pos"); if (el) el.outerHTML = h; else if (h) $(".term-side")?.insertAdjacentHTML("afterbegin", h); S.impKey = ""; }
+  if (ok) { offerShare(p, q.side, (Number(q.amt) / (q.side === "buy" ? 1e6 : 1e18) * (q.side === "buy" ? 1 : p.mk.price)).toFixed(2)); await refresh(); await loadTrades(p); const h = posBox(p), el = $("#tx-pos"); if (el) el.outerHTML = h; else if (h) $(".term-side")?.insertAdjacentHTML("afterbegin", h); S.impKey = ""; }
 }
 
 // ================================================================= terminal de trading y Market
@@ -515,7 +521,7 @@ function boardHtml(p) {
     ${l.length ? `<ol class="lb">${l.map((r, i) => `<li><button type="button" data-trader="${r.a}"><span class="rk">${i + 1}</span>${avatar(r.a, 34)}<span class="nm">${esc(uname(r.a))}<small>${short(r.a)}</small></span><b class="${r.pnl >= 0 ? "u" : "d"}">${r.pnl >= 0 ? "+" : "-"}$${Math.abs(r.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}</b><em class="${r.pct >= 0 ? "u" : "d"}">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(0)}%</em></button></li>`).join("")}</ol>` : `<p class="prose">No trades in this period yet.</p>`}`;
 }
 const loadImg = (src) => new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = src; });
-async function traderPng(p, r, rank) {
+async function traderPng(p, r, rank, opt = {}) {
   try { await document.fonts.load("700 60px 'Space Grotesk'"); await document.fonts.load("600 60px 'JetBrains Mono'"); } catch {}
   const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
   const up = r.pnl >= 0, col = up ? "#ff4fa3" : "#8f6bff", F = "'Space Grotesk', sans-serif", M = "'JetBrains Mono', monospace", rr = (x, y, w, h, k) => { g.beginPath(); g.roundRect(x, y, w, h, k); };
@@ -529,13 +535,16 @@ async function traderPng(p, r, rank) {
   g.textAlign = "right"; g.fillStyle = "#5a5a62"; g.font = `500 32px ${F}`; g.fillText(new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }), W - 76, 140); g.textAlign = "left";
   // gráfico de línea del token con las compras del trader
   const all = (p.trades || []).filter((t) => t.ts && t.price).sort((x, y) => x.ts - y.ts), mine = all.filter((t) => t.who && t.who.toLowerCase() === r.a.toLowerCase());
-  const cx0 = 48, cx1 = W - 48, cy0 = 250, cy1 = 700, pts = all.length ? all : [{ ts: 0, price: p.mk.price }, { ts: 1, price: p.mk.price }];
+  const btokAll = mine.filter((t) => t.buy).reduce((s2, t) => s2 + Number(t.tok) / 1e18, 0), cx0 = 48, cx1 = W - 48, cy0 = 270, cy1 = 700, pts = all.length ? all : [{ ts: 0, price: p.mk.price }, { ts: 1, price: p.mk.price }];
   const t0 = pts[0].ts, t1 = pts[pts.length - 1].ts || t0 + 1, ps = pts.map((t) => t.price), lo = Math.min(...ps), hi = Math.max(...ps), X = (t) => cx0 + ((t - t0) / (t1 - t0 || 1)) * (cx1 - cx0 - 40), Y = (v) => cy1 - ((v - lo) / (hi - lo || 1)) * (cy1 - cy0 - 70) - 20;
   const gr = g.createLinearGradient(0, cy0, 0, cy1); gr.addColorStop(0, up ? "rgba(255,79,163,.30)" : "rgba(143,107,255,.30)"); gr.addColorStop(1, "rgba(0,0,0,0)");
   const path = () => { g.beginPath(); pts.forEach((t, i) => (i ? g.lineTo(X(t.ts), Y(t.price)) : g.moveTo(X(t.ts), Y(t.price)))); };
   path(); g.lineTo(X(t1), cy1 + 10); g.lineTo(X(t0), cy1 + 10); g.closePath(); g.fillStyle = gr; g.fill();
   path(); g.strokeStyle = col; g.lineWidth = 9; g.lineJoin = "round"; g.lineCap = "round"; g.shadowColor = col; g.shadowBlur = 24; g.stroke(); g.shadowBlur = 0;
   const mk6 = [...mine].sort((x, y) => Number(y.usdc) - Number(x.usdc)).slice(0, 6); for (const t of mine.filter((q) => mk6.includes(q) || mine.length <= 6)) { const x = X(t.ts), y = Y(t.price), mc = t.buy ? "#ff4fa3" : "#8f6bff"; g.fillStyle = mc; g.beginPath(); g.arc(x, y, 30, 0, 7); g.fill(); g.strokeStyle = "#050506"; g.lineWidth = 6; g.stroke(); g.strokeStyle = "#16040e"; g.lineWidth = 6; g.lineCap = "round"; g.beginPath(); g.moveTo(x - 12, y); g.lineTo(x + 12, y); if (t.buy) { g.moveTo(x, y - 12); g.lineTo(x, y + 12); } g.stroke(); }
+  { const avgP = r.spent && btokAll ? r.spent / btokAll : 0; if (avgP > 0 && avgP >= lo && avgP <= hi) { const ey = Y(avgP); g.setLineDash([10, 10]); g.strokeStyle = "rgba(255,255,255,.55)"; g.lineWidth = 3; g.beginPath(); g.moveTo(cx0 + 150, ey); g.lineTo(cx1, ey); g.stroke(); g.setLineDash([]); g.fillStyle = "#f4f4f1"; rr(cx0 + 16, ey - 24, 124, 48, 24); g.fill(); g.fillStyle = "#09090b"; g.font = `700 26px ${F}`; g.textAlign = "center"; g.fillText("Entry", cx0 + 78, ey + 9); g.textAlign = "left"; } }
+  { const lt = opt.last ? { buy: opt.last.buy, usd: Number(opt.last.usd) } : mine.length ? { buy: mine[mine.length - 1].buy, usd: Number(mine[mine.length - 1].usdc) / 1e6 } : null;
+    if (lt) { g.fillStyle = "#9a9aa2"; g.font = `500 32px ${F}`; g.textAlign = "left"; g.fillText(`${lt.buy ? "Bought" : "Sold"} $${lt.usd.toLocaleString("en-US", { maximumFractionDigits: 2 })} of ${p.q.symbol}`, 72, 236); } }
   // caja de posición
   g.fillStyle = "#0e0e11"; rr(64, 720, W - 128, 312, 40); g.fill(); g.strokeStyle = "#1f1f25"; g.lineWidth = 2; g.stroke();
   const pr = S.prof?.[r.a.toLowerCase()], ax = 330, ay = 782, AR = 26; g.save(); g.beginPath(); g.arc(ax, ay, AR, 0, 7); g.clip(); let d2 = false;
@@ -552,7 +561,7 @@ async function traderPng(p, r, rank) {
   return new Promise((ok2) => c.toBlob(ok2, "image/png"));
 }
 if (CONFIG.demo) window.__hf = { traderPng, traderBoard, S };
-async function traderCard(p, addr) {
+async function traderCard(p, addr, opt = {}) {
   const lc = String(addr).toLowerCase(), r = traderBoard(p, "all").find((x) => x.a.toLowerCase() === lc) || { a: lc, spent: 0, got: 0, buys: 0, sells: 0, tok: 0, best: 0, val: 0, pnl: 0, pct: 0 }, rank = traderBoard(p, "all").findIndex((x) => x.a.toLowerCase() === lc) + 1; 
   const ov = document.createElement("div"); ov.className = "pnl-ov";
   ov.innerHTML = `<div class="tc"><div class="tc-cover" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button type="button" class="tc-x" data-px aria-label="Close">✕</button>
@@ -565,8 +574,8 @@ async function traderCard(p, addr) {
     ${logoSrc(p) ? `<img class="tc-tok" src="${esc(logoSrc(p))}" alt="">` : ""}</div>`;
   document.body.appendChild(ov); requestAnimationFrame(() => ov.classList.add("on"));
   { const box = document.createElement("div"); box.className = "tc-prev"; box.innerHTML = `<div class="tc-wait">Making your card…</div>`; ov.querySelector(".tc-cover").after(box);
-    traderPng(p, r, rank).then((bl) => { const u = URL.createObjectURL(bl); box.innerHTML = `<img src="${u}" alt="Position card">`; }).catch(() => { box.innerHTML = ""; }); }
-  const blobOf = () => traderPng(p, r, rank); const fname = `holdfast-${p.q.symbol}-${uname(r.a)}.png`;
+    traderPng(p, r, rank, opt).then((bl) => { const u = URL.createObjectURL(bl); box.innerHTML = `<img src="${u}" alt="Position card">`; }).catch(() => { box.innerHTML = ""; }); }
+  const blobOf = () => traderPng(p, r, rank, opt); const fname = `holdfast-${p.q.symbol}-${uname(r.a)}.png`;
   ov.querySelector("[data-dl]").onclick = async () => { const b = await blobOf(), u = URL.createObjectURL(b), l = document.createElement("a"); l.href = u; l.download = fname; l.click(); toast("Image saved"); };
   ov.querySelector("[data-sh]").onclick = async () => { const b = await blobOf(), f = new File([b], fname, { type: "image/png" }); if (navigator.canShare?.({ files: [f] })) { try { await navigator.share({ files: [f], title: `${uname(r.a)} on ${p.q.symbol}` }); } catch {} } else { const u = URL.createObjectURL(b), l = document.createElement("a"); l.href = u; l.download = fname; l.click(); toast("Image saved"); } };
   const fl = ov.querySelector("[data-fol]"); if (fl) fl.onclick = () => { const l = folGet(), k = r.a.toLowerCase(), on = l.includes(k); folSet(on ? l.filter((x) => x !== k) : [...l, k]); fl.textContent = on ? "Follow" : "Following"; toast(on ? `Unfollowed ${uname(r.a)}` : `Following ${uname(r.a)}: you'll get an alert when they trade.`); chartOff?.update(); };
@@ -645,6 +654,7 @@ if (!window.__txKeys) {
   document.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id === "tamt") document.querySelector("[data-act=swap]")?.click(); });
   document.addEventListener("click", (e) => {
     const pb = e.target.closest("[data-pro]"); if (pb) { const on = !proOn(); try { localStorage.setItem("hf-pro", on ? "1" : "0"); } catch {} const t = document.querySelector(".term"); t?.classList.toggle("pro", on); pb.textContent = on ? "Simple" : "Pro"; pb.setAttribute("aria-pressed", on); setTimeout(() => chartOff?.update(), 50); return; }
+    const qb = e.target.closest("[data-qbuy]"); if (qb) { const p = curTok(); if (!p) return; if (!S.me) { $("#connect").click(); return; } S.side = "buy"; const box = $(".cyber"); if (box && !box.querySelector('[data-side="buy"][aria-selected="true"]')) { box.outerHTML = tradePanel(p); bindTrade(p); } const inp = $("#tamt"); if (!inp) return; inp.value = qb.dataset.qbuy; qb.classList.add("busy"); quote(p).then(() => document.querySelector("[data-act=swap]")?.click()).finally(() => setTimeout(() => qb.classList.remove("busy"), 1500)); return; }
     if (e.target.closest("[data-menu]")) { document.querySelector(".tx-id")?.classList.toggle("menu"); return; }
     if (document.querySelector(".tx-id.menu") && !e.target.closest(".tx-id")) document.querySelector(".tx-id")?.classList.remove("menu");
     if (e.target.closest("[data-toks]")) { const t = document.querySelector(".term"); t?.classList.toggle("toks"); if (t?.classList.contains("toks")) setTimeout(() => document.getElementById("tp-q")?.focus(), 40); return; }
@@ -803,7 +813,7 @@ function vTerminal(p) {
           <p>Prices can go up or down. Holdfast doesn't control the market.</p></div>
       </aside>
     </div>
-  <div class="tx-bar"><button type="button" class="b" data-sheet="buy">Buy</button><button type="button" class="s" data-sheet="sell">Sell</button></div><div class="tx-sheet-bg" data-sheet-x></div></section>`;
+  <div class="tx-bar"><div class="tx-qb">${[5, 10, 25, 50].map((v) => `<button type="button" class="b" data-qbuy="${v}">$${v}</button>`).join("")}<button type="button" class="m" data-sheet="buy" aria-label="Other amount">⋯</button></div><button type="button" class="s" data-sheet="sell">Sell</button></div><div class="tx-sheet-bg" data-sheet-x></div></section>`;
 }
 function mkItems() {
   const q = (S.mkQ || "").toLowerCase(), ch = (p) => (p.trades ? stats24(p).chg : ((p.mk.price - p.mk.round) / p.mk.round) * 100);

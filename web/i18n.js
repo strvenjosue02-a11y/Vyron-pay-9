@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Share card": "Compartir tarjeta", "Bought": "Compraste", "Sold": "Vendiste", "of": "de",
   "bought": "compró", "sold": "vendió",
   "Flow": "Flujo", "Net money in": "Dinero neto que entra",
   "Trade it": "Operarlo", "Loading the market…": "Cargando el mercado…",
