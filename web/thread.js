@@ -49,9 +49,9 @@ function xpHtml(key, m, ctx, me, kids, isReply, i) {
   const likes = (m.r && m.r["♥"]) || 0; let liked = false; try { liked = localStorage.getItem("hf-thmy-" + key + m.id + "♥") === "1"; } catch {}
   const others = Object.entries(m.r || {}).filter(([e, n]) => e !== "♥" && n > 0).map(([e, n]) => `<button type="button" class="th-rx on" data-thr="${e}" data-id="${m.id}">${e} <b>${n}</b></button>`).join("");
   const body = m.g ? `<div class="th-gifw"><img src="${esc(m.g)}" alt="GIF" loading="lazy" referrerpolicy="no-referrer"></div>${m.t ? `<p>${esc(m.t)}</p>` : ""}` : `<p>${esc(m.t)}</p>`;
-  return `<article class="xp${isReply ? " rp" : ""}${mine ? " me" : ""}" data-id="${m.id}" style="--i:${i || 0}"><div class="xp-l">${(ctx.avatar || dAva)(m.a || m.n, isReply ? 30 : 42)}${kids ? '<i class="xp-line"></i>' : ""}</div>
-    <div class="xp-r"><div class="xp-h"><span class="xp-n"><b>${esc(m.n)}</b>${ctx.rank?.(m) || ""}${tag}</span>${!mine && m.a && ctx.toggleFol ? `<button type="button" class="xp-f${fol ? " on" : ""}" data-xpf="${esc(m.a)}">${fol ? T("Following", "Siguiendo") : T("Follow", "Seguir")}</button>` : ""}</div><div class="xp-m"><span class="xp-hd">@${slug(m.n)}</span><span class="xp-t">${hms(m.ts)}</span></div>
-    ${body}${m.call ? callHtml(m, ctx.callState?.(m)) : ""}${(!isReply && ctx.card?.(m)) || ""}${others ? `<div class="xp-o">${others}</div>` : ""}
+  return `<article class="xp${isReply ? " rp" : ""}${mine ? " me" : ""}" data-id="${m.id}" style="--i:${i || 0}"><div class="xp-l"><span class="xp-av">${(ctx.avatar || dAva)(m.a || m.n, isReply ? 30 : 42)}${!mine && !isReply && m.a && ctx.toggleFol ? `<button type="button" class="xp-fb${fol ? " on" : ""}" data-xpf="${esc(m.a)}" aria-label="${fol ? T("Following", "Siguiendo") : T("Follow", "Seguir")}">${fol ? "✓" : "+"}</button>` : ""}</span>${kids ? '<i class="xp-line"></i>' : ""}</div>
+    <div class="xp-r"><div class="xp-h"><span class="xp-n"><b>${esc(m.n)}</b>${ctx.rank?.(m) || ""}${tag}</span></div><div class="xp-m"><span class="xp-hd">@${slug(m.n)}</span><span class="xp-t">${hms(m.ts)}</span></div>
+    ${body}${m.call ? callHtml(m, ctx.callState?.(m)) : ""}${(!isReply && m.pos && ctx.card?.(m)) || ""}${others ? `<div class="xp-o">${others}</div>` : ""}
     <div class="xp-a"><button type="button" data-thre="${m.id}" aria-label="${T("Reply", "Responder")}">${IC.re}<b>${kids ? kids.n : ""}</b></button><button type="button" data-xl="${m.id}" class="${liked ? "on" : ""}" aria-label="Like">${IC.lk}<b>${likes || ""}</b></button><button type="button" data-xs="${m.id}" aria-label="${T("Share", "Compartir")}">${IC.sh}</button>${m.v ? `<span class="xp-v">${IC.ey}${m.v}</span>` : ""}</div>${kids ? kids.h : ""}</div></article>`;
 }
 function xListHtml(key, ctx, msgs, me) {
@@ -68,17 +68,38 @@ function listHtml(key) {
 function ensureCalls(key) {
   const px = REG.get(key)?.price?.(); if (!DEMO || !px) return; const m = load(key) || []; if (m.length < 5 || m.some((x) => x.call)) return;
   const mk = (i, x, h, f, r, tx) => { if (m[i]) { m[i].call = { x, h, p0: px * f, ...(r ? { res: r } : {}) }; m[i].t = tx; m[i].ts -= 3600; } };
-  mk(1, 1.5, 7200, 0.55, "hit", "esto se va a 1.5x"); mk(2, 5, 3600, 0.9, "miss", "5x en una hora, confíen"); mk(3, 2, 86400, 0.9, "", "mi meta: 2x hoy"); save(key, m);
+  mk(1, 1.5, 7200, 0.55, "hit", "esto se va a 1.5x"); mk(2, 5, 3600, 0.9, "miss", "5x en una hora, confíen"); mk(3, 2, 86400, 0.9, "", "mi meta: 2x hoy"); if (m[0]) m[0].pos = true; if (m[4]) m[4].pos = true; save(key, m);
 }
 export function threadHtml(key, ctx) {
   REG.set(key, ctx); if (DEMO || ctx.seed) seed(key); ensureCalls(key);
   const me = ctx.me?.(), n = (load(key) || []).length;
   const lockH = `<a class="th-lock" href="${ctx.lockHref || "#/"}"><b>${T("Only holders can post", "Solo los holders pueden publicar")}</b><small>${T("Buy", "Compra")} ${esc(ctx.sym || "")} ${T("to join the conversation. Everyone can read and react.", "para entrar a la conversación. Todos pueden leer y reaccionar.")}</small></a>`;
-  const comp = me && ctx.canPost && !ctx.canPost() ? lockH : me ? `<form class="th-f" data-thf><div class="th-rp" hidden></div><div class="th-row">${(ctx.avatar || dAva)(me.a, 34)}${ctx.x ? '<span class="th-pr">&gt;</span>' : ""}<textarea rows="1" maxlength="200" placeholder="${T("Write something…", "Escribe algo…")}" aria-label="${T("Message", "Mensaje")}"></textarea><button class="th-s" type="submit" aria-label="${T("Send", "Enviar")}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div><div class="th-em">${ctx.x ? `<button type="button" class="th-call" data-thcall>${T("Call", "Llamada")}</button>` : ""}<button type="button" class="th-gif" data-thg>GIF</button>${EMOJI.map((e) => `<button type="button" data-the="${e}">${e}</button>`).join("")}<span class="th-c">0/200</span></div>${ctx.x ? `<div class="th-cp" hidden><small>${T("Target", "Meta")}</small><div class="th-cg">${[1.5, 2, 5, 10].map((v) => `<button type="button" data-cx="${v}">${v}x</button>`).join("")}</div><small>${T("Time", "Plazo")}</small><div class="th-cg">${[[3600, "1 h"], [86400, "24 h"], [604800, "7 d"]].map(([v, l]) => `<button type="button" data-ch="${v}">${l}</button>`).join("")}</div></div>` : ""}<div class="th-gp" hidden><label class="th-up"><input type="file" accept="image/gif,image/webp,image/png,image/jpeg" data-thgf>${T("Upload from your gallery", "Subir desde tu galería")}<small>${T("Up to 350 KB", "Hasta 350 KB")}</small></label><div class="th-ln"><input type="url" placeholder="${T("Or paste a GIF link (https)", "O pega el enlace de un GIF (https)")}" data-thgu><button type="button" data-thgl>${T("Add", "Añadir")}</button></div></div></form>`
+  const comp = me && ctx.canPost && !ctx.canPost() ? lockH : me ? `<form class="th-f" data-thf><div class="th-rp" hidden></div>${ctx.x ? '<div class="th-cmd" hidden></div>' : ""}<div class="th-row">${(ctx.avatar || dAva)(me.a, 34)}${ctx.x ? '<span class="th-pr">&gt;</span>' : ""}<textarea rows="1" maxlength="200" placeholder="${ctx.x ? T("Write, or type / for commands", "Escribe o usa / para comandos") : T("Write something…", "Escribe algo…")}" aria-label="${T("Message", "Mensaje")}"></textarea><button class="th-s" type="submit" aria-label="${T("Send", "Enviar")}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>${ctx.x ? '<div class="th-cc" hidden></div><div class="th-er" hidden></div>' : ""}<div class="th-em">${ctx.x ? `<button type="button" class="th-sl" data-thsl aria-label="${T("Commands", "Comandos")}">/</button>` : ""}<button type="button" class="th-gif" data-thg>GIF</button>${EMOJI.map((e) => `<button type="button" data-the="${e}">${e}</button>`).join("")}<span class="th-c">0/200</span></div><div class="th-gp" hidden><label class="th-up"><input type="file" accept="image/gif,image/webp,image/png,image/jpeg" data-thgf>${T("Upload from your gallery", "Subir desde tu galería")}<small>${T("Up to 350 KB", "Hasta 350 KB")}</small></label><div class="th-ln"><input type="url" placeholder="${T("Or paste a GIF link (https)", "O pega el enlace de un GIF (https)")}" data-thgu><button type="button" data-thgl>${T("Add", "Añadir")}</button></div></div></form>`
     : `<button type="button" class="th-con" data-thc>${T("Connect your wallet to join the thread", "Conecta tu wallet para escribir en el hilo")}</button>`;
   return `<div class="th${ctx.x ? " th-x th-in" : ""}" data-th="${esc(key)}"><div class="th-top"><b>${ctx.x ? T("Posts", "Publicaciones") : T("Thread", "Hilo")}</b><small>${n} ${T("messages", "mensajes")}</small></div>${comp}<div class="th-list">${listHtml(key)}</div></div>`;
 }
 const refresh = (root) => { const key = root.dataset.th; if (!REG.has(key)) return; setTimeout(() => root.classList.remove("th-in"), 900); root.querySelector(".th-list").innerHTML = listHtml(key); const s = root.querySelector(".th-top small"); if (s) s.textContent = `${(load(key) || []).length} ${T("messages", "mensajes")}`; };
+
+const CMDS = () => [
+  { c: "/call", a: "/call 2x 24h ", d: T("Make a call: target and deadline", "Haz una llamada: meta y plazo"), s: "/call 2x 24h" },
+  { c: "/pos", a: "/pos ", d: T("Show my position as proof", "Muestra mi posición como prueba"), s: "proof" },
+  { c: "/pnl", a: "/pnl ", d: T("Share my profit", "Comparte mi ganancia"), s: "pnl" },
+  { c: "/entry", a: "/entry ", d: T("Share my entry price", "Comparte mi precio de entrada"), s: "entry" },
+  { c: "/alert", a: "/alert ", d: T("Price alert, e.g. /alert 0.002", "Alerta de precio, ej. /alert 0.002"), s: "/alert 0.002" },
+  { c: "/gif", a: "/gif", d: T("Add a GIF", "Agrega un GIF"), s: "gif" },
+];
+function cmdUpdate(root, ta) {
+  const box = root.querySelector(".th-cmd"), cc = root.querySelector(".th-cc"), er = root.querySelector(".th-er"); if (!box) return; if (er) er.hidden = true;
+  const v = ta.value;
+  if (v.startsWith("/") && !/\s/.test(v)) { const l = CMDS().filter((c) => c.c.startsWith(v.toLowerCase())); box.hidden = !l.length; box.innerHTML = l.map((c) => `<button type="button" data-cmd="${c.c}"><b>${c.c}</b><span>${c.d}</span><kbd>${c.s}</kbd></button>`).join(""); } else box.hidden = true;
+  const mc = v.match(/^\/call\b\s*(?:(\d+(?:\.\d+)?)x)?\s*(?:(\d+[hd]))?/i);
+  if (mc) { const cx = mc[1] ? mc[1] + "x" : "", ch = (mc[2] || "").toLowerCase();
+    cc.hidden = false; cc.innerHTML = `<div>${["1.5x", "2x", "5x", "10x"].map((x) => `<button type="button" data-qx="${x}" class="${cx === x ? "on" : ""}">${x}</button>`).join("")}</div><div>${["1h", "24h", "7d"].map((x) => `<button type="button" data-qh="${x}" class="${ch === x ? "on" : ""}">${x}</button>`).join("")}</div>`; } else if (cc) cc.hidden = true;
+}
+function cmdPick(root, patch) {
+  const ta = root.querySelector("textarea"), m = ta.value.match(/^\/call\s*(?:(\d+(?:\.\d+)?)x)?\s*(?:(\d+[hd]))?\s*([\s\S]*)$/i); const cur = { x: m && m[1] ? m[1] + "x" : "2x", h: m && m[2] ? m[2].toLowerCase() : "24h", rest: m ? m[3] : "" };
+  const n = { ...cur, ...patch }; ta.value = `/call ${n.x} ${n.h} ${n.rest}`; ta.focus(); ta.dispatchEvent(new Event("input", { bubbles: true }));
+}
 function postGif(root, src) {
   const key = root.dataset.th, ctx = REG.get(key), me = ctx.me?.(); if (!me || !gifOk(src)) return false;
   const ta = root.querySelector("textarea"), cap = (ta?.value || "").trim().slice(0, 200), m = load(key) || [];
@@ -86,9 +107,21 @@ function postGif(root, src) {
   if (ta) { ta.value = ""; ta.style.height = ""; } root.dataset.re = ""; const rp = root.querySelector(".th-rp"); if (rp) rp.hidden = true; const gp = root.querySelector(".th-gp"); if (gp) gp.hidden = true; refresh(root); return true;
 }
 function post(root, text) {
-  const key = root.dataset.th, ctx = REG.get(key), me = ctx.me?.(); const cx = Number(root.dataset.callx || 0), ch = Number(root.dataset.callh || 0), call = cx && ch && ctx.price ? { x: cx, h: ch, p0: ctx.price() } : undefined; const txt = text.trim() || (call ? `${cx}x · ${fmtH(ch)}` : ""); if (!me || !txt) return;
-  const m = load(key) || []; m.push({ id: "m" + nowS() + Math.random().toString(36).slice(2, 6), n: me.n, a: me.a, t: txt.slice(0, 200), ts: nowS(), r: {}, re: root.dataset.re || undefined, call }); save(key, m);
-  root.dataset.re = ""; root.dataset.callx = ""; root.dataset.callh = ""; root.querySelectorAll("[data-cx].on, [data-ch].on").forEach((b) => b.classList.remove("on")); root.querySelector(".th-cp")?.setAttribute("hidden", ""); root.querySelector(".th-call")?.classList.remove("on"); const rp = root.querySelector(".th-rp"); if (rp) rp.hidden = true; refresh(root);
+  const key = root.dataset.th, ctx = REG.get(key), me = ctx.me?.(); if (!me) return false; const er = root.querySelector(".th-er");
+  const say = (msg, ok) => { if (er) { er.textContent = msg; er.hidden = false; er.classList.toggle("ok", !!ok); } return !!ok; };
+  let txt = text.trim(), call, pos; const m0 = txt.match(/^\/(\w+)\s*([\s\S]*)$/);
+  if (m0) { const c = m0[1].toLowerCase(), rest = m0[2].trim();
+    if (c === "call") { const mm = rest.match(/^(\d+(?:\.\d+)?)x\s+(\d+)(h|d)\b\s*([\s\S]*)$/i); if (!mm) return say(T("Use: /call 2x 24h your message", "Usa: /call 2x 24h tu mensaje"));
+      const x = Number(mm[1]), h = Number(mm[2]) * (mm[3].toLowerCase() === "d" ? 86400 : 3600); if (!(x > 1 && x <= 100 && h >= 3600 && h <= 30 * 86400)) return say(T("Target from 1.1x to 100x, time from 1 h to 30 d", "Meta de 1.1x a 100x y plazo de 1 h a 30 d"));
+      if (!ctx.price) return false; call = { x, h, p0: ctx.price() }; txt = mm[4].trim() || `${x}x · ${fmtH(h)}`; }
+    else if (c === "pos" || c === "pnl" || c === "entry") { const st = ctx.myStats?.(); if (!st) return say(T("You have no position in this token yet.", "Todavía no tienes posición en este token.")); pos = true;
+      txt = c === "pos" ? (rest || T("My position", "Mi posición")) : c === "pnl" ? `${rest ? rest + " · " : ""}${T("Profit", "Ganancia")} ${st.pnl} (${st.pct})` : `${rest ? rest + " · " : ""}${T("Entry", "Entrada")} ${st.avg}`; }
+    else if (c === "alert") { const v = parseFloat(rest.replace("$", "")); if (!(v > 0)) return say(T("Use: /alert 0.002", "Usa: /alert 0.002")); ctx.setAlert?.(v); return say(T("Price alert set at $", "Alerta de precio en $") + v, true); }
+    else if (c === "gif") { root.querySelector(".th-gp")?.removeAttribute("hidden"); return true; }
+    else return say(T("Unknown command. Type / to see them.", "Comando desconocido. Escribe / para verlos.")); }
+  if (!txt) return false;
+  const m = load(key) || []; m.push({ id: "m" + nowS() + Math.random().toString(36).slice(2, 6), n: me.n, a: me.a, t: txt.slice(0, 200), ts: nowS(), r: {}, re: root.dataset.re || undefined, call, pos }); save(key, m);
+  root.dataset.re = ""; const rp = root.querySelector(".th-rp"); if (rp) rp.hidden = true; const bx = root.querySelector(".th-cmd"); if (bx) bx.hidden = true; const cc = root.querySelector(".th-cc"); if (cc) cc.hidden = true; if (er) er.hidden = true; refresh(root); return true;
 }
 function reactTo(root, id, emoji) {
   const key = root.dataset.th, m = load(key) || [], x = m.find((y) => y.id === id); if (!x) return; const mk = "hf-thmy-" + key + x.id + emoji; let had = false; try { had = localStorage.getItem(mk) === "1"; } catch {}
@@ -109,20 +142,21 @@ function openMenu(li) {
 }
 if (!window.__thInit) {
   window.__thInit = 1;
-  document.addEventListener("submit", (e) => { const f = e.target.closest("[data-thf]"); if (!f) return; e.preventDefault(); const root = f.closest(".th"), ta = f.querySelector("textarea"); post(root, ta.value); ta.value = ""; ta.style.height = ""; f.querySelector(".th-c").textContent = "0/200"; });
+  document.addEventListener("submit", (e) => { const f = e.target.closest("[data-thf]"); if (!f) return; e.preventDefault(); const root = f.closest(".th"), ta = f.querySelector("textarea"); if (post(root, ta.value)) { ta.value = ""; ta.style.height = ""; f.querySelector(".th-c").textContent = "0/200"; } });
   document.addEventListener("change", (e) => { const fi = e.target.closest("[data-thgf]"); if (!fi) return; const f = fi.files[0]; fi.value = ""; if (!f) return; const root = fi.closest(".th");
     if (f.size > MAXGIF) { alert(T("That GIF is over 350 KB. Pick a lighter one or paste a link.", "Ese GIF pesa más de 350 KB. Elige uno más liviano o pega un enlace.")); return; }
     const rd = new FileReader(); rd.onload = () => postGif(root, String(rd.result)); rd.readAsDataURL(f); });
-  document.addEventListener("input", (e) => { const ta = e.target.closest(".th-f textarea"); if (!ta) return; ta.style.height = "auto"; ta.style.height = Math.min(110, ta.scrollHeight) + "px"; ta.closest(".th-f").querySelector(".th-c").textContent = ta.value.length + "/200"; });
-  document.addEventListener("keydown", (e) => { const ta = e.target.closest?.(".th-f textarea"); if (ta && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ta.closest("form").requestSubmit(); } });
+  document.addEventListener("input", (e) => { const ta = e.target.closest(".th-f textarea"); if (!ta) return; cmdUpdate(ta.closest(".th"), ta); ta.style.height = "auto"; ta.style.height = Math.min(110, ta.scrollHeight) + "px"; ta.closest(".th-f").querySelector(".th-c").textContent = ta.value.length + "/200"; });
+  document.addEventListener("keydown", (e) => { const ta = e.target.closest?.(".th-f textarea"); if (ta && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); const bx = ta.closest("form").querySelector(".th-cmd"); if (bx && !bx.hidden && /^\/\w*$/.test(ta.value.trim())) { bx.querySelector("[data-cmd]")?.click(); return; } ta.closest("form").requestSubmit(); } });
   document.addEventListener("click", (e) => {
     const root = e.target.closest(".th"); if (!root) return;
     const xl = e.target.closest("[data-xl]"); if (xl) { reactTo(root, xl.dataset.xl, "♥"); return; }
     const xf = e.target.closest("[data-xpf]"); if (xf) { REG.get(root.dataset.th)?.toggleFol?.(xf.dataset.xpf); refresh(root); return; }
     if (e.target.closest("[data-xs]")) { try { navigator.clipboard?.writeText(location.href); } catch {} return; }
-    if (e.target.closest("[data-thcall]")) { const cp = root.querySelector(".th-cp"); cp.hidden = !cp.hidden; e.target.closest("[data-thcall]").classList.toggle("on", !cp.hidden); return; }
-    const cxb = e.target.closest("[data-cx]"); if (cxb) { root.dataset.callx = cxb.dataset.cx; root.querySelectorAll("[data-cx]").forEach((b) => b.classList.toggle("on", b === cxb)); return; }
-    const chb = e.target.closest("[data-ch]"); if (chb) { root.dataset.callh = chb.dataset.ch; root.querySelectorAll("[data-ch]").forEach((b) => b.classList.toggle("on", b === chb)); return; }
+    const cm = e.target.closest("[data-cmd]"); if (cm) { const c = CMDS().find((x) => x.c === cm.dataset.cmd), ta = root.querySelector("textarea"); if (c.c === "/gif") { ta.value = ""; root.querySelector(".th-gp").hidden = false; root.querySelector(".th-cmd").hidden = true; } else { ta.value = c.a; ta.focus(); ta.dispatchEvent(new Event("input", { bubbles: true })); } return; }
+    const qx = e.target.closest("[data-qx]"); if (qx) { cmdPick(root, { x: qx.dataset.qx }); return; }
+    const qh = e.target.closest("[data-qh]"); if (qh) { cmdPick(root, { h: qh.dataset.qh }); return; }
+    if (e.target.closest("[data-thsl]")) { const ta = root.querySelector("textarea"); if (!ta.value.startsWith("/")) ta.value = "/" + ta.value.replace(/^\//, ""); ta.focus(); ta.dispatchEvent(new Event("input", { bubbles: true })); return; }
     if (e.target.closest("[data-thg]")) { const gp = root.querySelector(".th-gp"); gp.hidden = !gp.hidden; return; }
     if (e.target.closest("[data-thgl]")) { const u = root.querySelector("[data-thgu]"); if (!postGif(root, u.value.trim())) u.setCustomValidity?.("https"); u.value = ""; return; }
     if (e.target.closest("[data-thc]")) { document.getElementById("connect")?.click(); return; }
