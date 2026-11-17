@@ -114,6 +114,11 @@ button { background: none; border: 0; cursor: pointer; }
 .filter-note { text-align: center; color: var(--muted); font-size: 14px; margin: 12px 0 0; min-height: 22px; }
 
 .course { padding: 56px 0 0; text-align: center; }
+/* Foto de sección, de borde a borde en el celular */
+.ph { position: relative; margin: 0 -20px 40px; aspect-ratio: 4 / 5; overflow: hidden; background: #0E0E0F; }
+.ph img { position: absolute; left: 0; top: -8%; width: 100%; height: 116%; object-fit: cover; display: block; will-change: transform; }
+.ph .ref { position: absolute; left: 12px; bottom: 12px; font-size: 12.5px; font-weight: 500; color: #F3EAE1; background: rgba(0,0,0,.45); padding: 3px 10px; border-radius: 999px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+@media (min-width: 680px) { .ph { margin: 0 0 44px; aspect-ratio: 16 / 11; } }
 .course h3 { font-style: italic; font-size: clamp(30px, 8vw, 40px); line-height: 1.1; margin: 0 0 6px; }
 .dishes { list-style: none; margin: 0; padding: 0; }
 .dish { padding: 24px 0; border-bottom: 1px solid var(--line); }
@@ -130,6 +135,18 @@ button { background: none; border: 0; cursor: pointer; }
 
 /* ================= Degustación ================= */
 .tasting { margin: 88px 0 0; padding: 48px 26px; border: 1px solid var(--line); outline: 1px solid var(--line); outline-offset: -8px; text-align: center; }
+/* Con foto: la degustación se monta sobre la imagen, siempre en tonos claros sobre oscuro */
+.tasting.photo {
+  --ink: #F3EAE1; --muted: #D2C6BC; --line: rgba(220, 194, 145, .45);
+  position: relative; overflow: hidden; color: var(--ink); border: 0; outline: 0; padding: 0;
+  margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); min-height: 120svh; display: flex; align-items: flex-end; justify-content: center;
+}
+.tasting.photo > img { position: absolute; inset: -8% 0; width: 100%; height: 116%; object-fit: cover; object-position: 50% 40%; will-change: transform; }
+.tasting.photo::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(8,6,6,0) 20%, rgba(8,6,6,.55) 55%, rgba(8,6,6,.92) 100%); }
+.tasting.photo .box { position: relative; z-index: 2; margin: 0 20px 48px; max-width: 520px; width: 100%; padding: 44px 24px; border: 1px solid var(--line); outline: 1px solid var(--line); outline-offset: -8px;
+  background: rgba(10, 8, 8, .38); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.tasting.photo .ref { position: absolute; z-index: 2; left: 12px; top: 12px; font-size: 12.5px; font-weight: 500; background: rgba(0,0,0,.45); padding: 3px 10px; border-radius: 999px; }
+.tasting.photo .btn.solid, .tasting.photo .btn { color: var(--ink); border-color: #DCC291; }
 .tasting h2 { font-size: clamp(32px, 8.5vw, 44px); margin: 0 0 12px; line-height: 1.1; }
 .tasting p { margin: 0 auto; color: var(--muted); max-width: 30ch; }
 .tasting .big { font-family: "Newsreader", Georgia, serif; font-size: 46px; margin: 22px 0 0; line-height: 1; }
@@ -379,6 +396,7 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
   };
   const q = new URLSearchParams(location.search);
   const TZ = "America/Costa_Rica";
+  const DEMO = q.get("cliente") !== "1" && R.modoDemo !== false;
 
   const PALETAS = {
     bordeaux:   { nombre: "Bordeaux",   bg: "#2A0E14", rim: "#DCC291" },
@@ -400,7 +418,7 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
       openNow: (c) => "Abierto ahora, cierra a las " + c, opensAt: (d, h) => "Cerrado, abre " + d + " a las " + h, today: "hoy", tomorrow: "mañana",
       filters: { sg: "Sin gluten", v: "Vegetariano", vg: "Vegano", mariscos: "Sin mariscos", nueces: "Sin nueces", lacteos: "Sin lácteos" },
       showing: (n) => n === 1 ? "1 plato para vos" : n + " platos para vos", clear: "Quitar filtros", none: "Ningún plato cumple todos esos filtros.",
-      sold: "Agotado hoy", with: "Con ", occ: { "": "Ninguna en especial", cumple: "Cumpleaños", aniversario: "Aniversario", negocios: "Cena de negocios", propuesta: "Propuesta de matrimonio", chef: "Mesa del chef", playa: "Cena privada en la playa", jazz: "Jazz los viernes", degustacion: "Menú degustación" },
+      sold: "Agotado hoy", with: "Con ", ref: "Foto de referencia", occ: { "": "Ninguna en especial", cumple: "Cumpleaños", aniversario: "Aniversario", negocios: "Cena de negocios", propuesta: "Propuesta de matrimonio", chef: "Mesa del chef", playa: "Cena privada en la playa", jazz: "Jazz los viernes", degustacion: "Menú degustación" },
       msg: { hi: "Hola, quisiera reservar en ", date: "Día", time: "Hora", people: "Personas", occ: "Ocasión", name: "Nombre", notes: "Notas" },
       days: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"], closedDay: "Cerrado",
       reviews: (n) => n.toLocaleString("es-CR") + " reseñas en Google",
@@ -420,7 +438,7 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
       openNow: (c) => "Open now, closes at " + c, opensAt: (d, h) => "Closed, opens " + d + " at " + h, today: "today", tomorrow: "tomorrow",
       filters: { sg: "Gluten-free", v: "Vegetarian", vg: "Vegan", mariscos: "No shellfish", nueces: "No nuts", lacteos: "No dairy" },
       showing: (n) => n === 1 ? "1 dish for you" : n + " dishes for you", clear: "Clear filters", none: "No dish matches all those filters.",
-      sold: "Sold out today", with: "With ", occ: { "": "Nothing special", cumple: "Birthday", aniversario: "Anniversary", negocios: "Business dinner", propuesta: "Marriage proposal", chef: "Chef's table", playa: "Private beach dinner", jazz: "Jazz Friday", degustacion: "Tasting menu" },
+      sold: "Sold out today", with: "With ", ref: "Reference photo", occ: { "": "Nothing special", cumple: "Birthday", aniversario: "Anniversary", negocios: "Business dinner", propuesta: "Marriage proposal", chef: "Chef's table", playa: "Private beach dinner", jazz: "Jazz Friday", degustacion: "Tasting menu" },
       msg: { hi: "Hello, I'd like to book a table at ", date: "Day", time: "Time", people: "Guests", occ: "Occasion", name: "Name", notes: "Notes" },
       days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], closedDay: "Closed",
       reviews: (n) => n.toLocaleString("en-US") + " Google reviews",
@@ -526,7 +544,8 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
     $("#courses").innerHTML = R.categorias.map((c) => {
       const items = c.platos.filter(passes); shown += items.length;
       if (!items.length) return "";
-      return '<section class="course" id="' + c.id + '"><h3>' + esc(t(c.nombre)) + '</h3><ul class="dishes">' + items.map((p) => {
+      const ph = c.foto ? '<figure class="ph"><img src="' + c.foto + '" alt="" loading="lazy" decoding="async">' + (DEMO ? '<span class="ref">' + L().ref + "</span>" : "") + "</figure>" : "";
+      return '<section class="course" id="' + c.id + '">' + ph + "<h3>" + esc(t(c.nombre)) + '</h3><ul class="dishes">' + items.map((p) => {
         const mk = (p.marcas || []).map((k) => L().mk[k]).join(" ");
         return '<li class="dish' + (p.agotado ? " out" : "") + '"><h4>' + esc(t(p.nombre)) + (mk ? '<span class="mk">' + mk + "</span>" : "") + "</h4>" +
           (p.desc ? "<p>" + esc(t(p.desc)) + "</p>" : "") +
@@ -540,9 +559,15 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
 
     const d = R.degustacion;
     $("#degustacion").hidden = !d;
-    if (d) $("#degustacion").innerHTML = "<h2>" + esc(t(d.nombre)) + "</h2><p>" + esc(t(d.desc)) + '</p><div class="big">' + price(d.precio) +
-      '</div><div class="per">' + L().per + '</div><div class="pairing">' + esc(t(d.maridaje)) + "<b>" + price(d.precioMaridaje) + "</b></div>" +
-      '<a class="btn" href="#reservar" data-occ="degustacion">' + L().tastingBtn + "</a>";
+    if (d) {
+      const inner = "<h2>" + esc(t(d.nombre)) + "</h2><p>" + esc(t(d.desc)) + '</p><div class="big">' + price(d.precio) +
+        '</div><div class="per">' + L().per + '</div><div class="pairing">' + esc(t(d.maridaje)) + "<b>" + price(d.precioMaridaje) + "</b></div>" +
+        '<a class="btn" href="#reservar" data-occ="degustacion">' + L().tastingBtn + "</a>";
+      $("#degustacion").classList.toggle("photo", !!d.foto);
+      $("#degustacion").innerHTML = d.foto
+        ? '<img src="' + d.foto + '" alt="" loading="lazy" decoding="async">' + (DEMO ? '<span class="ref">' + L().ref + "</span>" : "") + '<div class="box">' + inner + "</div>"
+        : inner;
+    }
   }
 
   /* ---------- Reserva ---------- */
@@ -655,6 +680,12 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
       stage.style.transform = "translateY(" + (k * h * 0.2) + "px) scale(" + (1 - k * 0.12) + ") rotate(" + (k * 16) + "deg)";
       stage.style.opacity = 1 - k * 0.9;
     }
+    if (!still) $$(".ph img, .tasting.photo > img").forEach((img) => {
+      const r2 = img.parentElement.getBoundingClientRect();
+      if (r2.bottom < 0 || r2.top > h) return;
+      const k2 = (r2.top + r2.height / 2 - h / 2) / h;
+      img.style.transform = "translateY(" + (k2 * -6) + "%)";
+    });
     ticking = false;
   }
   addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
@@ -678,7 +709,7 @@ footer p { margin: 0 auto 6px; max-width: 52ch; }
   });
 
   /* ---------- Panel de demo ---------- */
-  if (q.get("cliente") !== "1" && R.modoDemo !== false) {
+  if (DEMO) {
     $("#demo").hidden = false;
     $("#pals").innerHTML = Object.entries(PALETAS).map(([k, v]) =>
       '<button class="pal" type="button" data-p="' + k + '"><span class="sw" style="background:' + v.bg + ";--rim:" + v.rim + '"></span>' + v.nombre + "</button>").join("");

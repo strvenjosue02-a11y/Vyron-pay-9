@@ -19,7 +19,8 @@ window.RESTAURANTE = {
   paleta: "bordeaux",                      // bordeaux | nuit | bouteille | porcelaine
   metal: null,                             // ej. "#C9CCD1" para filos plateados
   tipoCambio: 505,                         // colones por dólar
-  modoDemo: true,                          // false = oculta el panel de paletas
+  modoDemo: true,                          // false = oculta el panel de paletas y las etiquetas "Foto de referencia"
+  // Fotos: cada categoría y el menú degustación aceptan "foto". Reemplazá las de img/ por las del restaurante.
 
   // Opcional: hoja de Google publicada como CSV (columnas: id, precio, agotado).
   // El dueño cambia precios o marca "si" en agotado desde el celular y la carta se actualiza sola.
@@ -39,6 +40,7 @@ window.RESTAURANTE = {
     {
       id: "empezar",
       nombre: { es: "Para empezar", en: "To begin" },
+      foto: "img/foto-caviar.jpg",
       platos: [
         { id: "ostras", nombre: { es: "Ostras de Guanacaste", en: "Guanacaste oysters" },
           desc: { es: "Mignonette de cas, aceite de culantro", en: "Cas fruit mignonette, cilantro oil" },
@@ -81,6 +83,7 @@ window.RESTAURANTE = {
     {
       id: "postres",
       nombre: { es: "Postres", en: "Desserts" },
+      foto: "img/foto-esfera.jpg",
       platos: [
         { id: "souffle", nombre: { es: "Soufflé de cacao de Talamanca", en: "Talamanca cacao soufflé" },
           desc: { es: "Crema inglesa de vainilla", en: "Vanilla crème anglaise" },
@@ -94,6 +97,7 @@ window.RESTAURANTE = {
     {
       id: "bodega",
       nombre: { es: "Bodega", en: "Wine" },
+      foto: "img/foto-vino.jpg",
       platos: [
         { id: "champagne", nombre: { es: "Champagne Blanc de Blancs", en: "Champagne Blanc de Blancs" },
           desc: { es: "Copa", en: "By the glass" }, precio: 18000, marcas: ["vg", "sg"], contiene: [] },
@@ -110,7 +114,8 @@ window.RESTAURANTE = {
     desc: { es: "Siete tiempos que el chef arma según la pesca del día.", en: "Seven courses built around the day's catch." },
     precio: 75000,
     maridaje: { es: "Maridaje con vinos franceses", en: "French wine pairing" },
-    precioMaridaje: 45000
+    precioMaridaje: 45000,
+    foto: "img/foto-champan.jpg"
   },
 
   experiencias: [
