@@ -9,7 +9,7 @@ import { initI18n } from "./i18n.js";
 import { mountCoin } from "./coin3d.js";
 import { mountChart } from "./pro.js";
 import { createDemo } from "./demo.js";
-import { showLaunches, stopLaunches } from "./launch.js";
+import { showLaunches, launchRows, stopLaunches } from "./launch.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, msgProfile, validProfile, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
@@ -436,7 +436,7 @@ function boardHtml(p) {
 function traderCard(p, addr) {
   const r = traderBoard(p, "all").find((x) => x.a === addr), rank = traderBoard(p, "all").findIndex((x) => x.a === addr) + 1; if (!r) return;
   const ov = document.createElement("div"); ov.className = "pnl-ov";
-  ov.innerHTML = `<div class="tc"><button type="button" class="tc-x" data-px aria-label="Close">✕</button>
+  ov.innerHTML = `<div class="tc"><div class="tc-cover" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button type="button" class="tc-x" data-px aria-label="Close">✕</button>
     <div class="tc-h">${avatar(r.a, 72)}<div><b>${esc(uname(r.a))}</b><small>${short(r.a)} · #${rank} on ${esc(p.q.symbol)}</small></div></div>
     <div class="tc-pnl ${r.pnl >= 0 ? "u" : "d"}">${r.pnl >= 0 ? "+" : "-"}$${Math.abs(r.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}<span>${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</span></div>
     <div class="tc-g"><div><span>Bought</span><b>$${r.spent.toFixed(2)}</b></div><div><span>Sold</span><b>$${r.got.toFixed(2)}</b></div><div><span>Trades</span><b>${r.buys + r.sells} (${r.buys} buy · ${r.sells} sell)</b></div>
@@ -519,11 +519,11 @@ function vMarket() {
   return `<div class="page-h mk-h"><h1>Market</h1><p>Every Holdfast token with an open Uniswap pool. Anyone can buy with USDC; liquidity is locked for 12 months.</p></div>
   <div class="cat-bar"><div class="cat-tabs">${[["volume", "Top volume"], ["gainers", "Gainers"], ["losers", "Losers"], ["new", "New"], ["favorites", "★ Favorites"]].map(([k, t]) => `<button type="button" data-mks="${k}" aria-selected="${sort === k}">${t}</button>`).join("")}</div>
     <label class="cat-search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="mk-q" type="search" placeholder="Search name or token" value="${esc(S.mkQ || "")}" aria-label="Search markets"></label></div>
-  ${live.length ? `<div class="mk-list"><div class="mk-row mk-head"><span>Token</span><span>Price</span><span>24h</span><span>Liquidity</span><span>24h volume</span><span></span></div>
+  ${live.length || launchRows(S.mkQ || "") ? `<div class="mk-list"><div class="mk-row mk-head"><span>Token</span><span>Price</span><span>24h</span><span>Liquidity</span><span>24h volume</span><span></span></div>
     ${live.map((p) => { const c = ch(p), up = c >= 0; return `<a class="mk-row" href="#/trade/${p.id}" data-testid="mk-${p.id}">
       <span class="mk-tok">${mark(p)}<span><b>${esc(p.q.symbol)}${fv.includes(p.id) ? ' <i class="mk-star">★</i>' : ""}</b><small>${esc(p.q.name)}</small></span></span>
       <span class="mk-p">${fmtP(p.mk.price)}</span><span class="${up ? "u" : "d"}">${up ? "+" : ""}${c.toFixed(2)}%</span>
-      <span>$${usd(p.mk.poolUsdc)}</span><span>$${usd(vol24(p))}</span><span>${spark(p)}</span></a>`; }).join("")}</div>`
+      <span>$${usd(p.mk.poolUsdc)}</span><span>$${usd(vol24(p))}</span><span>${spark(p)}</span></a>`; }).join("")}${sort === "favorites" ? "" : launchRows(S.mkQ || "")}</div>`
     : `<div class="list"><div class="empty">${sort === "favorites" ? "Tap ★ on a token to follow it." : "No token has a market yet. Markets open when a raise closes successfully."}</div></div>`}`;
 }
 function bindMarket() {

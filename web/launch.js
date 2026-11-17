@@ -60,9 +60,10 @@ const art = (l, cls = "") => (l.img ? `<img class="${cls}" src="${esc(l.img)}" a
 const bar = (l) => `<div class="meter"><b style="width:${Math.min(100, (l.raised / l.goal) * 100)}%"></b></div>`;
 
 function listHtml() {
-  const f = window.__lcf || "all", rows = L.filter((l) => f === "all" || (f === "live" ? l.status === "live" : l.status === "open")).sort((a, b) => b.last - a.last);
+  const f = window.__lcf || "all", rows = L.filter((l) => (f === "all" || (f === "live" ? l.status === "live" : l.status === "open")) && (!window.__lcq || (l.name + " " + l.sym).toLowerCase().includes(window.__lcq.toLowerCase()))).sort((a, b) => b.last - a.last);
   return `<div class="page-h"><h1>${T("Launches", "Lanzamientos")}</h1><p>${T("Rounds fill in minutes. If one doesn't fill, take your money out. When it fills, trading opens.", "Las rondas se llenan en minutos. Si no se llena, sacas tu dinero. Al llenarse, se abre el mercado.")}</p></div>
   <div class="cat-bar"><div class="cat-tabs">${[["all", T("Active", "Activos")], ["open", T("Filling", "Llenándose")], ["live", T("Live", "En vivo")]].map(([k, t]) => `<button type="button" data-lcf="${k}" aria-selected="${f === k}">${t}</button>`).join("")}</div><a class="btn btn-ember btn-sm" href="#/lc/new">${T("Launch", "Lanzar")}</a></div>
+  <label class="cat-search lc-sq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="lc-q" type="search" placeholder="${T("Search by name or ticker", "Buscar por nombre o ticker")}" value="${esc(window.__lcq || "")}" autocomplete="off"></label>
   <div class="deck">${rows.map((l) => { const live = l.status === "live", ch = live && l.ticks.length ? (price(l) / l.p0 - 1) * 100 : 0;
     return `<a class="pcard" href="#/lc/${l.id}"><div class="pc-img">${art(l)}<span class="pc-tick">${esc(l.sym)}</span>${live ? `<span class="lc-live">${T("LIVE", "EN VIVO")}</span>` : ""}</div>
       <div class="pc-body"><h3>${esc(l.name)}</h3>${live ? `<div class="lc-px"><b>${fmtP(price(l))}</b><em class="${ch >= 0 ? "u" : "d"}">${ch >= 0 ? "+" : ""}${ch.toFixed(0)}%</em></div>` : bar(l)}
@@ -111,6 +112,7 @@ function view() {
   if (m) { const l = L.find((x) => x.id === m[1]); if (!l) { location.hash = "#/lc"; return; } cur = l.id; root.innerHTML = pageHtml(l); bindPage(l); return; }
   cur = "list"; const sy = scrollY; root.innerHTML = listHtml(); scrollTo(0, sy);
   root.querySelectorAll("[data-lcf]").forEach((b) => (b.onclick = () => { window.__lcf = b.dataset.lcf; view(); }));
+  const sq = root.querySelector("#lc-q"); if (sq) sq.oninput = () => { window.__lcq = sq.value; const pos = sq.selectionStart; view(); const n = root.querySelector("#lc-q"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } };
 }
 function liveUpdate() {
   const l = L.find((x) => x.id === cur); if (!l) return; const side = document.getElementById("lc-side"); if (!side) return;
@@ -150,5 +152,10 @@ export function showLaunches(el) {
   root = el; if (!timer) timer = setInterval(tick, 2500);
   if (!window.__lcLang) { window.__lcLang = 1; document.addEventListener("click", (e) => { if (e.target.closest("[data-lang]") && location.hash.startsWith("#/lc")) setTimeout(view, 80); }); }
   view();
+}
+export function launchRows(q = "") {
+  q = q.trim().toLowerCase();
+  return L.filter((l) => l.status === "live" && (!q || l.name.toLowerCase().includes(q) || l.sym.toLowerCase().includes(q))).sort((a, b) => b.last - a.last).map((l) => { const ch = l.ticks.length ? (price(l) / l.p0 - 1) * 100 : 0, up = ch >= 0;
+    return `<a class="mk-row" href="#/lc/${l.id}"><span class="mk-tok"><span class="mk-mark">${art(l)}</span><span><b>${esc(l.sym)} <i class="mk-new">${T("NEW", "NUEVO")}</i></b><small>${esc(l.name)}</small></span></span><span class="mk-p">${fmtP(price(l))}</span><span class="${up ? "u" : "d"}">${up ? "+" : ""}${ch.toFixed(2)}%</span><span>$${usd(l.rU)}</span><span>$${usd(l.rU * 0.4)}</span><span></span></a>`; }).join("");
 }
 export const stopLaunches = () => { cur = ""; chart?.destroy(); chart = null; };
