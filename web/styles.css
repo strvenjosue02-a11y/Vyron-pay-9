@@ -1454,3 +1454,13 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 60; pointer-event
   .term.tx .tx-safe2 { display: flex; flex-wrap: wrap; margin: 0 0 6px; overflow: visible; }
 }
 @media (max-width: 1000px) { .term.tx .term-side > .tx-safe2 { order: 1 !important; } }
+
+/* ===== CELULAR limpio, como las apps de trading: periodos + gráfico + Comprar/Vender ===== */
+@media (max-width: 1000px) {
+  .term.tx .cp-tools [data-t="mode"], .term.tx .cp-tools [data-t="ma"], .term.tx .cp-tools [data-t="draw"], .term.tx .cp-tools [data-t="clear"] { display: none; }
+  .term.tx .cp-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; } .term.tx .cp-tools { display: flex; gap: 6px; } .term.tx .cp-info { display: none; }
+  .term.tx .cp-face { display: none; } .term.tx .tx-row2 { display: none; }
+  .term.tx .tx-top { padding-bottom: 4px; } .demo-bar { opacity: .9; transform: translateX(-50%) scale(.9); bottom: 68px; }
+  .term.tx .tx-chart { background: transparent; box-shadow: none; padding: 0; } .term.tx .cp-svg { height: clamp(440px, 66vh, 680px) !important; }
+}
+@media (max-width: 1000px) { .term.tx .cp-bar { padding: 0 12px; } }

@@ -14,14 +14,14 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   const L = { candles: "Candles", line: "Line", ma: "MA", draw: "Line", clear: "Clear", full: "Full screen", exit: "Exit", vol: "Vol", price: "Price", cap: "Market cap", ...labels };
   const key = `hf-hl-${id}`;
   let hl = []; try { hl = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
-  const st = { cap: false, mode: "candle", ma: true, draw: false, period, k: 1, last: null };
+  const st = { cap: false, mode: "candle", ma: !matchMedia("(max-width: 1000px)").matches, draw: false, period, k: 1, last: null };
   el.classList.add("cp");
   el.innerHTML = `<div class="cp-bar">
       <div class="cp-per" role="tablist">${periods.map((k) => `<button type="button" data-per="${k}" aria-selected="${k === period}">${k}</button>`).join("")}</div>
       <div class="cp-tools">
         <button type="button" data-t="unit" title="Price / Market cap">${L.price}</button>
         <button type="button" data-t="mode">${L.candles}</button>
-        <button type="button" data-t="ma" aria-pressed="true">${L.ma}</button>
+        <button type="button" data-t="ma" aria-pressed="${st.ma}">${L.ma}</button>
         <button type="button" data-t="draw" aria-pressed="false">${L.draw}</button>
         <button type="button" data-t="clear" title="${L.clear}">⌫</button>
         <button type="button" data-t="full" title="${L.full}" class="cp-full">⛶</button>
