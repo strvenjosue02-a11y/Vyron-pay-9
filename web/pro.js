@@ -10,11 +10,13 @@ const fmtN = (x, cap) => {
 };
 const maOf = (cs, n) => cs.map((c, i) => (i + 1 < n ? null : { time: c.time, value: cs.slice(i + 1 - n, i + 1).reduce((a, k) => a + k.close, 0) / n })).filter(Boolean);
 
+const emaOf = (v, n) => { const k = 2 / (n + 1), out = []; let e = null; v.forEach((x, i) => { e = e == null ? x : x * k + e * (1 - k); out.push(e); }); return out; };
+const rsiOf = (c, n = 14) => { const out = []; let g = 0, l = 0; for (let i = 1; i < c.length; i++) { const d = c[i] - c[i - 1]; const up = Math.max(d, 0), dn = Math.max(-d, 0); if (i <= n) { g += up / n; l += dn / n; } else { g = (g * (n - 1) + up) / n; l = (l * (n - 1) + dn) / n; } if (i >= n) out.push([i, l === 0 ? 100 : 100 - 100 / (1 + g / l)]); } return out; };
 export function mountChart(el, { id, getData, periods, period, onPeriod, labels = {}, fsTarget, onFace, onLine }) {
   const L = { candles: "Candles", line: "Line", ma: "MA", draw: "Line", clear: "Clear", full: "Full screen", exit: "Exit", vol: "Vol", price: "Price", cap: "Market cap", ...labels };
   const key = `hf-hl-${id}`;
   let hl = []; try { hl = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
-  const st = { heat: (() => { try { return localStorage.getItem("hf-heat") !== "0"; } catch { return true; } })(), faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: "candle", ma: !matchMedia("(max-width: 900px)").matches, draw: false, period, k: 1, last: null };
+  const st = { ind: null, heat: (() => { try { return localStorage.getItem("hf-heat") !== "0"; } catch { return true; } })(), faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: "candle", ma: !matchMedia("(max-width: 900px)").matches, draw: false, period, k: 1, last: null };
   el.classList.add("cp");
   el.innerHTML = `<div class="cp-bar">
       <div class="cp-per" role="tablist">${periods.map((k) => `<button type="button" data-per="${k}" aria-selected="${k === period}">${k}</button>`).join("")}</div>
@@ -24,6 +26,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
         <button type="button" data-t="ma" aria-pressed="${st.ma}">${L.ma}</button>
         <button type="button" data-t="faces" aria-pressed="${st.faces}">${L.faces || "Faces"}</button>
         <button type="button" data-t="heat" aria-pressed="${st.heat}">${L.heat || "Heat"}</button>
+        <button type="button" data-t="rsi" aria-pressed="false">RSI</button><button type="button" data-t="macd" aria-pressed="false">MACD</button>
         <button type="button" data-t="draw" aria-pressed="false">${L.draw}</button>
         <button type="button" data-t="clear" title="${L.clear}">⌫</button>
         <button type="button" data-t="full" title="${L.full}" class="cp-full">⛶</button>
@@ -48,6 +51,22 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
   const mo = { lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, priceFormat: pf };
   const m7 = chart.addLineSeries({ ...mo, color: "rgba(255,255,255,.75)" }), m25 = chart.addLineSeries({ ...mo, color: "rgba(255,255,255,.3)" });
+  const indLine = chart.addLineSeries({ priceScaleId: "ind", color: "#f4f4f1", lineWidth: 1.5, priceLineVisible: false, lastValueVisible: true, visible: false, priceFormat: { type: "price", precision: 2, minMove: 0.01 } });
+  const indSig = chart.addLineSeries({ priceScaleId: "ind", color: "rgba(255,255,255,.4)", lineWidth: 1, priceLineVisible: false, lastValueVisible: false, visible: false, priceFormat: { type: "price", precision: 2, minMove: 0.01 } });
+  const indHist = chart.addHistogramSeries({ priceScaleId: "ind", priceLineVisible: false, lastValueVisible: false, visible: false, priceFormat: { type: "price", precision: 2, minMove: 0.01 } });
+  const indLines = [];
+  function applyInd() {
+    const on = !!st.ind; indLines.splice(0).forEach((r) => indLine.removePriceLine(r));
+    candle.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: on ? 0.4 : 0.26 } }); chart.priceScale("vol").applyOptions({ scaleMargins: { top: on ? 0.58 : 0.82, bottom: on ? 0.28 : 0 } });
+    chart.priceScale("ind").applyOptions({ scaleMargins: { top: 0.74, bottom: 0.03 }, borderVisible: false });
+    indLine.applyOptions({ visible: on }); indSig.applyOptions({ visible: st.ind === "macd" }); indHist.applyOptions({ visible: st.ind === "macd" });
+    if (!on || !data.length) { indLine.setData([]); indSig.setData([]); indHist.setData([]); return; }
+    const cl = data.map((c) => c.close);
+    if (st.ind === "rsi") { const r = rsiOf(cl); indLine.setData(r.map(([i, v]) => ({ time: data[i].time, value: v }))); indSig.setData([]); indHist.setData([]);
+      [70, 30].forEach((p2) => indLines.push(indLine.createPriceLine({ price: p2, color: "rgba(255,255,255,.18)", lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: "" }))); }
+    else { const e12 = emaOf(cl, 12), e26 = emaOf(cl, 26), m = e12.map((v, i) => v - e26[i]), sg = emaOf(m, 9); indLine.setData(data.map((c, i) => ({ time: c.time, value: m[i] }))); indSig.setData(data.map((c, i) => ({ time: c.time, value: sg[i] })));
+      indHist.setData(data.map((c, i) => ({ time: c.time, value: m[i] - sg[i], color: m[i] - sg[i] >= 0 ? UP + "88" : DN + "88" }))); }
+  }
   let roundLine = null, hlRefs = [], first = true, data = [], lnRefs = [], faces = [], lines = [], allTr = [], heat = [];
   const fog = document.createElement("div"); fog.className = "cp-fog";
   const tip = document.createElement("div"); tip.className = "cp-tip"; box.appendChild(tip);
@@ -94,7 +113,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     data = (d.candles || []).filter((c) => c.t).map((c) => ({ time: c.t, open: c.o * k, high: c.h * k, low: c.l * k, close: c.c * k }));
     if (!data.length) return;
     chart.applyOptions({ watermark: { text: d.symbol || "" } });
-    candle.setData(data); line.setData(data.map((c) => ({ time: c.time, value: c.close })));
+    candle.setData(data); applyInd(); line.setData(data.map((c) => ({ time: c.time, value: c.close })));
     vol.setData((d.candles || []).filter((c) => c.t).map((c) => ({ time: c.t, value: c.v, color: (c.c >= c.o ? UP : DN) + "38" })));
     const ma7 = maOf(data, 7), ma25 = maOf(data, 25); m7.setData(st.ma ? ma7 : []); m25.setData(st.ma ? ma25 : []);
     candle.applyOptions({ visible: st.mode === "candle" }); line.applyOptions({ visible: st.mode === "line" });
@@ -125,6 +144,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     if (t === "unit") { st.cap = !st.cap; b.textContent = st.cap ? L.cap : L.price; }
     if (t === "mode") { st.mode = st.mode === "candle" ? "line" : "candle"; b.textContent = st.mode === "candle" ? L.candles : L.line; }
     if (t === "ma") { st.ma = !st.ma; b.setAttribute("aria-pressed", st.ma); }
+    if (t === "rsi" || t === "macd") { st.ind = st.ind === t ? null : t; el.querySelectorAll("[data-t=rsi],[data-t=macd]").forEach((x) => x.setAttribute("aria-pressed", x.dataset.t === st.ind)); applyInd(); }
     if (t === "heat") { st.heat = !st.heat; b.setAttribute("aria-pressed", st.heat); try { localStorage.setItem("hf-heat", st.heat ? "1" : "0"); } catch {} }
     if (t === "faces") { st.faces = !st.faces; b.setAttribute("aria-pressed", st.faces); try { localStorage.setItem("hf-faces", st.faces ? "1" : "0"); } catch {} }
     if (t === "draw") { st.draw = !st.draw; b.setAttribute("aria-pressed", st.draw); }

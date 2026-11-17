@@ -403,7 +403,7 @@ function termTab(p) {
   const t = S.ttab || "trades";
   if (t === "heat") return heatHtml(p);
   if (t === "chat") return chatHtml(p);
-  if (t === "holders") return p.holders ? (p.holders.length ? `${holdBar(p)}${(() => { const top = p.holders.find((h) => !holderLabel(p, h.a)), sh = top && p.supply ? Number((top.b * 10000n) / p.supply) / 100 : 0; return sh > 20 ? `<div class="note warn" style="margin-bottom:12px">One wallet holds ${sh.toFixed(1)}% of the supply. If it sells, the price can drop fast.</div>` : ""; })()}<ul class="hold">${p.holders.map((h, i) => `<li><span class="rk">${i + 1}</span>${avatar(h.a, 26)}<span class="addr">${short(h.a)}</span><span class="hl">${holderLabel(p, h.a)}</span><b>${p.supply ? ((Number(h.b) / Number(p.supply)) * 100).toFixed(2) : "–"}%</b></li>`).join("")}</ul>` : `<p class="prose">No holders yet.</p>`) : `<p class="prose">Loading holders…</p>`;
+  if (t === "holders") return p.holders ? (p.holders.length ? `${holdBar(p)}${holderFlowHtml(p)}${(() => { const top = p.holders.find((h) => !holderLabel(p, h.a)), sh = top && p.supply ? Number((top.b * 10000n) / p.supply) / 100 : 0; return sh > 20 ? `<div class="note warn" style="margin-bottom:12px">One wallet holds ${sh.toFixed(1)}% of the supply. If it sells, the price can drop fast.</div>` : ""; })()}<ul class="hold">${p.holders.map((h, i) => `<li><span class="rk">${i + 1}</span>${avatar(h.a, 26)}<span class="addr">${short(h.a)}</span><span class="hl">${holderLabel(p, h.a)}</span><b>${p.supply ? ((Number(h.b) / Number(p.supply)) * 100).toFixed(2) : "–"}%</b></li>`).join("")}</ul>` : `<p class="prose">No holders yet.</p>`) : `<p class="prose">Loading holders…</p>`;
   if (t === "depth") return `<p class="fine" style="margin:0 0 12px">How much it takes to move the price. Small pools move fast: check before large trades.</p>
     <ul class="depth"><li class="dh"><span>Move</span><b>Buy to push up</b><b>Sell to push down</b></li>${depthRows(p)}</ul>`;
   if (t === "mine" && !S.me) return `<p class="prose">Connect your wallet to see your trades.</p>`;
@@ -629,8 +629,8 @@ function pressHtml(p) {
   const now = S.now || Date.now() / 1000, tr = (p.trades || []).filter((t) => t.ts); let w = "1h", sec = 3600, sub = tr.filter((t) => t.ts > now - sec);
   if (sub.length < 3) { w = "24h"; sec = 86400; sub = tr.filter((t) => t.ts > now - sec); }
   const bu = sub.filter((t) => t.buy).reduce((x, t) => x + Number(t.usdc) / 1e6, 0), se = sub.filter((t) => !t.buy).reduce((x, t) => x + Number(t.usdc) / 1e6, 0), tot = bu + se, pc = tot ? Math.round((bu / tot) * 100) : 50;
-  const mk = new Set(sub.map((t) => t.who)).size;
-  return `<div class="pr-l"><b class="u">${pc}%</b><small>Buys ${w}</small></div><div class="pr-bar"><i style="width:${pc}%"></i></div><div class="pr-r"><small>Sells</small><b class="d">${100 - pc}%</b></div><div class="pr-n"><span>${sub.length}<small>trades</small></span><span>${mk}<small>traders</small></span></div>`;
+  const mk = new Set(sub.map((t) => t.who)).size, nb = new Set(sub.filter((t) => t.buy).map((t) => t.who)).size, ns = new Set(sub.filter((t) => !t.buy).map((t) => t.who)).size, span = Math.max(1, Math.min(sec, now - Math.min(...sub.map((t) => t.ts), now))) / 60, opm = sub.length / span;
+  return `<div class="pr-l"><b class="u">${pc}%</b><small>Buys ${w}</small></div><div class="pr-bar"><i style="width:${pc}%"></i></div><div class="pr-r"><small>Sells</small><b class="d">${100 - pc}%</b></div><div class="pr-n"><span>${sub.length}<small>trades</small></span><span>${mk}<small>traders</small></span></div><div class="pr-x"><span><b class="u">${nb}</b> buyers</span><span><b class="d">${ns}</b> sellers</span><span><b>${opm.toFixed(1)}</b> trades/min</span></div>`;
 }
 function holdBar(p) {
   if (!p.holders || !p.holders.length || !p.supply) return "";
@@ -690,6 +690,13 @@ function acctHtml() {
   S.list.forEach(add); lcLive().map(lcP).forEach(add); try { tot += lcMeBal().usdc; } catch {}
   return `<div class="ac-box"><button type="button" class="ip-x" data-acx aria-label="Close">✕</button><small>Total balance</small><b class="ac-t">$${tot.toLocaleString("en-US", { maximumFractionDigits: 2 })}</b>${hasP ? `<span class="${pnl >= 0 ? "u" : "d"} ac-p">${pnl >= 0 ? "+" : "-"}$${Math.abs(pnl).toFixed(2)} <i>total profit</i></span>` : ""}
     <h3>Your positions</h3>${rows.length ? rows.map(({ p, v, ps }) => `<a class="ac-r" href="#/trade/${p.id}" data-acx><span>${mark(p)}<b>${esc(p.q.symbol)}</b></span><span>$${v.toFixed(2)}</span>${ps ? `<em class="${ps.pnl >= 0 ? "u" : "d"}">${ps.pnl >= 0 ? "+" : "-"}$${Math.abs(ps.pnl).toFixed(2)}</em>` : "<em></em>"}</a>`).join("") : `<p class="fine">No tokens yet. Buy one and it shows here.</p>`}</div>`;
+}
+function holderFlowHtml(p) {
+  const now = S.now || Date.now() / 1000, m = {};
+  for (const t of (p.trades || []).filter((x) => x.who && x.ts)) { const r = (m[t.who.toLowerCase()] ||= { first: null, b: 0, s: 0 }), q = Number(t.tok) / 1e18; if (t.buy) { r.b += q; r.first = r.first ?? t.ts; } else r.s += q; }
+  const ex = new Set([p.s.pool, p.address, CONFIG.platform].filter(Boolean).map((x) => x.toLowerCase())), v = Object.entries(m).filter(([k, r]) => !ex.has(k) && r.b > 0);
+  const nw = v.filter(([, r]) => r.first > now - 86400).length, all = v.filter(([, r]) => r.s >= r.b * 0.98).length, some = v.filter(([, r]) => r.s > 0 && r.s < r.b * 0.98).length;
+  return `<div class="hf"><span><b>${nw}</b><small>new holders (24h)</small></span><span><b class="d">${all}</b><small>sold everything</small></span><span><b>${some}</b><small>sold some</small></span><span><b class="u">${v.length - all}</b><small>still holding</small></span></div>`;
 }
 function vTerminal(p) {
   if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
