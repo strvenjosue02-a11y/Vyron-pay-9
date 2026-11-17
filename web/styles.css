@@ -1330,3 +1330,30 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 60; pointer-event
 @media (max-width: 760px) { .tx-px { justify-items: start; text-align: left; grid-column: 1 / -1; } .tx-px #tx-capbig { font-size: 44px; } .tx-feed { margin-top: 10px; } }
 
 .term.tx .back { display: inline-block; margin-bottom: 0; } .term.tx .tx-top { margin-top: 0; padding-top: 4px; row-gap: 4px; } .term.tx .tx-feed { margin: 8px 0 4px; } .term.tx .tx-stats { margin-top: 6px; } .term.tx .tx-px #tx-capbig { font-size: clamp(34px, 5vw, 52px); }
+
+/* ===== Trading GRANDE: el gráfico ocupa la pantalla ===== */
+@media (min-width: 1001px) {
+  .term.tx { width: min(1920px, calc(100vw - 32px)); }
+  .term-grid.tx-3 { grid-template-columns: minmax(0, 1fr) 360px !important; }
+  .term.tx .tx-side { display: none; } .term.tx .tx-side-open { display: none; }
+  .term.tx .tx-chart { padding: 8px; } .term.tx .cp-svg { height: clamp(560px, calc(100vh - 250px), 980px) !important; }
+}
+@media (max-width: 1000px) { .term.tx .cp-svg { height: clamp(420px, 64vh, 640px) !important; } .term.tx .tx-chart { margin: 0 -8px; border-radius: 16px; } }
+.tc-pos { display: flex; justify-content: space-between; gap: 12px; margin: 14px 0 0; padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.05); font-size: 14px; } .tc-pos span { color: var(--ink-3); } .tc-pos b { font-family: var(--mono); font-weight: 600; }
+.tc-act { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.tc-h { gap: 14px; } .tc-h .ava { box-shadow: 0 0 0 4px #09090b, 0 0 0 6px rgba(255,255,255,.4); }
+
+/* encabezado compacto: el gráfico sube y es lo primero que se ve */
+@media (min-width: 1001px) {
+  .term.tx .back { position: absolute; top: -34px; left: 0; } .term.tx .tx-top { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 0 0 10px; }
+  .term.tx .coin3d, .term.tx .tx-top > img { width: 52px; height: 52px; } .term.tx .tx-id { margin-right: auto; } .term.tx .tx-id h1 { font-size: 30px; }
+  .term.tx .tx-px { display: flex; align-items: baseline; gap: 14px; text-align: left; } .term.tx .tx-px .tx-cl { display: none; } .term.tx .tx-px #tx-capbig { font-size: 38px; } .term.tx .tx-px #tt-delta { font-size: 16px; }
+  .term.tx .tx-chips { margin: 0; flex: none; } .term.tx .tx-stats { display: none; width: 100%; } .term.tx .tx-stats.open { display: grid; } .term.tx .tx-more { display: inline-block !important; }
+  .term.tx .tx-feed { margin: 0 0 8px; } .term.tx .tx-feed span { padding: 4px 10px; font-size: 12px; }
+  .term.tx .cp-svg { height: clamp(560px, calc(100vh - 210px), 1000px) !important; }
+}
+
+.panel.cyber .btn, .aside .panel.cyber .btn, .term-side .panel.cyber .btn { background: #f4f4f1 !important; color: #09090b !important; box-shadow: none !important; }
+.tx-more { background: none !important; border: 0 !important; color: var(--ink-2) !important; font: 500 13px var(--font); padding: 6px 10px; cursor: pointer; }
+
+@media (max-width: 1000px) { .term.tx .tx-chips { display: none; } .term.tx .tx-stats { display: none; } .term.tx .tx-stats.open { display: grid; } .term.tx .tx-more { display: block; } .term.tx .tx-top { row-gap: 2px; } .term.tx .tx-feed { margin: 4px 0; } .term.tx .back { display: none; } .tx-px #tx-capbig { font-size: 36px; } .tx-px { gap: 0; } }

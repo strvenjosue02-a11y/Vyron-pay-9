@@ -442,7 +442,31 @@ function boardHtml(p) {
   return `<div class="lb-tabs">${[["day", "Today"], ["week", "Week"], ["all", "All time"]].map(([k, t]) => `<button type="button" data-bper="${k}" aria-selected="${per === k}">${t}</button>`).join("")}${S.me ? `<button type="button" class="lb-me" data-prof>Edit my profile</button>` : ""}</div>
     ${l.length ? `<ol class="lb">${l.map((r, i) => `<li><button type="button" data-trader="${r.a}"><span class="rk">${i + 1}</span>${avatar(r.a, 34)}<span class="nm">${esc(uname(r.a))}<small>${short(r.a)}</small></span><b class="${r.pnl >= 0 ? "u" : "d"}">${r.pnl >= 0 ? "+" : "-"}$${Math.abs(r.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}</b><em class="${r.pct >= 0 ? "u" : "d"}">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(0)}%</em></button></li>`).join("")}</ol>` : `<p class="prose">No trades in this period yet.</p>`}`;
 }
-function traderCard(p, addr) {
+const loadImg = (src) => new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = src; });
+async function traderPng(p, r, rank) {
+  try { await document.fonts.load("700 60px Geist"); await document.fonts.load("600 60px 'Geist Mono'"); } catch {}
+  const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"), up = r.pnl >= 0, col = up ? "#3ddc97" : "#ff5d5d";
+  g.fillStyle = "#09090b"; g.fillRect(0, 0, W, H);
+  const cg = g.createLinearGradient(0, 0, W, 380); cg.addColorStop(0, "#0e0e11"); cg.addColorStop(1, "#1d1d23"); g.fillStyle = cg; g.fillRect(0, 0, W, 380);
+  let seed = parseInt(r.a.slice(2, 10), 16) || 7; const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+  for (let i = 0; i < 22; i++) { const x = 24 + i * 47, h = 50 + rnd() * 200, u = rnd() > 0.42; g.fillStyle = u ? "rgba(61,220,151,.55)" : "rgba(255,93,93,.5)"; g.fillRect(x, 330 - h, 26, h); g.fillRect(x + 12, 300 - h, 2, h + 60); }
+  const fd = g.createLinearGradient(0, 180, 0, 380); fd.addColorStop(0, "rgba(9,9,11,0)"); fd.addColorStop(1, "#09090b"); g.fillStyle = fd; g.fillRect(0, 180, W, 200);
+  const cx = 150, cy = 370, R = 96, pr = S.prof?.[r.a.toLowerCase()];
+  g.save(); g.beginPath(); g.arc(cx, cy, R, 0, 7); g.clip();
+  let drew = false; if (pr?.photo) { try { const im = await loadImg(pr.photo); const s = Math.max(2 * R / im.width, 2 * R / im.height); g.drawImage(im, cx - im.width * s / 2, cy - im.height * s / 2, im.width * s, im.height * s); drew = true; } catch {} }
+  if (!drew) { const h = parseInt(r.a.slice(2, 6), 16) % 360, ag = g.createLinearGradient(cx - R, cy - R, cx + R, cy + R); ag.addColorStop(0, `hsl(${h} 70% 55%)`); ag.addColorStop(1, `hsl(${(h + 140) % 360} 65% 45%)`); g.fillStyle = ag; g.fillRect(cx - R, cy - R, 2 * R, 2 * R); }
+  g.restore(); g.lineWidth = 8; g.strokeStyle = "#09090b"; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.stroke(); g.lineWidth = 2; g.strokeStyle = "rgba(255,255,255,.5)"; g.beginPath(); g.arc(cx, cy, R + 4, 0, 7); g.stroke();
+  g.fillStyle = "#f4f4f1"; g.font = "700 64px Geist, sans-serif"; g.textAlign = "left"; g.fillText(uname(r.a).slice(0, 18), 280, 410);
+  g.fillStyle = "#8b8b93"; g.font = "500 30px Geist, sans-serif"; g.fillText(`#${rank} on ${p.q.symbol} · ${short(r.a)}`, 280, 458);
+  g.fillStyle = "#8b8b93"; g.font = "500 28px Geist, sans-serif"; g.fillText("PROFIT / LOSS", 70, 620);
+  g.fillStyle = col; g.font = "600 170px 'Geist Mono', monospace"; g.fillText(`${up ? "+" : "-"}$${Math.abs(r.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}`, 62, 780);
+  g.font = "600 60px 'Geist Mono', monospace"; g.fillText(`${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%`, 70, 862);
+  const cells = [["BOUGHT", "$" + r.spent.toFixed(2)], ["SOLD", "$" + r.got.toFixed(2)], ["TRADES", `${r.buys + r.sells}`], ["HOLDING", Math.max(0, r.tok).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " " + p.q.symbol], ["WORTH NOW", "$" + r.val.toFixed(2)], ["BEST SALE", r.best > 0 ? "+$" + r.best.toFixed(2) : "-"]];
+  cells.forEach(([k, v], i) => { const x = 60 + (i % 2) * 490, y = 920 + Math.floor(i / 2) * 112; g.fillStyle = "rgba(255,255,255,.05)"; g.beginPath(); g.roundRect(x, y, 470, 100, 20); g.fill(); g.fillStyle = "#8b8b93"; g.font = "500 22px Geist, sans-serif"; g.fillText(k, x + 24, y + 36); g.fillStyle = "#f4f4f1"; g.font = "600 34px 'Geist Mono', monospace"; g.fillText(v.slice(0, 20), x + 24, y + 78); });
+  g.fillStyle = "#f4f4f1"; g.font = "700 40px Geist, sans-serif"; g.fillText("Holdfast", 60, 1318); g.fillStyle = "#6c6c74"; g.font = "500 26px Geist, sans-serif"; g.textAlign = "right"; g.fillText(new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }), W - 60, 1314);
+  return new Promise((ok) => c.toBlob(ok, "image/png"));
+}
+async function traderCard(p, addr) {
   const r = traderBoard(p, "all").find((x) => x.a === addr), rank = traderBoard(p, "all").findIndex((x) => x.a === addr) + 1; if (!r) return;
   const ov = document.createElement("div"); ov.className = "pnl-ov";
   ov.innerHTML = `<div class="tc"><div class="tc-cover" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button type="button" class="tc-x" data-px aria-label="Close">✕</button>
@@ -450,8 +474,14 @@ function traderCard(p, addr) {
     <div class="tc-pnl ${r.pnl >= 0 ? "u" : "d"}">${r.pnl >= 0 ? "+" : "-"}$${Math.abs(r.pnl).toLocaleString("en-US", { maximumFractionDigits: 2 })}<span>${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</span></div>
     <div class="tc-g"><div><span>Bought</span><b>$${r.spent.toFixed(2)}</b></div><div><span>Sold</span><b>$${r.got.toFixed(2)}</b></div><div><span>Trades</span><b>${r.buys + r.sells} (${r.buys} buy · ${r.sells} sell)</b></div>
       <div><span>Best sale</span><b>${r.best > 0 ? "+$" + r.best.toFixed(2) : "–"}</b></div><div><span>Holding now</span><b>${Math.max(0, r.tok).toLocaleString("en-US", { maximumFractionDigits: 0 })} ${esc(p.q.symbol)}</b></div><div><span>Worth today</span><b>$${r.val.toFixed(2)}</b></div></div>
+    <div class="tc-pos"><span>Position</span><b>${Math.max(0, r.tok).toLocaleString("en-US", { maximumFractionDigits: 0 })} ${esc(p.q.symbol)} · $${r.val.toFixed(2)}</b></div>
+    <div class="tc-act"><button type="button" class="btn btn-ember btn-sm" data-dl>Download image</button><button type="button" class="btn btn-line btn-sm" data-sh>Share</button>${S.me && S.me.toLowerCase() === r.a.toLowerCase() ? `<button type="button" class="btn btn-soft btn-sm" data-ed>Edit my profile</button>` : ""}</div>
     ${logoSrc(p) ? `<img class="tc-tok" src="${esc(logoSrc(p))}" alt="">` : ""}</div>`;
-  document.body.appendChild(ov); requestAnimationFrame(() => ov.classList.add("on"));
+  document.body.appendChild(ov);
+  const blobOf = () => traderPng(p, r, rank); const fname = `holdfast-${p.q.symbol}-${uname(r.a)}.png`;
+  ov.querySelector("[data-dl]").onclick = async () => { const b = await blobOf(), u = URL.createObjectURL(b), l = document.createElement("a"); l.href = u; l.download = fname; l.click(); toast("Image saved"); };
+  ov.querySelector("[data-sh]").onclick = async () => { const b = await blobOf(), f = new File([b], fname, { type: "image/png" }); if (navigator.canShare?.({ files: [f] })) { try { await navigator.share({ files: [f], title: `${uname(r.a)} on ${p.q.symbol}` }); } catch {} } else { const u = URL.createObjectURL(b), l = document.createElement("a"); l.href = u; l.download = fname; l.click(); toast("Image saved"); } };
+  const ed = ov.querySelector("[data-ed]"); if (ed) ed.onclick = () => { ov.remove(); editProfile(); }; requestAnimationFrame(() => ov.classList.add("on"));
   ov.onclick = (e) => { if (e.target === ov || e.target.closest("[data-px]")) { ov.classList.remove("on"); setTimeout(() => ov.remove(), 250); } };
 }
 async function editProfile() {

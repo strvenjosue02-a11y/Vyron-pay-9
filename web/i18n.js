@@ -2,6 +2,7 @@
 // los textos visibles (y placeholder/aria-label/title) cada vez que cambian, sin tocar la lógica.
 
 const ES = {
+  "Connect wallet to buy": "Conectar wallet para comprar", "Connect wallet to sell": "Conectar wallet para vender", "Download image": "Descargar imagen", "Edit my profile": "Editar mi perfil", "Position": "Posición", "Waiting for the first trade…": "Esperando la primera operación…", "Market cap": "Valor total", "Holders": "Holders",
   "Launch it.": "Lánzalo.", "Fill it.": "Llénalo.", "Trade it.": "Tradéalo.", "Put money in. If it fills, trading opens. If it doesn't, take it out.": "Mete dinero. Si se llena, se abre el mercado. Si no, lo sacas.", "See launches": "Ver lanzamientos", "Launch": "Lanzar",
   "Launches": "Lanzamientos",
   "Price / Market cap": "Precio / Valor total", "Market cap": "Valor total",
