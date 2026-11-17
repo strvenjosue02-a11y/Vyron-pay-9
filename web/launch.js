@@ -1,6 +1,7 @@
 // "Launches": lanzamientos rápidos con todo o nada. Prototipo de interfaz sobre datos simulados (sin contrato todavía).
 // Una ronda se llena con USDC; mientras no se llene, cada quien puede sacar su dinero. Al llenarse, el dinero pasa a un pool y el token se opera.
 import { mountChart } from "./pro.js";
+import { threadHtml } from "./thread.js";
 
 const GOALS = [100, 500, 2000];
 const now = () => Date.now() / 1000;
@@ -44,6 +45,7 @@ function mk(name, sym, goal, raised, img, live = false) {
   L.push(l); return l;
 }
 function goLive(l, seed = false) {
+  if (!seed && (me.dep?.[l.id] || 0) > 0) window.dispatchEvent(new CustomEvent("hf-notify", { detail: { kind: "round", text: T(`${l.name} filled. Trading is open.`, `${l.name} se llenó. Ya puedes tradear.`) } }));
   l.status = "live"; l.raised = l.goal; l.rU = l.goal; l.rT = l.goal / l.p0 * 0.95; l.liveAt = now();
   if (seed) { let t = now() - 3 * 3600; for (let i = 0; i < 60; i++) { t += 180; trade(l, Math.random() < 0.58 ? "buy" : "sell", rnd(2, 14) * (l.goal / 500), t, true); } }
 }
@@ -101,6 +103,7 @@ function listHtml() {
   return `<div class="page-h"><h1>${T("Launches", "Lanzamientos")}</h1><p>${T("Rounds fill in minutes. If one doesn't fill, take your money out. When it fills, trading opens.", "Las rondas se llenan en minutos. Si no se llena, sacas tu dinero. Al llenarse, se abre el mercado.")}</p></div>
   <div class="cat-bar"><div class="cat-tabs">${[["new", T("Recent", "Recientes")], ["open", T("Filling", "Llenándose")], ["live", T("Live", "En vivo")]].map(([k, t]) => `<button type="button" data-lcf="${k}" aria-selected="${f === k}">${t}</button>`).join("")}</div></div>
   <label class="cat-search lc-sq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="lc-q" type="search" placeholder="${T("Search by name or ticker", "Buscar por nombre o ticker")}" value="${esc(window.__lcq || "")}" autocomplete="off"></label>
+  ${f === "new" && !window.__lcq ? trendHtml() : ""}
   <div class="deck">${rows.map((l) => { const live = l.status === "live", ch = live && l.ticks.length ? (price(l) / l.p0 - 1) * 100 : 0;
     return `<a class="pcard" href="${live ? "#/trade/lc-" + l.id : "#/lc/" + l.id}"><div class="pc-img">${art(l)}<span class="pc-tick">${esc(l.sym)}</span>${now() - born(l) < 3600 ? `<span class="pc-new">${T("NEW", "NUEVO")}</span>` : ""}<span class="pc-age">${T("", "hace ")}${ago(born(l))}${T(" ago", "")}</span>${live ? `<span class="lc-live">${T("LIVE", "EN VIVO")}</span>` : ""}</div>
       <div class="pc-body"><h3>${esc(l.name)}</h3>${live ? `<div class="lc-px"><b>${fmtP(price(l))}</b><em class="${ch >= 0 ? "u" : "d"}">${ch >= 0 ? "+" : ""}${ch.toFixed(0)}%</em></div>` : bar(l)}
@@ -113,8 +116,7 @@ function pageHtml(l) {
   <div class="lc-side" id="lc-side">${l.chain && l.cs?.state === "live" ? liveChainHtml(l) : live ? liveHtml(l, tk) : openHtml(l, mine, left)}</div>
   <div class="lc-main">${live ? `<div class="tx-chart" id="lc-chart"></div>` : `<div class="lc-note">${T("Everyone gets the same price. The moment the goal is reached the round closes, all the money goes into a locked pool and trading opens.", "Todos reciben el mismo precio. En cuanto se llega a la meta, la ronda se cierra, todo el dinero pasa a un pool bloqueado y se abre el mercado.")}</div><div class="lc-lock"><span>${T("Chart and trading open when the round fills", "El gráfico y el trading se abren cuando se llene")}</span></div>`}
     ${l.creator ? `<p class="lc-dev">${T("Creator put in", "El creador metió")} <b>${l.creator}%</b> ${T("of the goal", "de la meta")}.</p>` : ""}
-    <h3 class="lc-h">${T("Thread", "Hilo")}</h3><ul class="lc-cm" id="lc-cm">${cmHtml(l)}</ul>
-    <div class="lc-cin"><input id="lc-ci" maxlength="140" placeholder="${T("Write something…", "Escribe algo…")}"><button class="btn btn-line btn-sm" id="lc-cs">${T("Post", "Publicar")}</button></div></div></div>`;
+    ${threadHtml("rnd-" + l.id, { me: () => window.__hfMe?.() || null, avatar: window.__hfAva, seed: true })}</div></div>`;
 }
 const cmHtml = (l) => l.comments.slice().sort((a, b) => b[2] - a[2]).map((c) => `<li><b>${esc(c[0])}</b><span>${esc(c[1])}</span><em>${ago(c[2])}</em></li>`).join("");
 function openHtml(l, mine, left) {
@@ -195,8 +197,6 @@ function bindChain(l) {
 }
 function bindPage(l) {
   bindSide(l);
-  const post = () => { const i = document.getElementById("lc-ci"), v = i.value.trim(); if (!v) return; l.comments.push(["you", v, now()]); l.last = now(); i.value = ""; document.getElementById("lc-cm").innerHTML = cmHtml(l); };
-  document.getElementById("lc-cs").onclick = post; document.getElementById("lc-ci").onkeydown = (e) => e.key === "Enter" && post();
   if (l.status === "live") { const es = lang() === "es"; chart = mountChart(document.getElementById("lc-chart"), { id: "lc-" + l.id, periods: ["1m", "5m"], period: "1m", onPeriod: () => {},
     getData: (per) => ({ candles: candles(l, per === "1m" ? 60 : 300), round: l.p0, supply: 1_000_000, marks: [] }), labels: es ? { cap: "Valor total", price: "Precio", candles: "Velas", line: "Línea", ma: "Promedios", draw: "Línea", clear: "Borrar", full: "Pantalla completa" } : {} }); }
 }
@@ -236,3 +236,12 @@ export const stopLaunches = () => { cur = ""; chart?.destroy(); chart = null; };
 
 // miniatura 256px para el servidor (la foto grande se queda en el navegador del creador)
 function thumb(src) { return new Promise((ok) => { if (!src) return ok(""); const im = new Image(); im.onload = () => { const k = Math.min(1, 256 / Math.max(im.width, im.height)), c = document.createElement("canvas"); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); ok(c.toDataURL("image/webp", 0.8)); }; im.onerror = () => ok(""); im.src = src; }); }
+
+// En tendencia: lo que más se mueve ahora (tokens en vivo) y las rondas que están por llenarse
+function trendHtml() {
+  const live = L.filter((l) => l.status === "live" && l.ticks.length).map((l) => ({ l, ch: (price(l) / l.p0 - 1) * 100 })).sort((a, b) => b.ch - a.ch).slice(0, 4);
+  const near = L.filter((l) => l.status === "open" && !isExp(l) && l.raised / l.goal >= 0.5).sort((a, b) => b.raised / b.goal - a.raised / a.goal).slice(0, 3);
+  const cards = live.map(({ l, ch }, i) => `<a class="tr-c" href="#/trade/lc-${l.id}"><span class="tr-r">${i + 1}</span><span class="tr-i">${art(l)}</span><span class="tr-n"><b>${esc(l.sym)}</b><small>${esc(l.name)}</small></span><span class="tr-v ${ch >= 0 ? "u" : "d"}">${ch >= 0 ? "+" : ""}${ch.toFixed(0)}%</span></a>`)
+    .concat(near.map((l) => `<a class="tr-c" href="#/lc/${l.id}"><span class="tr-r">⏳</span><span class="tr-i">${art(l)}</span><span class="tr-n"><b>${esc(l.sym)}</b><small>${T("almost full", "casi llena")}</small></span><span class="tr-v">${Math.round((l.raised / l.goal) * 100)}%</span></a>`));
+  return cards.length ? `<div class="tr"><h3 class="tr-h"><i></i>${T("Trending now", "En tendencia")}</h3><div class="tr-row">${cards.join("")}</div></div>` : "";
+}

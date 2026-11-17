@@ -7,6 +7,7 @@ import { CONFIG } from "./config.js";
 import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
 import { initI18n } from "./i18n.js";
 import { mountChart } from "./pro.js";
+import { threadHtml } from "./thread.js";
 import { createDemo } from "./demo.js";
 import { setLaunchChain, loadChainLaunches, lcChainLive, showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote } from "./launch.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, msgProfile, validProfile, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
@@ -441,7 +442,9 @@ function termTab(p) {
   const t = S.ttab || "trades";
   if (t === "heat") return heatHtml(p);
   if (t === "chat") return chatHtml(p);
-  if (t === "holders") return p.holders ? (p.holders.length ? `${holdBar(p)}${holderFlowHtml(p)}${(() => { const top = p.holders.find((h) => !holderLabel(p, h.a)), sh = top && p.supply ? Number((top.b * 10000n) / p.supply) / 100 : 0; return sh > 20 ? `<div class="note warn" style="margin-bottom:12px">One wallet holds ${sh.toFixed(1)}% of the supply. If it sells, the price can drop fast.</div>` : ""; })()}<ul class="hold">${p.holders.map((h, i) => `<li><span class="rk">${i + 1}</span>${avatar(h.a, 26)}<span class="addr">${short(h.a)}</span><span class="hl">${holderLabel(p, h.a)}</span><b>${p.supply ? ((Number(h.b) / Number(p.supply)) * 100).toFixed(2) : "–"}%</b></li>`).join("")}</ul>` : `<p class="prose">No holders yet.</p>`) : `<p class="prose">Loading holders…</p>`;
+  if (t === "holders") return p.holders ? (p.holders.length ? `${(() => { const sup = Math.max(p.supply ? Number(p.supply) : 0, p.holders.reduce((s, h) => s + Number(h.b), 0)), pc = (h) => (sup ? (Number(h.b) / sup) * 100 : 0), wallets = p.holders.filter((h) => !holderLabel(p, h.a) || holderLabel(p, h.a) === "Team"), top10 = wallets.slice(0, 10).reduce((s, h) => s + pc(h), 0), mx = Math.max(...p.holders.map(pc), 1);
+      return `<div class="hd-sum"><div><small>Holders</small><b>${wallets.length}</b></div><div><small>Top 10 hold</small><b>${top10.toFixed(1)}%</b></div><div><small>Biggest wallet</small><b>${Math.max(0, ...wallets.map(pc)).toFixed(1)}%</b></div></div><ul class="hold hd">${p.holders.map((h, i) => { const lb = holderLabel(p, h.a), me = S.me && h.a.toLowerCase() === S.me.toLowerCase(), pct = pc(h), big = !lb && pct > 10;
+        return `<li${me ? ' class="me"' : ""}><span class="rk">${i + 1}</span>${avatar(h.a, 34)}<div class="hd-n"><b>${lb === "Uniswap pool" ? "Liquidity pool" : lb && lb !== "Team" ? lb : esc(uname(h.a))}${me ? ' <em class="th-tag">You</em>' : ""}${lb === "Team" ? ' <em class="th-tag c">Creator</em>' : ""}${lb === "Uniswap pool" ? ' <em class="th-tag">🔒 Locked</em>' : ""}${big ? ' <em class="th-tag w">Whale</em>' : ""}</b><span class="hd-b"><i style="width:${Math.max(2, (pct / mx) * 100)}%"></i></span></div><b class="hd-p">${pct.toFixed(2)}%</b></li>`; }).join("")}</ul>`; })()}` : `<p class="prose">No holders yet.</p>`) : `<p class="prose">Loading holders…</p>`;
   if (t === "depth") return `<p class="fine" style="margin:0 0 12px">How much it takes to move the price. Small pools move fast: check before large trades.</p>
     <ul class="depth"><li class="dh"><span>Move</span><b>Buy to push up</b><b>Sell to push down</b></li>${depthRows(p)}</ul>`;
   if (t === "mine" && !S.me) return `<p class="prose">Connect your wallet to see your trades.</p>`;
@@ -642,7 +645,11 @@ function tpslCheck(p) {
   const t = $("#tx-tpsl"); if (t) t.outerHTML = tpslHtml(p); document.querySelector('[data-side="sell"]')?.click(); setTimeout(() => document.querySelector('[data-pct="100"]')?.click(), 60); document.querySelector(".term")?.classList.add("sheet");
 }
 const chatGet = (p) => { try { return JSON.parse(localStorage.getItem(`hf-chat-${p.id}`) || "[]"); } catch { return []; } };
-const chatHtml = (p) => { const l = chatGet(p).slice(-40).reverse(); return `<form class="chat-f" data-chat><input id="chat-in" maxlength="200" placeholder="Write a comment…" autocomplete="off"><button class="btn btn-dark btn-sm" type="submit">Post</button></form>` + (l.length ? `<ul class="chat">${l.map((m) => `<li><b>${esc(m.n)}</b><span>${esc(m.t)}</span><small>${agoS((S.now || Date.now() / 1000) - m.ts)}</small></li>`).join("")}</ul>` : `<p class="fine">Be the first to comment on ${esc(p.q.symbol)}.</p>`); };
+const chatHtml = (p) => threadHtml("tok-" + p.id, { me: () => (S.me ? { a: S.me, n: uname(S.me) } : null), avatar: (x, z) => avatar(x, z), seed: true,
+  tag: (m) => { const a2 = String(m.a || "").toLowerCase(); if (a2 && p.q.creator && a2 === p.q.creator.toLowerCase()) return `<em class="th-tag c">${T2("Creator", "Creador")}</em>`; const h = (p.holders || []).find((x) => String(x.a).toLowerCase() === a2); return h && p.supply ? `<em class="th-tag">${T2("Holder", "Holder")} ${((Number(h.b) / Number(p.supply)) * 100).toFixed(1)}%</em>` : ""; },
+  events: () => (p.trades || []).filter((t) => t.who && t.ts).slice(-10).map((t) => ({ ts: t.ts, n: uname(t.who), buy: t.buy, usd: usd(t.usdc) })) });
+const T2 = (en, es) => ((() => { try { return localStorage.getItem("hf-lang") === "es"; } catch { return false; } })() ? es : en);
+window.__hfMe = () => (S.me ? { a: S.me, n: uname(S.me) } : null); window.__hfAva = (x, z) => avatar(x, z);
 const curTok = () => findTok((x) => location.hash === `#/trade/${x.id}` || location.hash.startsWith(`#/trade/${x.id}?`));
 if (!window.__txKeys) {
   window.__txKeys = 1;
@@ -678,8 +685,6 @@ if (!window.__txKeys) {
     const sn = e.target.closest("[data-snd]"); if (sn) { try { localStorage.setItem("hf-snd", sndOn() ? "0" : "1"); } catch {} sn.setAttribute("aria-pressed", sndOn()); if (sndOn()) beep(true); return; }
     const rpb = e.target.closest("[data-replay]"); if (rpb) { const p = curTok(); if (!p) return; clearInterval(S.rpT); const tot = buildCandles(p, S.period || "5m").length; S.rp = 5; rpb.textContent = "Stop"; S.rpT = setInterval(() => { S.rp += 1; chartOff?.update(); if (S.rp >= tot) { clearInterval(S.rpT); S.rp = 0; rpb.textContent = "Replay"; chartOff?.update(); } }, 140); if (rpb.dataset.on === "1") { clearInterval(S.rpT); S.rp = 0; rpb.textContent = "Replay"; rpb.dataset.on = "0"; chartOff?.update(); } else rpb.dataset.on = "1"; }
   });
-  document.addEventListener("submit", (e) => { const f = e.target.closest("[data-chat]"); if (!f) return; e.preventDefault(); const p = curTok(), v = $("#chat-in").value.trim(); if (!p || !v) return;
-    const l = chatGet(p); l.push({ n: S.me ? uname(S.me) : "Guest", t: v.slice(0, 200), ts: S.now || Math.floor(Date.now() / 1000) }); try { localStorage.setItem(`hf-chat-${p.id}`, JSON.stringify(l.slice(-80))); } catch {} $("#term-tab").innerHTML = chatHtml(p); });
 }
 const folGet = () => { try { return JSON.parse(localStorage.getItem("hf-follow") || "[]"); } catch { return []; } };
 const folSet = (v) => { try { localStorage.setItem("hf-follow", JSON.stringify(v)); } catch {} };
@@ -721,7 +726,31 @@ const RX = { rocket: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none
 function react(kind) { const h = $("#chartpro"); if (!h) return; const e = document.createElement("div"); e.className = "cp-rx"; e.style.left = 20 + Math.random() * 60 + "%"; e.innerHTML = RX[kind]; h.appendChild(e); setTimeout(() => e.remove(), 2200); }
 const proOn = () => true; // un solo modo: todo visible
 const oneTap = () => { try { return localStorage.getItem("hf-1tap") === "1"; } catch { return false; } }; // por defecto apagado: los montos solo rellenan, compras al tocar Comprar
-function notify(t) { try { if ("Notification" in window && Notification.permission === "granted") new Notification("Holdfast", { body: t }); } catch {} }
+const ntOn = (k) => { try { return localStorage.getItem("hf-nt-" + k) !== "0"; } catch { return true; } };
+async function notify(t, title = "Holdfast") {
+  try { if (!("Notification" in window) || Notification.permission !== "granted") return false;
+    try { const reg = await navigator.serviceWorker?.getRegistration?.(); if (reg?.showNotification) { await reg.showNotification(title, { body: t, icon: "./assets/holdfast-mark.svg", tag: t.slice(0, 40) }); return true; } } catch {}
+    new Notification(title, { body: t, icon: "./assets/holdfast-mark.svg" }); return true; } catch { return false; }
+}
+try { navigator.serviceWorker?.register("./sw.js").catch(() => {}); } catch {}
+window.addEventListener("hf-notify", (e) => { const { kind, text } = e.detail || {}; if (kind && !ntOn(kind)) return; toast(text); if (document.hidden) notify(text); });
+function ntHtml() {
+  const sup = "Notification" in window, st = sup ? Notification.permission : "unsupported";
+  const msg = st === "granted" ? "Alerts are on. You'll get them here and as system notifications." : st === "denied" ? "Alerts are blocked in your browser. Allow notifications for this site in the browser settings, then try again." : st === "unsupported" ? "This browser can't show system alerts. On iPhone, add Holdfast to your home screen first." : "Turn on alerts to know when a round fills, a trader you follow buys, or a price is hit.";
+  const tg = (k, t) => `<label class="nt-t"><span>${t}</span><input type="checkbox" data-nt-k="${k}"${ntOn(k) ? " checked" : ""}><i></i></label>`;
+  return `<div class="ac-box nt-box"><button type="button" class="ip-x" data-ntx aria-label="Close">✕</button><h3 style="margin:0 0 6px">Alerts</h3><p class="fine" style="margin:0 0 14px">${msg}</p>
+    ${st === "default" ? `<button type="button" class="btn btn-ember btn-block" data-nt-on>Turn on alerts</button>` : ""}
+    <button type="button" class="btn btn-line btn-block" data-nt-test style="margin-top:8px">Send a test alert</button>
+    <div class="nt-g">${tg("round", "My round fills")}${tg("fol", "A trader I follow buys or sells")}${tg("price", "My price alert is hit")}</div>
+    <p class="fine" style="margin:12px 0 0">Alerts reach you while Holdfast is open in a tab or installed on your phone. Alerts with the app closed need a push server, which isn't connected yet.</p></div>`;
+}
+function openNt() { document.getElementById("nt-ov")?.remove(); const ov = document.createElement("div"); ov.id = "nt-ov"; ov.className = "acct-ov"; ov.innerHTML = ntHtml(); document.body.appendChild(ov);
+  const redraw = () => { ov.innerHTML = ntHtml(); document.getElementById("bell")?.classList.toggle("on", "Notification" in window && Notification.permission === "granted"); };
+  ov.onclick = async (e) => { if (e.target === ov || e.target.closest("[data-ntx]")) return ov.remove();
+    if (e.target.closest("[data-nt-on]")) { try { await Notification.requestPermission(); } catch {} redraw(); if (Notification.permission === "granted") notify(T2("Alerts are on. You'll see them like this.", "Avisos activados. Los verás así."), "Holdfast"); return; }
+    if (e.target.closest("[data-nt-test]")) { const ok = await notify(T2("This is a test alert. A trader you follow just bought.", "Este es un aviso de prueba. Un trader que sigues acaba de comprar."), "Holdfast"); toast(ok ? "Test alert sent" : "Turn on alerts first", !ok); return; }
+    const k = e.target.closest("[data-nt-k]"); if (k) { try { localStorage.setItem("hf-nt-" + k.dataset.ntK, k.checked ? "1" : "0"); } catch {} } }; }
+
 function creatorHtml(p) {
   const c = p.q.creator, k = parseInt(c.slice(2, 6), 16), filled = 2 + (k % 6), failed = k % 3, trades = (p.trades || []).filter((t) => t.who && t.who.toLowerCase() === c.toLowerCase()), sold = trades.some((t) => !t.buy);
   return `<div class="cr"><span>${avatar(c, 40)}</span><div><b>${esc(uname(c))}</b><small>${short(c)}</small></div></div><div class="cr-n"><span><b>${filled}</b><small>rounds filled</small></span><span><b>${failed}</b><small>did not fill</small></span><span><b class="${sold ? "d" : "u"}">${sold ? "Yes" : "No"}</b><small>sold own tokens</small></span></div>`;
@@ -816,7 +845,7 @@ function vTerminal(p) {
         <div class="tx-bal" id="tx-bal">${balHtml(p)}</div>
         <div class="tx-strip"><div class="tx-feed" id="tx-feed" aria-label="Live trades">${feedHtml(p)}</div>
     <div class="tx-tools"><button type="button" data-replay>Replay</button><button type="button" data-react="rocket" aria-label="Rocket">${RX.rocket}</button><button type="button" data-react="fire" aria-label="Fire">${RX.fire}</button><button type="button" data-snd aria-pressed="${sndOn()}">Sound</button></div></div>
-        <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["heat", "Heatmap"], ["chat", "Comments"], ["top", "Top traders"], ["whales", "Whales"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${k === "whales" ? ICO.whale + " " : ""}${t}</button>`).join("")}</div>
+        <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["heat", "Heatmap"], ["chat", "Thread"], ["top", "Top traders"], ["whales", "Whales"], ["mine", "My trades"], ["holders", "Holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${k === "whales" ? ICO.whale + " " : ""}${t}</button>`).join("")}</div>
         <div id="term-tab">${termTab(p)}</div>
       </div>
       <aside class="term-side"><button type="button" class="tx-sheet-x" data-sheet-x aria-label="Close">✕</button><div class="tx-safe tx-safe2" id="tx-safe2">${safetyHtml(p)}</div><div class="tx-row2"><div id="tx-rank">${rankHtml(p)}</div><div class="tx-press" id="tx-press">${pressHtml(p)}</div></div>${tradePanel(p)}${posBox(p)}${tpslHtml(p)}
@@ -900,12 +929,12 @@ function startTerminal(p) {
       el.classList.remove("flash-up", "flash-dn"); void el.offsetWidth; el.classList.add(p.mk.price > before ? "flash-up" : "flash-dn");
       const n0 = (p.trades || []).length; await loadTrades(p); reTerm();
       (p.trades || []).slice(n0).slice(-2).forEach((t) => liveAlert(p, t));
-      (p.trades || []).slice(n0).filter((t) => t.who && isFol(t.who)).slice(-2).forEach((t) => { toast(`${uname(t.who)} ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`); notify(`${uname(t.who)} ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`); });
+      (p.trades || []).slice(n0).filter((t) => t.who && isFol(t.who)).slice(-2).forEach((t) => window.dispatchEvent(new CustomEvent("hf-notify", { detail: { kind: "fol", text: `${uname(t.who)} ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}` } })));
       (p.trades || []).slice(n0).filter((t) => isWhale(p, t)).slice(-1).forEach((t) => { burst(t.buy); beep(t.buy); });
       (p.trades || []).slice(n0).filter((t) => isWhale(p, t)).slice(-1).forEach((t) => toast(`Whale ${t.buy ? "bought" : "sold"} $${usd(t.usdc)} of ${p.q.symbol}`));
       const pb = $("#tx-pos"); if (pb) pb.outerHTML = posBox(p);
       const av = Number(localStorage.getItem(`hf-alert-${p.id}`) || 0);
-      if (av && p.alertSide && ((p.alertSide === "up" && p.mk.price >= av) || (p.alertSide === "dn" && p.mk.price <= av))) { toast(`${p.q.symbol} reached $${av}`); p.alertSide = null; }
+      if (av && p.alertSide && ((p.alertSide === "up" && p.mk.price >= av) || (p.alertSide === "dn" && p.mk.price <= av))) { window.dispatchEvent(new CustomEvent("hf-notify", { detail: { kind: "price", text: `${p.q.symbol} reached $${av}` } })); p.alertSide = null; }
     }
   }, Number(new URLSearchParams(location.search).get("poll")) || (CONFIG.demo ? 3000 : 6000));
 }
@@ -1874,6 +1903,7 @@ async function main() {
   initI18n();
   $("#net span").textContent = CONFIG.chainName;
   setLaunchChain({ CONFIG, pub, wallet: null, account: null }); if (!CONFIG.demo) loadChainLaunches().catch(() => {});
+  $("#bell").onclick = openNt; $("#bell").classList.toggle("on", "Notification" in window && Notification.permission === "granted");
   $("#connect").onclick = () => { if (S.me) { const o = document.getElementById("acct-ov"); if (o) { o.remove(); return; } const ov = document.createElement("div"); ov.id = "acct-ov"; ov.innerHTML = acctHtml(); document.body.appendChild(ov); ov.onclick = (e) => { if (e.target.closest("[data-edp]")) { ov.remove(); editProfile(); return; } if (e.target === ov || e.target.closest("[data-acx]")) ov.remove(); }; return; } connect().catch((x) => toast(x.shortMessage || x.message, true)); };
   window.addEventListener("hashchange", () => { S.tab = "overview"; clearInterval(S.poll); if (!location.hash.startsWith("#/launch")) $("#app").innerHTML = ""; route(); scrollTo(0, 0); });
   await loadCatalog();
