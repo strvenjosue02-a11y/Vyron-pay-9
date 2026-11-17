@@ -9,7 +9,7 @@ import { initI18n } from "./i18n.js";
 import { mountChart } from "./pro.js";
 import { threadHtml } from "./thread.js";
 import { createDemo } from "./demo.js";
-import { setLaunchChain, loadChainLaunches, lcChainLive, showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote } from "./launch.js";
+import { setLaunchChain, loadChainLaunches, lcChainLive, showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote, nextClose } from "./launch.js";
 import { canonical, msgSubmit, msgDecision, msgUpdate, msgPanel, msgQuestion, msgAnswer, msgProfile, validProfile, validate, CATEGORIES, COLORS, USE_KEYS, USE_LINKS } from "./shared.js";
 
 const RPC = new URLSearchParams(location.search).get("rpc") || CONFIG.rpc; // ?rpc= solo para pruebas locales
@@ -647,7 +647,7 @@ function tpslCheck(p) {
 const chatGet = (p) => { try { return JSON.parse(localStorage.getItem(`hf-chat-${p.id}`) || "[]"); } catch { return []; } };
 const chatHtml = (p) => threadHtml("tok-" + p.id, { me: () => (S.me ? { a: S.me, n: uname(S.me) } : null), avatar: (x, z) => avatar(x, z), seed: true,
   tag: (m) => { const a2 = String(m.a || "").toLowerCase(); if (a2 && p.q.creator && a2 === p.q.creator.toLowerCase()) return `<em class="th-tag c">${T2("Creator", "Creador")}</em>`; const h = (p.holders || []).find((x) => String(x.a).toLowerCase() === a2); return h && p.supply ? `<em class="th-tag">${T2("Holder", "Holder")} ${((Number(h.b) / Number(p.supply)) * 100).toFixed(1)}%</em>` : ""; },
-  events: () => (p.trades || []).filter((t) => t.who && t.ts).slice(-10).map((t) => ({ ts: t.ts, n: uname(t.who), buy: t.buy, usd: usd(t.usdc) })) });
+  events: () => [] });
 const T2 = (en, es) => ((() => { try { return localStorage.getItem("hf-lang") === "es"; } catch { return false; } })() ? es : en);
 window.__hfMe = () => (S.me ? { a: S.me, n: uname(S.me) } : null); window.__hfAva = (x, z) => avatar(x, z);
 const curTok = () => findTok((x) => location.hash === `#/trade/${x.id}` || location.hash.startsWith(`#/trade/${x.id}?`));
@@ -1682,16 +1682,48 @@ function reviewCard(p) {
 }
 
 // ================================================================= router
+// Inicio (compu): el video de Blender avanza con el scroll; los textos aparecen según el avance.
+let heroOff = null;
+function startHero() {
+  if (heroOff) { heroOff(); heroOff = null; }
+  const hx = $("#hx"), v = $("#hx-vid"); if (!hx) return;
+  const cd = () => { const n = nextClose(); const box = $("#hx-cd"); if (!box) return; if (!n) { box.hidden = true; return; } box.hidden = false;
+    const s = n.secs, p2 = (x) => String(x).padStart(2, "0"); $("#hx-cdl").textContent = `${n.name} closes in`; $("#hx-ch").textContent = p2(Math.floor(s / 3600)); $("#hx-cm").textContent = p2(Math.floor((s % 3600) / 60)); $("#hx-cs").textContent = p2(s % 60); };
+  cd(); const tm = setInterval(() => { if (!$("#hx")) return clearInterval(tm); cd(); }, 1000);
+  let raf = 0, cur = 0, tgt = 0, on = true;
+  const desk = () => matchMedia("(min-width: 901px)").matches && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const prog = () => { const r = hx.getBoundingClientRect(), span = hx.offsetHeight - innerHeight + 64; return Math.min(1, Math.max(0, -r.top / Math.max(1, span))); };
+  const paint = () => { if (!on || !$("#hx")) return; const p = prog(); hx.style.setProperty("--pr", p.toFixed(3));
+    hx.querySelectorAll(".hx-chips li").forEach((c) => c.classList.toggle("on", p >= Number(c.dataset.p)));
+    hx.querySelectorAll(".hx-steps li").forEach((c) => c.classList.toggle("on", p >= Number(c.dataset.s) / 3 - 0.001 && (Number(c.dataset.s) === 2 || p < (Number(c.dataset.s) + 1) / 3)));
+    if (desk() && v && v.duration) { tgt = p * (v.duration - 0.05); cur += (tgt - cur) * 0.18; if (Math.abs(v.currentTime - cur) > 0.012) v.currentTime = cur; }
+    raf = requestAnimationFrame(paint); };
+  if (v) { v.pause(); v.addEventListener("loadedmetadata", () => { v.currentTime = 0; }); }
+  raf = requestAnimationFrame(paint);
+  heroOff = () => { on = false; cancelAnimationFrame(raf); clearInterval(tm); };
+}
+
 function route() {
   const h = location.hash || "#/";
   if (h.startsWith("#/lc")) { document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === (location.hash === "#/lc/new" ? "launch" : "lc") ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current"))); showLaunches($("#app")); return; }
   if (h === "#/" || h === "#" || h === "") {
     document.querySelectorAll("[data-nav]").forEach((x) => (x.dataset.nav === "lc" ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
-    if (!$("#lc-home")) $("#app").innerHTML = `<section class="hx"><div class="hx-t"><h1><span>Launch it.</span><span>Fill it.</span><em>Trade it.</em></h1><p>Put money in. If it fills, trading opens. If it doesn't, take it out.</p><div class="hx-b"><a class="btn btn-ember" href="#/lc">See launches</a><a class="btn btn-line" href="#/lc/new">Launch</a></div></div><img class="hx-art" src="./assets/hero-gem.webp" alt="" aria-hidden="true" width="2400" height="1000"><canvas class="hx-bg" id="hx-bg" aria-hidden="true"></canvas></section><div id="lc-home"></div>`;
-    { const cv = $("#hx-bg"); if (cv) startHeroBg(cv); }
+    if (!$("#lc-home")) $("#app").innerHTML = `<section class="hx" id="hx"><div class="hx-pin">
+      <video class="hx-vid" id="hx-vid" muted playsinline preload="auto" poster="./assets/hero-poster.webp" src="./assets/hero-scroll.mp4" aria-hidden="true"></video>
+      <img class="hx-art" src="./assets/hero-poster.webp" alt="" aria-hidden="true">
+      <div class="hx-shade"></div>
+      <div class="hx-t"><h1><span>If it fills,</span><span>it opens.</span></h1>
+        <p>Back a token with USDC for 24 hours. When the round fills, trading opens. If it doesn't, you get everything back.</p>
+        <div class="hx-b"><a class="btn btn-ember" href="#/lc">See launches</a><a class="btn btn-line" href="#/lc/new">Launch a token</a></div>
+        <ol class="hx-steps"><li data-s="0"><b>1</b><span>Put in USDC</span></li><li data-s="1"><b>2</b><span>The round fills</span></li><li data-s="2"><b>3</b><span>Trading opens</span></li></ol></div>
+      <ul class="hx-chips"><li data-p="0.10" style="--y:22%">Liquidity locked forever</li><li data-p="0.36" style="--y:46%">Automatic refund</li><li data-p="0.62" style="--y:70%">Same price for everyone</li></ul>
+      <div class="hx-cd" id="hx-cd" hidden><small id="hx-cdl"></small><div class="hx-cb"><span><b id="hx-ch">00</b><i>hours</i></span><span><b id="hx-cm">00</b><i>minutes</i></span><span><b id="hx-cs">00</b><i>seconds</i></span></div></div>
+    </div></section><div id="lc-home"></div>`;
+    startHero();
     showLaunches($("#lc-home")); return;
   }
   if (/^#\/(projects|p\/|studio|portfolio|launch$)/.test(h)) { location.hash = "#/lc"; return; }
+  if (heroOff) { heroOff(); heroOff = null; }
   stopLaunches();
   const m = h.match(/^#\/p\/([\w-]+)/);
   const p = m && S.list.find((x) => x.id === m[1]);
