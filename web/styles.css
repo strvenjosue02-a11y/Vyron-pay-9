@@ -1809,3 +1809,24 @@ h1, h2, h3, .tx-px b, .tx-px #tx-capbig, .page-h h1 { text-shadow: none !importa
   .lc-form > button[type="submit"] { position: sticky; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 5; height: 58px; font-size: 17px; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,.7); }
   body:has(.lc-form) { padding-bottom: 150px; }
 }
+
+/* ===== CELULAR MÍNIMO: quién compra arriba, token (cambiar), gráfico limpio, lo que tienes, Comprar / Vender ===== */
+.tx-bal { display: none; }
+@media (max-width: 900px) {
+  .term.tx .tx-menu-b, .term.tx .cp-tools, .cp-alert, .term.tx .tx-share, .term.tx .tx-info-b { display: none !important; }
+  .term.tx .tx-id .tx-toks-b { display: inline-flex !important; height: 32px; margin-left: 8px !important; padding: 0 12px; background: #121215; } .tx-toks-b svg { display: inline !important; }
+  .term.tx .tx-top { grid-template-columns: 28px 40px 1fr !important; }
+  .term.tx .tx-id { display: flex; align-items: center; } .term.tx .tx-id h1 { margin: 0; }
+  /* los que compran, arriba, bajo el encabezado */
+  .term.tx .tx-strip { order: -1; } .term.tx .term-main { gap: 6px; }
+  .term.tx .cp-bar { padding: 0 2px 4px; } .term.tx .cp-per { justify-content: center; gap: 6px; } .term.tx .cp-per button { flex: none; padding: 7px 14px; border-radius: 999px; background: #121215; box-shadow: none !important; font-size: 13px; } .term.tx .cp-per button[aria-selected="true"] { background: #f4f4f1 !important; color: #09090b !important; box-shadow: none !important; }
+  .term.tx .tx-chart { border-radius: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; margin: 0 -12px !important; }
+  /* lo que tienes y lo que vale */
+  .tx-bal { display: grid !important; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 6px 4px; border-top: 1px solid #17171c; flex: none; } .tx-bal div { display: grid; gap: 2px; } .tx-bal small { font-size: 12.5px; color: var(--ink-3); } .tx-bal b { font: 600 22px var(--mono); letter-spacing: -0.05em; } .tx-bal em { font: 600 13px var(--mono); font-style: normal; } .tx-bal div:last-child { text-align: right; justify-items: end; }
+}
+@media (max-width: 900px) { .term.tx .tx-id:not(.menu) .tx-toks-b, .term.tx .tx-id.menu .tx-toks-b { display: inline-flex !important; } }
+@media (max-width: 900px) {
+  .term.tx .tx-strip { order: 0 !important; } .term.tx .tx-chart { order: 2 !important; } .term.tx .tx-bal { order: 3 !important; }
+  .term.tx .cp-per { gap: 4px; flex-wrap: nowrap; } .term.tx .cp-per button { padding: 7px 9px !important; font-size: 12.5px !important; }
+  .cp-ln, .cp-face { display: none !important; }
+}

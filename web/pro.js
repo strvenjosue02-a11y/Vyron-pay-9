@@ -21,7 +21,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
   const L = { candles: "Candles", line: "Line", ma: "MA", draw: "Line", clear: "Clear", full: "Full screen", exit: "Exit", vol: "Vol", price: "Price", cap: "Market cap", ...labels };
   const key = `hf-hl-${id}`;
   let hl = []; try { hl = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
-  const st = { flow: (() => { try { return localStorage.getItem("hf-flow") === "1"; } catch { return false; } })(), ind: null, heat: (() => { try { return localStorage.getItem("hf-heat") !== "0"; } catch { return true; } })(), faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: "candle", ma: !matchMedia("(max-width: 900px)").matches, draw: false, period, k: 1, last: null };
+  const st = { flow: (() => { try { return localStorage.getItem("hf-flow") === "1"; } catch { return false; } })(), ind: null, heat: (() => { try { return localStorage.getItem("hf-heat") !== "0"; } catch { return true; } })(), faces: (() => { try { return localStorage.getItem("hf-faces") !== "0"; } catch { return true; } })(), cap: false, mode: PHONE() ? "line" : "candle", ma: !matchMedia("(max-width: 900px)").matches, draw: false, period, k: 1, last: null };
   el.classList.add("cp");
   el.innerHTML = `<div class="cp-bar">
       <div class="cp-per" role="tablist">${periods.map((k) => `<button type="button" data-per="${k}" aria-selected="${k === period}">${k}</button>`).join("")}</div>
@@ -87,7 +87,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
       return `<i class="${h.win ? "g" : h.now ? "n" : "r"}" style="top:${top}px;height:${ht}px;opacity:${(0.05 + h.v * 0.3).toFixed(2)}"></i>`; }).join("");
   }
   function drawFlow() {
-    const on = st.flow; fl.style.display = on ? "block" : "none"; candle.applyOptions({ visible: on ? false : st.mode === "candle" }); vol.applyOptions({ visible: !on });
+    const on = st.flow; fl.style.display = on ? "block" : "none"; candle.applyOptions({ visible: on ? false : st.mode === "candle" }); vol.applyOptions({ visible: !on && !PHONE() });
     if (!on) return; const W = box.clientWidth, H = box.clientHeight, dpr = Math.min(devicePixelRatio || 1, 2); if (!W || !H) return;
     if (fl.width !== W * dpr || fl.height !== H * dpr) { fl.width = W * dpr; fl.height = H * dpr; fl.style.width = W + "px"; fl.style.height = H + "px"; }
     const g = fl.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H); const ts = chart.timeScale(), k = st.k, times = data.map((c) => c.time);
@@ -146,6 +146,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     candle.setData(data); applyInd(); line.setData(data.map((c) => ({ time: c.time, value: c.close })));
     vol.setData((d.candles || []).filter((c) => c.t).map((c) => ({ time: c.t, value: c.v, color: (c.c >= c.o ? UP : DN) + "38" })));
     const ma7 = maOf(data, 7), ma25 = maOf(data, 25); m7.setData(st.ma ? ma7 : []); m25.setData(st.ma ? ma25 : []);
+    vol.applyOptions({ visible: !st.flow && !PHONE() }); line.applyOptions({ lineWidth: PHONE() ? 3 : 2 });
     candle.applyOptions({ visible: st.mode === "candle" }); line.applyOptions({ visible: st.mode === "line" || (st.mode === "candle" && !st.flow), lineVisible: st.mode === "line", topColor: st.mode === "line" ? "rgba(61,220,151,.22)" : (data.length && data[data.length - 1].close >= data[0].open ? "rgba(61,220,151,.20)" : "rgba(255,93,93,.20)"), bottomColor: "rgba(0,0,0,0)" });
     if (roundLine) candle.removePriceLine(roundLine);
     roundLine = d.round && !PHONE() ? candle.createPriceLine({ price: d.round * k, color: "rgba(255,255,255,.35)", lineWidth: 1, lineStyle: 2, axisLabelVisible: false, title: "" }) : null;
