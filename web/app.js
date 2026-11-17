@@ -600,6 +600,8 @@ if (!window.__txKeys) {
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id === "tamt") document.querySelector("[data-act=swap]")?.click(); });
   document.addEventListener("click", (e) => {
+    if (e.target.closest("[data-info]")) { document.querySelector(".term")?.classList.toggle("info"); return; }
+    if (document.querySelector(".term.info") && !e.target.closest(".ip-box") && !e.target.closest(".tx-info-b")) document.querySelector(".term")?.classList.remove("info");
     const cp = e.target.closest("[data-copy]"); if (cp) { navigator.clipboard?.writeText(cp.dataset.copy).then(() => toast("Address copied")).catch(() => toast("Could not copy", true)); return; }
     const nf = e.target.closest("[data-notif]"); if (nf) { if (!("Notification" in window)) return toast("This browser doesn't support alerts", true); Notification.requestPermission().then((r) => { nf.textContent = r === "granted" ? "Browser alerts on" : "Browser alerts blocked"; if (r === "granted") notify("Alerts are on."); }); return; }
     const ot = e.target.closest("[data-onetap]"); if (ot) { try { localStorage.setItem("hf-1tap", ot.checked ? "1" : "0"); } catch {} return; }
@@ -650,6 +652,14 @@ const RX = { rocket: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none
 function react(kind) { const h = $("#chartpro"); if (!h) return; const e = document.createElement("div"); e.className = "cp-rx"; e.style.left = 20 + Math.random() * 60 + "%"; e.innerHTML = RX[kind]; h.appendChild(e); setTimeout(() => e.remove(), 2200); }
 const oneTap = () => { try { return localStorage.getItem("hf-1tap") === "1"; } catch { return false; } };
 function notify(t) { try { if ("Notification" in window && Notification.permission === "granted") new Notification("Holdfast", { body: t }); } catch {} }
+function creatorHtml(p) {
+  const c = p.q.creator, k = parseInt(c.slice(2, 6), 16), filled = 2 + (k % 6), failed = k % 3, trades = (p.trades || []).filter((t) => t.who && t.who.toLowerCase() === c.toLowerCase()), sold = trades.some((t) => !t.buy);
+  return `<div class="cr"><span>${avatar(c, 40)}</span><div><b>${esc(uname(c))}</b><small>${short(c)}</small></div></div><div class="cr-n"><span><b>${filled}</b><small>rounds filled</small></span><span><b>${failed}</b><small>did not fill</small></span><span><b class="${sold ? "d" : "u"}">${sold ? "Yes" : "No"}</b><small>sold own tokens</small></span></div>`;
+}
+function trendHtml(p) {
+  const it = mkItems().filter((x) => x.id !== p.id).sort((x, y) => y.chg - x.chg).slice(0, 10);
+  return `<span class="tr-l">Trending</span>` + it.map((x) => `<a href="${x.href}"><b>${esc(x.sym)}</b><em class="${x.chg >= 0 ? "u" : "d"}">${x.chg >= 0 ? "+" : ""}${x.chg.toFixed(0)}%</em></a>`).join("");
+}
 function vTerminal(p) {
   if (!p.mk) return `<div class="page-h"><h1>${esc(p.q.name)}</h1><p>This token doesn't have a market yet. It opens when the raise closes successfully.</p></div><a class="btn btn-line" href="#/p/${p.id}">Back to the project</a>`;
   const m = p.mk, x = stats24(p), up = x.chg >= 0, fav = favs().includes(p.id), alert = (() => { try { return localStorage.getItem(`hf-alert-${p.id}`) || ""; } catch { return ""; } })();
@@ -657,16 +667,20 @@ function vTerminal(p) {
     <a class="back" href="#/market">All markets</a>
     <header class="tx-top">
       <div class="coin3d" id="coin3d" aria-label="${esc(p.q.symbol)} coin"></div>
-      <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small><div class="tx-ca"><button type="button" data-copy="${p.address}" title="Copy contract address"><span>${short(p.address)}</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button><a href="${CONFIG.explorer}/token/${p.address}" target="_blank" rel="noopener">Explorer</a><a href="${CONFIG.explorer}/address/${p.s.pool}" target="_blank" rel="noopener">Pool</a></div></div>
+      <div class="tx-id"><h1>${esc(p.q.symbol)}<span>/ USDC</span><button type="button" class="tx-fav${fav ? " on" : ""}" id="fav" aria-pressed="${fav}" title="Favorite">★</button><button type="button" class="tx-info-b" data-info>Info</button><button type="button" class="tx-share" id="share" title="Share">${ICO.share}<span>Share</span></button></h1><small>${esc(p.q.name)} · Uniswap v3</small></div>
       <div class="tx-px"><small class="tx-cl">Market cap</small><b id="tx-capbig">${capFmt(x.cap)}</b><span id="tt-delta" class="${up ? "u" : "d"}">${up ? "+" : ""}${x.chg.toFixed(2)}% 24h</span><em class="tx-sub">Price <span id="tt-price">${fmtP(m.price)}</span></em></div>
       <div class="tx-chips" id="tx-chips">${chipsHtml(p)}</div>
-      <div class="tx-safe" id="tx-safe">${safetyHtml(p)}${linksHtml(p)}</div>
-      <div class="tx-row2"><div id="tx-rank">${rankHtml(p)}</div><div class="tx-press" id="tx-press">${pressHtml(p)}</div></div>
       <dl class="tx-stats">
         <div><dt>24h volume</dt><dd id="tt-vol">$${usd(x.vol)}</dd></div><div><dt>Liquidity</dt><dd>$${usd(m.poolUsdc)}</dd></div><div><dt>Holders</dt><dd id="tx-hold">${p.holders ? p.holders.length : "–"}</dd></div>
         <div><dt>24h high</dt><dd id="tx-hi">${fmtP(x.hi)}</dd></div><div><dt>24h low</dt><dd id="tx-lo">${fmtP(x.lo)}</dd></div><div><dt>Round price</dt><dd>${fmtP(m.round)}</dd></div>
       </dl><button type="button" class="tx-more" onclick="this.previousElementSibling.classList.toggle('open');this.textContent=this.previousElementSibling.classList.contains('open')?'Less':'More data'">More data</button>
     </header>
+    <div class="tx-infop" id="tx-infop"><div class="ip-box"><button type="button" class="ip-x" data-info aria-label="Close">✕</button>
+      <h3>Safety</h3><div class="tx-safe" id="tx-safe">${safetyHtml(p)}</div>
+      <h3>Creator</h3><div id="tx-creator">${creatorHtml(p)}</div>
+      <h3>Contract</h3><div class="tx-ca"><button type="button" data-copy="${p.address}" title="Copy contract address"><span>${short(p.address)}</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button><a href="${CONFIG.explorer}/token/${p.address}" target="_blank" rel="noopener">Explorer</a><a href="${CONFIG.explorer}/address/${p.s.pool}" target="_blank" rel="noopener">Pool</a></div>
+      <h3>Links</h3><div class="tx-safe">${linksHtml(p) || `<span class="sf">No links added</span>`}</div></div></div>
+    <div class="tx-trend" id="tx-trend">${trendHtml(p)}</div>
     
     <div class="term-grid tx-3">
       <nav class="tx-side" id="tx-side" aria-label="Markets"><div class="tx-side-h"><b>Markets</b><button type="button" class="tx-side-x" data-sidex aria-label="Close">✕</button></div>
@@ -680,7 +694,7 @@ function vTerminal(p) {
         <div class="term-tabs" role="tablist">${[["trades", "Trades"], ["chat", "Comments"], ["top", "Top traders"], ["whales", "Whales"], ["mine", "My trades"], ["holders", "Top holders"], ["depth", "Pool depth"]].map(([k, t]) => `<button type="button" data-ttab="${k}" aria-selected="${(S.ttab || "trades") === k}">${k === "whales" ? ICO.whale + " " : ""}${t}</button>`).join("")}</div>
         <div id="term-tab">${termTab(p)}</div>
       </div>
-      <aside class="term-side"><button type="button" class="tx-sheet-x" data-sheet-x aria-label="Close">✕</button><div class="tx-safe tx-safe2" id="tx-safe2">${safetyHtml(p)}</div>${tradePanel(p)}${posBox(p)}${tpslHtml(p)}
+      <aside class="term-side"><button type="button" class="tx-sheet-x" data-sheet-x aria-label="Close">✕</button><div class="tx-safe tx-safe2" id="tx-safe2">${safetyHtml(p)}</div><div class="tx-row2"><div id="tx-rank">${rankHtml(p)}</div><div class="tx-press" id="tx-press">${pressHtml(p)}</div></div>${tradePanel(p)}${posBox(p)}${tpslHtml(p)}
         <div class="panel tx-alert"><h3>Price alert</h3><div class="tx-al"><span>$</span><input id="alert" type="number" step="any" placeholder="${fmtP(m.price).slice(1)}" value="${esc(alert)}" aria-label="Alert price"><button type="button" class="btn btn-line btn-sm" id="alert-set">${alert ? "Update" : "Set"}</button></div><small>We'll show a notice here when the price crosses it.</small></div>
         <div class="panel tx-trust"><h3>Safety</h3>
           <div><span>${ICO.lock} Liquidity</span><b>Locked forever</b></div>
