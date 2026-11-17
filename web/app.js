@@ -595,11 +595,11 @@ function welcomeProfile() {
 async function editProfile(first) {
   const cur = S.prof?.[S.me.toLowerCase()], ov = document.createElement("div"); ov.className = "pnl-ov";
   ov.innerHTML = `<div class="tc">${first ? "" : `<button type="button" class="tc-x" data-px aria-label="Close">✕</button>`}<h3 style="margin:0 0 ${first ? 4 : 12}px">${first ? "Welcome. Set up your profile" : "My trader profile"}</h3>${first ? `<p class="fine" style="margin:0 0 12px">Your name and photo are required. This is how others will see you.</p>` : ""}
-    <label class="tc-ph"><span id="pf-prev">${avatar(S.me, 72)}</span><input id="pf-photo" type="file" accept="image/png,image/jpeg,image/webp"><small>${first ? "Tap to choose a photo (required)" : "Tap to choose a photo"}</small></label>
+    <label class="tc-ph"><span id="pf-prev">${avatar(S.me, 72)}</span><input id="pf-photo" type="file" accept="image/*"><small>${first ? "Tap to choose a photo (required)" : "Tap to choose a photo"}</small></label>
     <div class="f"><label for="pf-name">Username</label><input id="pf-name" maxlength="20" value="${esc(cur?.name || uname(S.me))}"></div>
     <p class="fine">${first ? "Public." : "Public."} Signing is free and moves no money.</p><button type="button" class="btn btn-ember btn-block" id="pf-save">Sign and save</button></div>`;
   document.body.appendChild(ov); requestAnimationFrame(() => ov.classList.add("on")); let photo = cur?.photo || "";
-  ov.querySelector("#pf-photo").onchange = (e) => pickImage(e, 96, 24000, (u) => { photo = u; ov.querySelector("#pf-prev").innerHTML = `<img class="ava" src="${u}" style="width:72px;height:72px;object-fit:cover" alt="">`; });
+  ov.querySelector("#pf-photo").onchange = (e) => pickImage(e, 96, 38000, (u) => { photo = u; ov.querySelector("#pf-prev").innerHTML = `<img class="ava" src="${u}" style="width:72px;height:72px;object-fit:cover" alt="">`; });
   ov.onclick = async (e) => { if ((e.target === ov || e.target.closest("[data-px]")) && !first) { ov.classList.remove("on"); setTimeout(() => ov.remove(), 250); return; }
     if (!e.target.closest("#pf-save")) return; const name = ov.querySelector("#pf-name").value.trim(), err = validProfile(name, photo) || (first && !photo ? "Choose a profile photo." : first && name === uname(S.me) ? "Choose your own username." : ""); if (err) return toast(err, true); let sig;
     const ok = await flow("Save profile", ["Sign with your wallet", "Save"], [async () => { sig = await sign(msgProfile(S.me, name, keccak256(toBytes(photo)))); }, async () => api("./api/profile", { address: S.me, name, photo, signature: sig })], "Profile saved");
@@ -1450,7 +1450,8 @@ async function pickImage(e, size, max, done) {
     const img = await createImageBitmap(f), c = document.createElement("canvas"); c.width = c.height = size;
     const k = Math.max(size / img.width, size / img.height), w = img.width * k, h = img.height * k;
     c.getContext("2d").drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
-    let url = c.toDataURL("image/webp", 0.85); if (!url.startsWith("data:image/webp")) url = c.toDataURL("image/png");
+    let url = c.toDataURL("image/webp", 0.85); if (!url.startsWith("data:image/webp")) url = c.toDataURL("image/jpeg", 0.85);
+    for (let q = 0.7; url.length > max && q > 0.2; q -= 0.15) url = c.toDataURL("image/jpeg", q);
     if (url.length > max) return toast("That image is too big. Try a simpler one.", true);
     done(url);
   } catch { toast("That file isn't an image we can read.", true); }

@@ -90,6 +90,6 @@ export function validate(p, nowSec) {
 export const msgProfile = (addr, name, hash) => `Holdfast: set my trader profile\nwallet: ${addr.toLowerCase()}\nname: ${name}\nphoto: ${hash}`;
 export function validProfile(name, photo) {
   if (!/^[A-Za-z0-9_\- ]{3,20}$/.test(name || "")) return "The username must be 3 to 20 letters, numbers, spaces, - or _.";
-  if (photo && !(/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(photo) && photo.length <= 24000)) return "The photo must be a small PNG, JPG or WebP.";
+  if (photo && !(/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(photo) && photo.length <= 40000)) return "The photo must be a small PNG, JPG or WebP.";
   return null;
 }

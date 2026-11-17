@@ -1868,3 +1868,7 @@ h1, h2, h3, .tx-px b, .tx-px #tx-capbig, .page-h h1 { text-shadow: none !importa
 /* Perfil arriba: avatar + nombre en el botón de la cuenta */
 #connect .acct { display: inline-flex; align-items: center; gap: 8px; } #connect .acct b { font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } #connect .acct .ava { border-radius: 50%; flex: none; }
 .ac-me { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; margin-bottom: 12px; border-bottom: 1px solid #1a1a1f; } .ac-me > div { flex: 1; min-width: 0; display: grid; gap: 2px; } .ac-me b { font-size: 16px; } .ac-me small { color: var(--ink-3); font: 12.5px var(--mono); }
+
+/* el aviso siempre por encima de las ventanas (antes quedaba tapado) */
+.toast { z-index: 99999 !important; }
+.tc-ph { padding: 6px; } .tc-ph input { width: 100%; height: 100%; font-size: 0; }
