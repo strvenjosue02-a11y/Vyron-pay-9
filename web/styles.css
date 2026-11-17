@@ -1654,3 +1654,9 @@ a.mk-row:hover { box-shadow: inset 2px 0 0 #fff; } .tx-feed span.fol, .tx-ca but
 .tp-r b { display: block; font-size: 15px; letter-spacing: -0.02em; } .tp-r small { color: var(--ink-3); font-size: 12.5px; } .tp-r em { font: 600 13.5px var(--mono); font-style: normal; }
 @media (max-width: 900px) { .tx-toks-b { margin-left: 0; } .tx-toksp { padding-top: 70px; } }
 .lc-addr button { white-space: nowrap; }
+/* celular: nombre arriba, botones compactos en su propia fila */
+@media (max-width: 900px) {
+  .term.tx .tx-id { min-width: 0; } .term.tx .tx-id h1 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 24px; line-height: 1.1; } .term.tx .tx-id h1 > span { font-size: 14px; color: var(--ink-3); }
+  .tx-toks-b, .tx-info-b, .tx-pro-b, .term.tx .tx-share { height: 30px; padding: 0 10px; margin: 0 !important; font-size: 12.5px; } .tx-toks-b svg { display: none; }
+  .term.tx .tx-top { grid-template-columns: 44px minmax(0, 1fr); }
+}

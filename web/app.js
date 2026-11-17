@@ -156,7 +156,12 @@ async function loadLcx(p) {
     pub.readContract({ address: p.address, abi: erc20Abi, functionName: "balanceOf", args: [p.s.pool] })]);
   p.mk = { sqrt: slot[0], poolUsdc: bu, poolTok: bt, usdc0: CONFIG.usdc.toLowerCase() < p.address.toLowerCase() }; p.mk.price = usdcPerToken(p.mk.sqrt, p.mk.usdc0);
   p.mk.round = Number(p.q.hardcap) / 1e6 / (Number(p.q.saleTokens) / 1e18);
-  if (S.me) p.u.balance = await pub.readContract({ address: p.address, abi: erc20Abi, functionName: "balanceOf", args: [S.me] });
+  if (S.me) {
+    p.u.balance = await pub.readContract({ address: p.address, abi: erc20Abi, functionName: "balanceOf", args: [S.me] });
+    // lo reclamado de la ronda se compró al precio de la ronda (el mismo para todos); lo comprado en el pool ya cuenta en las operaciones
+    const bought = (p.trades || []).filter((t) => t.buy && t.who && t.who.toLowerCase() === S.me.toLowerCase()).reduce((s, t) => s + Number(t.tok) / 1e18, 0), fromRound = Math.max(0, Number(p.u.balance) / 1e18 - bought);
+    p.u.contributed = BigInt(Math.round(fromRound * p.mk.round * 1e6));
+  }
 }
 async function loadChain(p) {
   if (p.lcx) return loadLcx(p);
