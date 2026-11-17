@@ -36,7 +36,7 @@ export function mountChart(el, { id, getData, periods, period, onPeriod, labels 
     autoSize: true,
     layout: { background: { type: "solid", color: "transparent" }, textColor: "#8d8f95", fontSize: 12, fontFamily: "JetBrains Mono, ui-monospace, monospace" },
     grid: { vertLines: { visible: false }, horzLines: { color: "rgba(255,255,255,.035)" } },
-    watermark: { visible: true, text: "", fontSize: 120, horzAlign: "center", vertAlign: "center", color: "rgba(255,255,255,.035)", fontFamily: "Space Grotesk, sans-serif", fontStyle: "bold" },
+    watermark: { visible: false, text: "", fontSize: 120, horzAlign: "center", vertAlign: "center", color: "rgba(255,255,255,.035)", fontFamily: "Space Grotesk, sans-serif", fontStyle: "bold" },
     crosshair: { mode: CrosshairMode.Normal, vertLine: { color: "rgba(255,255,255,.28)", style: 2, width: 1, labelBackgroundColor: "#1c1c20" }, horzLine: { color: "rgba(255,255,255,.28)", style: 2, width: 1, labelBackgroundColor: "#1c1c20" } },
     rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.1, bottom: 0.26 } },
     timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false, rightOffset: 10, barSpacing: 11, minBarSpacing: 2 },

@@ -1595,3 +1595,19 @@ a.mk-row:hover { box-shadow: inset 2px 0 0 #fff; } .tx-feed span.fol, .tx-ca but
 .mk-row { min-height: 68px; padding: 12px 24px !important; } .mk-row .mk-mark, .mk-row .mark { width: 44px !important; height: 44px !important; } .mk-tok b { font-size: 16px; letter-spacing: -0.02em; } .mk-tok small { font-size: 13px; }
 .mk-list { border-radius: 22px !important; } .mk-head { min-height: 46px; } a.mk-row:hover { background: #0d0d10; }
 @media (max-width: 760px) { .mk-row { border-radius: 20px; padding: 16px 18px !important; } .mk-row .mk-mark, .mk-row .mark { width: 46px !important; height: 46px !important; } }
+
+/* ===== Mercado simple: solo lo que importa ===== */
+.mk-simple .mk-row { grid-template-columns: minmax(0, 2.2fr) 1fr 1fr 1fr !important; min-height: 64px; } .mk-simple .mk-row > span:nth-child(n+5) { display: none !important; }
+.mk-simple .mk-row > span { font-size: 15px; } .mk-simple .mk-row > span:nth-child(n+2) { text-align: right; justify-self: end; } .mk-simple .mk-head button { text-align: right; justify-self: end; }
+@media (max-width: 760px) { .mk-simple .mk-row { grid-template-columns: minmax(0, 1fr) auto !important; grid-template-areas: "tok cap" "tok chg" !important; } .mk-simple .mk-row > span:nth-child(2) { grid-area: cap !important; justify-self: end; font-size: 16px; } .mk-simple .mk-row > span:nth-child(3) { grid-area: chg !important; justify-self: end; font-weight: 600; } .mk-simple .mk-row > span:nth-child(4) { display: none !important; } }
+/* ===== Panel de operar: grande, claro, táctil ===== */
+.term-side .cy-toggle { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; box-shadow: none !important; padding: 0; background: transparent !important; }
+.term-side .cy-toggle button { height: 48px; border-radius: 12px !important; background: #0f0f12 !important; box-shadow: inset 0 0 0 1px #1f1f24 !important; color: var(--ink-2); font: 600 16px var(--font); }
+.term-side .cy-toggle button[aria-selected="true"][data-side="buy"] { background: var(--up) !important; color: #03130b !important; box-shadow: none !important; }
+.term-side .cy-toggle button[aria-selected="true"][data-side="sell"] { background: var(--dn) !important; color: #1a0505 !important; box-shadow: none !important; }
+.term-side .cy-field { height: 68px; border-radius: 14px; background: #08080a !important; box-shadow: inset 0 0 0 1px #1f1f24 !important; } .term-side .cy-field input { font: 600 28px var(--mono); letter-spacing: -0.05em; } .term-side .cy-field:focus-within { box-shadow: inset 0 0 0 1px #fff !important; }
+.term-side .tx-amts { grid-template-columns: repeat(6, 1fr); gap: 6px; } .term-side .tx-amts button, .term-side .tx-q button { height: 40px; border-radius: 10px; font: 600 13.5px var(--mono); background: #0f0f12; box-shadow: inset 0 0 0 1px #1f1f24; } .term-side .tx-amts button:hover { box-shadow: inset 0 0 0 1px #fff; }
+.term-side .cy-sum { background: transparent; } .term-side .cy-sum > div { padding: 8px 0 !important; border: 0 !important; font-size: 14px; } .term-side .cy-sum > div:nth-child(n+3) { display: none; }
+.term-side .panel.cyber .btn.tp-buy { background: var(--up) !important; color: #03130b !important; height: 56px; font-size: 17px; border-radius: 14px !important; box-shadow: 0 14px 40px -16px rgba(61,220,151,.7) !important; }
+.term-side .panel.cyber .btn.tp-sell { background: var(--dn) !important; color: #1a0505 !important; height: 56px; font-size: 17px; border-radius: 14px !important; box-shadow: 0 14px 40px -16px rgba(255,93,93,.7) !important; }
+.cy-1tap, .cy-fine, .cy-top { font-size: 12px; color: var(--ink-3); }
