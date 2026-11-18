@@ -25,8 +25,8 @@ window.VILLA = {
 
   whatsapp: "50688888888",                  // con 506 adelante, sin espacios
   instagram: "refugioniebla.cr",
-  mapa: "https://maps.google.com/?q=Monteverde+Costa+Rica",
-  waze: "https://waze.com/ul?q=Monteverde%20Costa%20Rica",
+  lat: 10.3, lng: -84.8167,                 // ubicación exacta: de aquí salen Google Maps, Waze y el mapa
+  mapa: "", waze: "",                       // opcional: pegá un enlace propio para reemplazar los automáticos
   resenaUrl: "https://g.page/r/EJEMPLO/review",      // link para dejar reseña (Google o Airbnb)
 
   paleta: "brasa",                          // brasa | bosque | medianoche | niebla
@@ -62,6 +62,8 @@ window.VILLA = {
   ],
 
   fotos: {
+    fondoPort: "img/fondo-port.jpg",
+    fondoLand: "img/fondo-land.jpg",
     exterior: "img/foto-exterior.jpg",
     interior: "img/foto-interior.jpg",
     detalles: [

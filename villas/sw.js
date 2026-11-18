@@ -1,6 +1,6 @@
 // Guarda la página en el teléfono para que abra aunque la señal falle (casas en zonas remotas).
-const CACHE = "refugio-v1";
-const CORE = ["./", "index.html", "config.js", "img/foto-exterior.jpg", "img/foto-interior.jpg", "img/det-loft.jpg", "img/det-sala.jpg", "img/det-cocina.jpg"];
+const CACHE = "refugio-v2";
+const CORE = ["./", "index.html", "config.js", "img/fondo-port.jpg", "img/fondo-land.jpg", "img/foto-exterior.jpg", "img/foto-interior.jpg", "img/det-loft.jpg", "img/det-sala.jpg", "img/det-cocina.jpg"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)).then(() => self.skipWaiting()));

@@ -7,24 +7,24 @@
 <title>Cabaña</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@600;700;800&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ================= Paletas ================= */
 :root, [data-paleta="brasa"] {
   --bg: #0F0E0D; --raise: #181614; --ink: #EFE8DC; --muted: #A89F91; --acc: #E2A15A; --on-acc: #1A1008;
-  --line: rgba(239, 232, 220, .16); --ok: #9BD08A; --busy: rgba(239, 232, 220, .1); --hero-end: #0F0E0D;
+  --line: rgba(239, 232, 220, .16); --ok: #9BD08A; --busy: rgba(239, 232, 220, .1); --hero-end: #0F0E0D; --fondo: none; --mapf: invert(.92) hue-rotate(180deg) grayscale(.55) brightness(.9);
 }
 [data-paleta="bosque"] {
   --bg: #0B1510; --raise: #122019; --ink: #E7EEE2; --muted: #9DB09F; --acc: #A8CC83; --on-acc: #0E1A10;
-  --line: rgba(231, 238, 226, .16); --ok: #A8D98E; --busy: rgba(231, 238, 226, .1); --hero-end: #0B1510;
+  --line: rgba(231, 238, 226, .16); --ok: #A8D98E; --busy: rgba(231, 238, 226, .1); --hero-end: #0B1510; --fondo: hue-rotate(95deg) saturate(.75); --mapf: invert(.92) hue-rotate(180deg) grayscale(.55) brightness(.9);
 }
 [data-paleta="medianoche"] {
   --bg: #0B111C; --raise: #121A29; --ink: #E6ECF5; --muted: #99A7BE; --acc: #9BBEFF; --on-acc: #0A1224;
-  --line: rgba(230, 236, 245, .16); --ok: #93D9A4; --busy: rgba(230, 236, 245, .1); --hero-end: #0B111C;
+  --line: rgba(230, 236, 245, .16); --ok: #93D9A4; --busy: rgba(230, 236, 245, .1); --hero-end: #0B111C; --fondo: hue-rotate(185deg) saturate(.8); --mapf: invert(.92) hue-rotate(180deg) grayscale(.55) brightness(.9);
 }
 [data-paleta="niebla"] {
   --bg: #E3E6E2; --raise: #EEF0ED; --ink: #151A17; --muted: #4E5953; --acc: #2B5A46; --on-acc: #FFFFFF;
-  --line: rgba(21, 26, 23, .18); --ok: #1F6B3A; --busy: rgba(21, 26, 23, .1); --hero-end: #0B0A09;
+  --line: rgba(21, 26, 23, .18); --ok: #1F6B3A; --busy: rgba(21, 26, 23, .1); --hero-end: #0B0A09; --fondo: none; --mapf: grayscale(.35);
 }
 
 /* ================= Base ================= */
@@ -33,14 +33,14 @@
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: 72px; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
-  font-family: "Hanken Grotesk", system-ui, sans-serif; font-size: 17px; line-height: 1.6;
+  font-family: "Inter Tight", system-ui, sans-serif; font-size: 17px; line-height: 1.6;
   transition: background-color .7s ease, color .7s ease; -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { background: none; border: 0; cursor: pointer; }
 :focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
-.disp, h1, h2, h3 { font-family: "Big Shoulders Display", Impact, sans-serif; text-transform: uppercase; letter-spacing: .005em; }
+.disp, h1, h2, h3 { font-family: "Instrument Serif", Georgia, serif; text-transform: uppercase; letter-spacing: .005em; }
 .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
 .col { max-width: 640px; }
 
@@ -77,30 +77,25 @@ button { background: none; border: 0; cursor: pointer; }
   padding: 0 20px 34px; background: #0B0A09; color: var(--ink);
 }
 .hero-photo { position: absolute; inset: 0; z-index: 0; }
-.hero-photo img { position: absolute; left: 0; top: -6%; width: 100%; height: 112%; object-fit: cover; object-position: 50% 62%; will-change: transform; transform: translateY(var(--py, 0px)); }
-.hero-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,7,6,.62) 0%, rgba(8,7,6,.12) 26%, rgba(8,7,6,.35) 52%, rgba(8,7,6,.86) 82%, var(--hero-end) 100%); }
+.hero-photo img { filter: var(--fondo); position: absolute; left: 0; top: -16%; width: 100%; height: 120%; object-fit: cover; object-position: 50% 62%; will-change: transform; transform: translateY(var(--py, 0px)); }
+.hero-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,7,6,.45) 0%, rgba(8,7,6,0) 24%, rgba(8,7,6,.2) 55%, rgba(8,7,6,.7) 80%, var(--hero-end) 100%); }
 .fog { position: absolute; width: 140%; height: 38%; left: -20%; border-radius: 50%; background: radial-gradient(closest-side, rgba(230, 236, 238, .2), transparent 72%); filter: blur(28px); opacity: .6; z-index: 1; }
 .fog.f1 { top: 22%; } .fog.f2 { top: 46%; opacity: .45; }
 .hero-top, .hero-body { position: relative; z-index: 2; max-width: 1080px; width: 100%; margin: 0 auto; }
 .hero-top { display: flex; justify-content: space-between; align-items: center; padding-top: env(safe-area-inset-top); gap: 8px; }
-.mark { font-family: "Big Shoulders Display", Impact, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; }
+.mark { font-family: "Instrument Serif", Georgia, serif; font-weight: 800; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; }
 .hero-ctrl { display: flex; align-items: center; gap: 6px; }
 .chip-top { font-size: 13.5px; font-weight: 700; border: 1px solid var(--line); padding: 0 12px; min-height: 34px; display: inline-flex; align-items: center; border-radius: 2px; }
 .loc { margin: 0 0 14px; font-size: 14.5px; font-weight: 600; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
-.name { margin: 0; font-weight: 900; font-size: clamp(88px, 28vw, 250px); line-height: .86; }
+.name { margin: 0; font-size: clamp(84px, 25vw, 250px); line-height: .84; }
 .name span { display: block; }
 .lema { font-size: clamp(19px, 4.8vw, 25px); line-height: 1.3; margin: 22px 0 0; max-width: 24ch; font-weight: 500; text-wrap: balance; }
 .status { margin: 18px 0 0; display: inline-flex; align-items: center; gap: 10px; font-size: 14.5px; color: var(--muted); font-weight: 600; }
 .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
 .status.free i { background: var(--ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 25%, transparent); }
 .cta { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
-@media (min-width: 900px) {
-  .hero { padding-bottom: 56px; background: var(--hero-end); }
-  .hero-photo { left: auto; right: 0; width: min(52vw, 760px); }
-  .hero-photo::after { background: linear-gradient(90deg, var(--hero-end) 0%, rgba(8,7,6,.1) 38%), linear-gradient(180deg, rgba(8,7,6,.5) 0%, rgba(8,7,6,0) 22%, rgba(8,7,6,0) 70%, var(--hero-end) 100%); }
-  .name { font-size: clamp(120px, 15vw, 250px); }
-  .lema { max-width: 28ch; }
-}
+@media (min-width: 760px) { .hero-photo img { top: -6%; height: 112%; } }
+@media (min-width: 900px) { .hero { padding-bottom: 56px; } .name { font-size: clamp(110px, 14vw, 230px); } .lema { max-width: 30ch; } }
 @media (prefers-reduced-motion: no-preference) {
   .fog.f1 { animation: drift 38s ease-in-out infinite alternate; }
   .fog.f2 { animation: drift 52s ease-in-out infinite alternate-reverse; }
@@ -119,7 +114,7 @@ button { background: none; border: 0; cursor: pointer; }
 }
 .bar.show { transform: none; visibility: visible; }
 .bar-in { max-width: 1080px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; gap: 18px; height: 60px; }
-.bar .nm { font-family: "Big Shoulders Display", Impact, sans-serif; font-weight: 800; font-size: 24px; letter-spacing: .04em; text-transform: uppercase; text-decoration: none; flex: none; }
+.bar .nm { font-family: "Instrument Serif", Georgia, serif; font-weight: 800; font-size: 24px; letter-spacing: .04em; text-transform: uppercase; text-decoration: none; flex: none; }
 .bar nav { flex: 1; display: flex; gap: 24px; justify-content: center; }
 .bar nav a { font-size: 15px; font-weight: 600; color: var(--muted); text-decoration: none; padding: 8px 0; border-bottom: 2px solid transparent; white-space: nowrap; }
 .bar nav a.on { color: var(--ink); border-color: var(--acc); }
@@ -162,7 +157,7 @@ section.blk { padding-top: 110px; }
 .cal-head .hint { font-size: 14.5px; color: var(--muted); font-weight: 600; text-align: center; flex: 1; padding: 0 8px; }
 .months { display: grid; gap: 30px; }
 @media (min-width: 760px) { .months { grid-template-columns: 1fr 1fr; gap: 44px; } }
-.month h4 { font-family: "Big Shoulders Display", Impact, sans-serif; font-weight: 800; font-size: 28px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .02em; }
+.month h4 { font-family: "Instrument Serif", Georgia, serif; font-weight: 800; font-size: 28px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .02em; }
 .dow, .days { display: grid; grid-template-columns: repeat(7, 1fr); }
 .dow span { text-align: center; font-size: 12.5px; color: var(--muted); font-weight: 700; padding: 6px 0; }
 .day { aspect-ratio: 1; min-height: 44px; margin: 1px 0; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; border-radius: 4px; position: relative; }
@@ -180,7 +175,7 @@ form.book { display: grid; gap: 18px; text-align: left; }
 .picked { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .picked div { padding: 12px 14px; border: 1px solid var(--line); background: var(--raise); border-radius: 2px; transition: background-color .7s; }
 .picked small { display: block; font-size: 13px; color: var(--muted); font-weight: 700; }
-.picked b { font-family: "Big Shoulders Display", Impact, sans-serif; font-weight: 800; font-size: 26px; text-transform: uppercase; line-height: 1.1; }
+.picked b { font-family: "Instrument Serif", Georgia, serif; font-weight: 800; font-size: 26px; text-transform: uppercase; line-height: 1.1; }
 .hint2 { font-size: 14.5px; min-height: 20px; margin: 0; color: var(--muted); font-weight: 600; }
 .hint2.bad { color: var(--acc); }
 .field label, .field .lbl { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; font-weight: 700; }
@@ -202,7 +197,7 @@ form.book { display: grid; gap: 18px; text-align: left; }
 .q-row.disc span:last-child { color: var(--ok); font-weight: 700; }
 .q-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 14px; }
 .q-total span { color: var(--muted); font-weight: 700; }
-.q-total b { font-family: "Big Shoulders Display", Impact, sans-serif; font-weight: 900; font-size: 52px; line-height: 1; }
+.q-total b { font-family: "Instrument Serif", Georgia, serif; font-weight: 900; font-size: 52px; line-height: 1; }
 .q-save { margin: 8px 0 0; color: var(--ok); font-weight: 700; font-size: 14.5px; text-align: right; }
 form.book .btn { width: 100%; }
 .fine { font-size: 13.5px; color: var(--muted); margin: 2px 0 0; }
@@ -214,7 +209,7 @@ form.book .btn { width: 100%; }
 .g-card h3 { font-weight: 800; font-size: 32px; margin: 0 0 8px; line-height: 1; }
 .g-times { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .g-times small { color: var(--muted); font-weight: 700; font-size: 13px; display: block; }
-.g-times b { font-family: "Big Shoulders Display", Impact, sans-serif; font-weight: 800; font-size: 40px; line-height: 1; }
+.g-times b { font-family: "Instrument Serif", Georgia, serif; font-weight: 800; font-size: 40px; line-height: 1; }
 .g-list { list-style: none; margin: 0; padding: 0; }
 .g-list li { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15.5px; }
 .g-list li:last-child { border-bottom: 0; }
@@ -237,7 +232,7 @@ details p { margin: 0 0 22px; color: var(--muted); max-width: 56ch; }
 
 /* ================= Reseñas ================= */
 .rev-top { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 26px; }
-.score { font-family: "Big Shoulders Display", Impact, sans-serif; font-weight: 900; font-size: 92px; line-height: .85; }
+.score { font-family: "Instrument Serif", Georgia, serif; font-weight: 900; font-size: 92px; line-height: .85; }
 .stars { display: inline-flex; gap: 4px; color: var(--acc); }
 .stars svg { width: 18px; height: 18px; fill: currentColor; }
 .count { color: var(--muted); font-size: 14.5px; margin: 6px 0 0; font-weight: 600; }
@@ -270,7 +265,7 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
 .sheet.on { transform: none; visibility: visible; transition: transform .4s cubic-bezier(.2,.8,.2,1), background-color .7s; }
 .sheet h2 { font-weight: 900; font-size: 44px; line-height: .9; margin: 0 0 8px; padding-right: 40px; }
 .sheet .sub { color: var(--muted); font-size: 15px; margin: 0 0 22px; }
-.sheet h3 { font-family: "Hanken Grotesk", sans-serif; text-transform: none; font-weight: 700; font-size: 14px; color: var(--muted); margin: 26px 0 12px; letter-spacing: 0; }
+.sheet h3 { font-family: "Inter Tight", sans-serif; text-transform: none; font-weight: 700; font-size: 14px; color: var(--muted); margin: 26px 0 12px; letter-spacing: 0; }
 .x { position: absolute; top: 14px; right: 14px; width: 44px; height: 44px; font-size: 24px; color: var(--muted); border-radius: 50%; }
 .pals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .pal { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0; font-size: 13.5px; text-align: center; font-weight: 700; }
@@ -298,6 +293,68 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
 .thanks h2 { padding: 0; }
 .toast { position: fixed; left: 50%; bottom: 90px; z-index: 60; transform: translate(-50%, 20px); opacity: 0; background: var(--ink); color: var(--bg); padding: 10px 18px; font-size: 14.5px; font-weight: 700; transition: opacity .25s, transform .25s; pointer-events: none; white-space: nowrap; border-radius: 2px; }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+/* ===== Tipografía de lujo ===== */
+h1, h2, h3, .mark, .bar .nm, .month h4, .picked b, .q-total b, .g-times b, .score, .sheet h2 { font-weight: 400 !important; text-transform: none; letter-spacing: -.02em; }
+.sec { font-size: clamp(60px, 15vw, 118px); line-height: .9; margin-bottom: 34px; }
+.sec::before { content: attr(data-n); display: block; font-family: "Syne", sans-serif; font-weight: 700; font-size: 12px; letter-spacing: .28em; color: var(--acc); margin-bottom: 18px; }
+.name span:nth-child(2) { font-style: italic; padding-left: .5em; }
+.mark { font-size: 26px; } .bar .nm { font-size: 28px; }
+.hl h3 { font-size: clamp(40px, 9.5vw, 60px); line-height: .98; }
+.g-card h3 { font-size: 36px; } .month h4 { font-size: 32px; text-transform: capitalize; }
+.q-total b { font-size: 58px; } .score { font-size: 110px; } .g-times b { font-size: 46px; } .picked b { font-size: 28px; text-transform: capitalize; }
+.btn, .chip-top, .bar nav a, .switch, .loc, .legend, .picked small, .g-times small, .field label, .field .lbl, .extras .lbl, .count { font-family: "Syne", sans-serif; }
+.btn { font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; }
+.chip-top, .bar nav a { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+.switch { font-size: 12.5px; letter-spacing: .06em; }
+.loc { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; }
+.picked small, .g-times small, .field label, .field .lbl, .extras .lbl, .legend { font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; }
+.intro { font-family: "Instrument Serif", Georgia, serif; font-size: clamp(30px, 7vw, 44px); line-height: 1.12; letter-spacing: -.01em; max-width: 22ch; }
+.lema { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: clamp(26px, 6.4vw, 38px); line-height: 1.1; max-width: 18ch; }
+summary { font-size: 19px; } .hl p, details p, .host { font-size: 17px; }
+.rq p { font-family: "Instrument Serif", Georgia, serif; font-size: 24px; line-height: 1.2; }
+.quick { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.quick a { font-family: "Syne", sans-serif; font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; text-decoration: none; border-bottom: 1.5px solid var(--acc); padding: 8px 0; margin-right: 14px; }
+/* foto de la cabaña */
+.cabin-photo { margin: 0 -20px 34px; } .cabin-photo img { display: block; width: 100%; height: auto; } .cabin-photo figcaption { margin: 10px 20px 0; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-family: "Syne", sans-serif; font-weight: 600; }
+@media (min-width: 900px) { .cabin-grid { grid-template-columns: 440px 1fr; gap: 84px; } .cabin-photo { margin: 0; } .cabin-photo figcaption { margin-left: 0; } .cabin-txt .ficha { margin-top: 36px; } }
+/* mapa */
+.mapcard { margin: 0 0 28px; border: 1px solid var(--line); background: var(--raise); }
+.mapcard iframe { display: block; width: 100%; height: 340px; border: 0; filter: var(--mapf); }
+.mapbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; }
+.mapbtns .btn { min-height: 56px; padding: 0 10px; }
+.mapbtns .full { grid-column: 1 / -1; }
+.mapnote { margin: 0; padding: 0 14px 14px; color: var(--muted); font-size: 14.5px; }
+@media (min-width: 900px) { .mapcard { display: grid; grid-template-columns: 1.5fr 1fr; } .mapcard iframe { height: 100%; min-height: 380px; } .mapbtns { align-content: center; padding: 28px; } .mapnote { grid-column: 2; padding: 0 28px 28px; } }
+/* modo dueño y panel */
+.ownbar { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 14px 16px; margin-bottom: 18px; border: 1px solid var(--acc); background: color-mix(in srgb, var(--acc) 12%, transparent); font-size: 15px; }
+.ownbar .btn { min-height: 42px; padding: 0 16px; }
+.day.blk2 { background: var(--busy); text-decoration: line-through; opacity: .8; }
+.own { display: grid; gap: 14px; }
+@media (min-width: 900px) { .own { grid-template-columns: 1fr 1fr; } .own .wide { grid-column: 1 / -1; } }
+.oc { border: 1px solid var(--line); background: var(--raise); padding: 22px; }
+.oc h3 { font-size: 34px; margin: 0 0 6px; line-height: 1; } .oc > p { margin: 0 0 16px; color: var(--muted); font-size: 15.5px; }
+.oc .tag { font-family: "Syne", sans-serif; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--acc); font-weight: 700; display: block; margin-bottom: 10px; }
+.calc { display: grid; gap: 14px; }
+.calc .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 15.5px; }
+.calc .row .stepper { width: 150px; min-height: 44px; } .calc .row .stepper button { width: 44px; height: 44px; }
+.calc input[type=range] { width: 100%; accent-color: var(--acc); }
+.big { font-family: "Instrument Serif", Georgia, serif; font-size: 64px; line-height: 1; margin: 8px 0 0; }
+.big small { font-family: "Inter Tight", sans-serif; font-size: 15px; color: var(--muted); margin-left: 8px; }
+.inbox { display: grid; gap: 10px; }
+.req { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 15px; }
+.req b { display: block; font-size: 16px; } .req span { color: var(--muted); font-size: 14px; }
+.req .btn { min-height: 40px; padding: 0 14px; flex: none; }
+.tpls { display: grid; gap: 10px; }
+.tpl { border-top: 1px solid var(--line); padding-top: 12px; }
+.tpl b { display: block; font-size: 16px; margin-bottom: 4px; }
+.tpl pre { white-space: pre-wrap; margin: 0 0 10px; font-family: inherit; font-size: 14px; color: var(--muted); max-height: 120px; overflow: hidden; }
+.tpl .btn { min-height: 40px; padding: 0 16px; }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.checks li { padding: 11px 0; border-top: 1px solid var(--line); font-size: 15.5px; display: flex; gap: 12px; }
+.checks li::before { content: "\2713"; color: var(--acc); font-weight: 700; }
+.checks.no li::before { content: "\2013"; color: var(--muted); }
+@media (max-width: 520px) { .hero .mark { display: none; } .hero-top { justify-content: flex-end; } }
 </style>
 </head>
 <body>
@@ -314,7 +371,7 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
 </div>
 
 <header class="hero" id="top">
-  <div class="hero-photo"><img id="heroImg" alt="" width="736" height="1211" decoding="async" fetchpriority="high"><div class="fog f1"></div><div class="fog f2"></div></div>
+  <div class="hero-photo"><picture><source id="heroSrc" media="(min-width:760px)"><img id="heroImg" alt="" width="1100" height="1800" decoding="async" fetchpriority="high"></picture><div class="fog f1"></div><div class="fog f2"></div></div>
   <div class="hero-top">
     <span class="mark" id="mark"></span>
     <div class="hero-ctrl">
@@ -332,20 +389,21 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
       <a class="btn solid" href="#reservar" data-t="datesBtn"></a>
       <a class="btn" href="#cabana" data-t="seeBtn"></a>
     </div>
+    <div class="quick"><a id="hMap" target="_blank" rel="noopener">Google Maps</a><a id="hWaze" target="_blank" rel="noopener">Waze</a></div>
   </div>
 </header>
 
 <main class="wrap">
   <section class="blk" id="cabana">
-    <h2 class="sec" data-t="cabinTitle"></h2>
+    <h2 class="sec" data-n="01" data-t="cabinTitle"></h2>
     <div class="cabin-grid">
-      <div><p class="intro" id="intro"></p><p class="facts-line" id="factsLine"></p></div>
-      <dl class="ficha" id="ficha"></dl>
+      <figure class="cabin-photo"><img id="extImg" alt="" loading="lazy" decoding="async" width="736" height="1211"><figcaption id="extCap"></figcaption></figure>
+      <div class="cabin-txt"><p class="intro" id="intro"></p><p class="facts-line" id="factsLine"></p><dl class="ficha" id="ficha"></dl></div>
     </div>
   </section>
 
   <section class="blk" id="por-dentro">
-    <h2 class="sec" data-t="insideTitle"></h2>
+    <h2 class="sec" data-n="02" data-t="insideTitle"></h2>
     <div class="inside">
       <figure><img id="intImg" alt="" loading="lazy" decoding="async" width="736" height="1104"><figcaption id="intCap"></figcaption></figure>
       <div id="hls"></div>
@@ -354,9 +412,10 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
   </section>
 
   <section class="blk" id="reservar">
-    <h2 class="sec" data-t="bookTitle"></h2>
+    <h2 class="sec" data-n="03" data-t="bookTitle"></h2>
     <p class="direct" id="directNote"></p>
     <p class="cancel" id="cancelNote"></p>
+    <div class="ownbar" id="ownBar" hidden><span><b>Modo dueño.</b> Tocá un día para bloquearlo o liberarlo. En tu web real esto se conecta a una hoja de Google.</span><button class="btn" type="button" id="ownOff">Salir</button></div>
     <div class="book-grid">
       <div class="cal cal-col">
         <div class="cal-head"><button type="button" id="calPrev" aria-label="Mes anterior">&#8249;</button><span class="hint" id="calHint"></span><button type="button" id="calNext" aria-label="Mes siguiente">&#8250;</button></div>
@@ -380,10 +439,13 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
   </section>
 
   <section class="blk" id="llegar">
-    <h2 class="sec" data-t="arriveTitle"></h2>
+    <h2 class="sec" data-n="04" data-t="arriveTitle"></h2>
+    <div class="mapcard" id="mapCard"><iframe id="mapFrame" title="Mapa" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div class="mapbtns"><a class="btn solid" id="bGmaps" target="_blank" rel="noopener">Google Maps</a><a class="btn solid" id="bWaze" target="_blank" rel="noopener">Waze</a><a class="btn" id="bApple" target="_blank" rel="noopener">Apple Maps</a><button class="btn" type="button" id="bCoords">Copiar coordenadas</button></div>
+      <p class="mapnote" id="mapNote"></p></div>
     <div class="arrive">
       <div class="g-card"><h3 data-t="times"></h3><div class="g-times"><div><small data-t="checkIn"></small><b id="ciT"></b></div><div><small data-t="checkOut"></small><b id="coT"></b></div></div></div>
-      <div class="g-card"><h3 data-t="howTo"></h3><ul class="g-list" id="llegarL"></ul><div class="maps"><a class="link" id="map" target="_blank" rel="noopener" data-t="openMap"></a><a class="link" id="waze" target="_blank" rel="noopener">Waze</a></div></div>
+      <div class="g-card"><h3 data-t="howTo"></h3><ul class="g-list" id="llegarL"></ul></div>
       <div class="g-card" id="wifiBox"><div class="wifi"><div><h3>Wi-Fi</h3><span id="wifiName"></span><small data-t="wifiHint"></small></div><button class="btn" type="button" id="wifiCopy" data-t="wifiCopy"></button></div></div>
       <div class="g-card"><h3 data-t="bring"></h3><ul class="g-list single" id="llevarL"></ul></div>
       <div class="g-card"><h3 data-t="nearby"></h3><ul class="g-list" id="cercaL"></ul></div>
@@ -392,19 +454,25 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
   </section>
 
   <section class="blk" id="preguntas">
-    <h2 class="sec" data-t="faqTitle"></h2>
+    <h2 class="sec" data-n="05" data-t="faqTitle"></h2>
     <div class="col" id="faq"></div>
   </section>
 
   <section class="blk" id="resenas">
-    <h2 class="sec" data-t="revTitle"></h2>
+    <h2 class="sec" data-n="06" data-t="revTitle"></h2>
     <div class="rev-top"><div class="score" id="score"></div><div><div class="stars" id="stars" aria-hidden="true"></div><p class="count" id="count"></p></div></div>
     <div class="quotes" id="quotes"></div>
     <a class="link" id="revLink" target="_blank" rel="noopener" data-t="revWrite" style="margin-top:16px"></a>
   </section>
 
+  <section class="blk" id="dueno" hidden>
+    <h2 class="sec" data-n="08">Para vos,<br>anfitrión</h2>
+    <p class="cancel" style="max-width:60ch">Esto no lo ven tus huéspedes. Es lo que tu web hace por vos: ahorrarte comisiones, ordenar las solicitudes y responder más rápido.</p>
+    <div class="own" id="ownBox"></div>
+  </section>
+
   <section class="blk" id="anfitriones">
-    <h2 class="sec" data-t="hostH"></h2>
+    <h2 class="sec" data-n="07" data-t="hostH"></h2>
     <p class="host" id="hostTxt"></p>
     <p class="host"><cite id="hostName"></cite></p>
     <div class="contact"><a class="link" id="ig" target="_blank" rel="noopener"></a></div>
@@ -477,6 +545,8 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
   };
   const q = new URLSearchParams(location.search);
   const TZ = "America/Costa_Rica";
+  const LL = R.lat + "," + R.lng;
+  const MAPS = { g: R.mapa || "https://www.google.com/maps/search/?api=1&query=" + LL, w: R.waze || "https://waze.com/ul?ll=" + LL + "&navigate=yes&zoom=17", a: "https://maps.apple.com/?ll=" + LL + "&q=" + encodeURIComponent(R.nombre), e: "https://maps.google.com/maps?q=" + LL + "&z=12&output=embed&hl=es" };
   const DEMO = q.get("cliente") !== "1" && R.modoDemo !== false;
   const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
 
@@ -496,7 +566,7 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
       pickIn: "Elegí tu día de entrada", pickOut: "Ahora elegí tu día de salida", minN: (n) => "La estadía mínima es de " + n + " noches", nameMissing: "Escribí tu nombre para la solicitud.",
       pickDates: "Elegí tus fechas para ver el precio.", nights: (n) => n + (n === 1 ? " noche" : " noches"),
       disc: (p) => "Descuento por reserva directa (" + p + " %)", clean: "Limpieza", tax: (p) => "Impuestos (" + p + " %)", total: "Total", save: (v) => "Ahorrás " + v + " reservando directo",
-      arriveTitle: "Antes de llegar", times: "Horarios", howTo: "Cómo llegar", openMap: "Abrir en el mapa", bring: "Qué traer", nearby: "Cerca de la cabaña", rules: "Normas de la casa",
+      arriveTitle: "Antes de llegar", times: "Horarios", howTo: "Cómo llegar", openMap: "Abrir en el mapa", mapNote: "Los últimos 2 km son de lastre. Dejá la ubicación en Waze o Google Maps antes de salir, la señal en el camino es irregular.", coordsCopied: "Coordenadas copiadas", extCap: "Refugio Niebla, desde arriba", bring: "Qué traer", nearby: "Cerca de la cabaña", rules: "Normas de la casa",
       wifiHint: "Tocá para copiar la clave", wifiCopy: "Copiar clave", wifiCopied: "Clave del Wi-Fi copiada", faqTitle: "Preguntas", revTitle: "Lo que dicen", revWrite: "Escribir una reseña", hostH: "Tus anfitriones",
       avail: "Disponible hoy", availNext: (d) => "Disponible hoy, próxima reserva el " + d, busyUntil: (d) => "Ocupada hasta el " + d,
       reviews: (n) => n + " reseñas", taxes: (p) => "Tarifas en dólares. Se suma el " + p + " % de impuestos. El tipo de cambio es el del día.",
@@ -515,7 +585,7 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
       pickIn: "Pick your check-in day", pickOut: "Now pick your check-out day", minN: (n) => "The minimum stay is " + n + " nights", nameMissing: "Add your name to the request.",
       pickDates: "Pick your dates to see the price.", nights: (n) => n + (n === 1 ? " night" : " nights"),
       disc: (p) => "Direct booking discount (" + p + " %)", clean: "Cleaning", tax: (p) => "Taxes (" + p + " %)", total: "Total", save: (v) => "You save " + v + " by booking direct",
-      arriveTitle: "Before you arrive", times: "Times", howTo: "Getting here", openMap: "Open in maps", bring: "What to bring", nearby: "Near the cabin", rules: "House rules",
+      arriveTitle: "Before you arrive", times: "Times", howTo: "Getting here", openMap: "Open in maps", mapNote: "The last 2 km are gravel. Save the location in Waze or Google Maps before you leave, signal on the road is patchy.", coordsCopied: "Coordinates copied", extCap: "Refugio Niebla, from above", bring: "What to bring", nearby: "Near the cabin", rules: "House rules",
       wifiHint: "Tap to copy the password", wifiCopy: "Copy password", wifiCopied: "Wi-Fi password copied", faqTitle: "Questions", revTitle: "What guests say", revWrite: "Write a review", hostH: "Your hosts",
       avail: "Available today", availNext: (d) => "Available today, next booking on " + d, busyUntil: (d) => "Booked until " + d,
       reviews: (n) => n + " reviews", taxes: (p) => "Rates in US dollars. " + p + " % taxes are added. Exchange rate is the day's rate.",
@@ -558,7 +628,9 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
     else ranges = (R.reservadas || []).slice();
   }
   function buildBooked() { booked = new Set(); ranges.forEach(([a, b]) => { for (let d = a; d < b; d = addDays(d, 1)) booked.add(d); }); }
-  const freeNight = (d) => d >= today() && !booked.has(d);
+  let ownerMode = false; let blocked = new Set((store.get("villa-blk") || "").split(",").filter(Boolean));
+  const isBusy = (d) => booked.has(d) || blocked.has(d);
+  const freeNight = (d) => d >= today() && !isBusy(d);
   function rangeFree(a, b) { for (let d = a; d < b; d = addDays(d, 1)) if (!freeNight(d)) return false; return true; }
 
   /* ---------- Precios ---------- */
@@ -599,8 +671,8 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
   /* ---------- Disponibilidad hoy ---------- */
   function renderStatus() {
     const t0 = today(); let txt, free;
-    if (!booked.has(t0)) { free = true; let d = t0, i = 0; while (i < 400 && !booked.has(d)) { d = addDays(d, 1); i++; } txt = i < 400 ? L().availNext(fmtD(d)) : L().avail; }
-    else { free = false; let d = t0; while (booked.has(d)) d = addDays(d, 1); txt = L().busyUntil(fmtD(d)); }
+    if (!isBusy(t0)) { free = true; let d = t0, i = 0; while (i < 400 && !isBusy(d)) { d = addDays(d, 1); i++; } txt = i < 400 ? L().availNext(fmtD(d)) : L().avail; }
+    else { free = false; let d = t0; while (isBusy(d)) d = addDays(d, 1); txt = L().busyUntil(fmtD(d)); }
     $("#availState").classList.toggle("free", free); $("#availState em").textContent = txt;
   }
 
@@ -615,9 +687,9 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
       for (let d = 1; d <= nd; d++) {
         const iso = y + "-" + String(m + 1).padStart(2, "0") + "-" + String(d).padStart(2, "0");
         const isFree = freeNight(iso), canEnd = selIn && !selOut && iso > selIn && rangeFree(selIn, iso);
-        let cls = "day"; if (booked.has(iso)) cls += " busy"; if (iso === today()) cls += " today";
+        let cls = "day"; if (booked.has(iso)) cls += " busy"; else if (blocked.has(iso)) cls += " blk2"; if (iso === today()) cls += " today";
         if (selIn && selOut && iso > selIn && iso < selOut) cls += " inr"; if (iso === selIn) cls += " s"; if (iso === selOut) cls += " e";
-        cells += '<button type="button" class="' + cls + '" data-d="' + iso + '"' + (!(isFree || canEnd) ? " disabled" : "") + ' aria-label="' + esc(fmtD(iso, { day: "numeric", month: "long", year: "numeric" })) + '">' + d + "</button>";
+        cells += '<button type="button" class="' + cls + '" data-d="' + iso + '"' + ((ownerMode ? (iso < today() || booked.has(iso)) : !(isFree || canEnd)) ? " disabled" : "") + ' aria-label="' + esc(fmtD(iso, { day: "numeric", month: "long", year: "numeric" })) + '">' + d + "</button>";
       }
       const title = new Date(Date.UTC(y, m, 1)).toLocaleDateString(lang === "es" ? "es-CR" : "en-US", { month: "long", year: "numeric", timeZone: "UTC" });
       mo.push('<div class="month"><h4>' + esc(title) + '</h4><div class="dow">' + dows.map((x) => "<span>" + x + "</span>").join("") + '</div><div class="days">' + cells + "</div></div>");
@@ -630,6 +702,7 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
     renderPicked(); renderQuote();
   }
   function onDay(iso) {
+    if (ownerMode) { blocked.has(iso) ? blocked.delete(iso) : blocked.add(iso); store.set("villa-blk", [...blocked].join(",")); renderCal(); renderStatus(); return; }
     if (selIn && selOut && iso > selOut && diff(selIn, selOut) < R.minNoches && rangeFree(selIn, iso)) selOut = iso;
     else if (!selIn || (selIn && selOut)) { if (freeNight(iso)) { selIn = iso; selOut = null; } }
     else if (iso <= selIn) { if (freeNight(iso)) { selIn = iso; selOut = null; } }
@@ -713,7 +786,9 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
     $("#mark").textContent = R.nombre; $("#barName").textContent = R.nombre;
     $("#name").innerHTML = R.nombre.split(" ").map((w) => "<span>" + esc(w) + "</span>").join("");
     $("#loc").textContent = t(R.lugar); $("#alt").textContent = t(R.altura); $("#lema").textContent = t(R.lema);
-    $("#heroImg").src = R.fotos.exterior;
+    $("#heroImg").src = R.fotos.fondoPort; $("#heroSrc").srcset = R.fotos.fondoLand; $("#extImg").src = R.fotos.exterior; $("#extCap").textContent = L().extCap;
+    $("#hMap").href = $("#bGmaps").href = MAPS.g; $("#hWaze").href = $("#bWaze").href = MAPS.w; $("#bApple").href = MAPS.a; $("#mapNote").textContent = L().mapNote; $("#bCoords").textContent = lang === "es" ? "Copiar coordenadas" : "Copy coordinates";
+    if (!$("#mapFrame").getAttribute("src")) $("#mapFrame").src = MAPS.e;
     $("#intro").textContent = t(R.intro); $("#factsLine").innerHTML = "<span>" + esc(R.coords) + "</span><span>" + esc(t(R.altura)) + "</span>";
     $("#ficha").innerHTML = R.ficha.map((f) => "<div><dt>" + esc(t(f.k)) + "</dt><dd>" + esc(t(f.v)) + "</dd></div>").join("");
     $("#barNav").innerHTML = [["cabana", L().cabinTitle], ["por-dentro", L().insideTitle], ["reservar", L().bookTitle], ["llegar", L().arriveTitle], ["preguntas", L().faqTitle]].map(([id, n]) => '<a href="#' + id + '" data-id="' + id + '">' + esc(n) + "</a>").join("");
@@ -728,8 +803,7 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
     $("#llevarL").innerHTML = R.llevar.map((c) => "<li><span>" + esc(t(c)) + "</span></li>").join("");
     $("#cercaL").innerHTML = R.cerca.map((c) => "<li><span>" + esc(t(c)) + "</span><span>" + esc(t(c.dato)) + "</span></li>").join("");
     $("#rulesL").innerHTML = R.normas.map((c) => "<li><span>" + esc(t(c)) + "</span></li>").join("");
-    $("#map").href = R.mapa; $("#waze").href = R.waze;
-    $("#wifiBox").hidden = !R.wifi; if (R.wifi) $("#wifiName").textContent = R.wifi.red;
+        $("#wifiBox").hidden = !R.wifi; if (R.wifi) $("#wifiName").textContent = R.wifi.red;
     $("#faq").innerHTML = R.faq.map((f) => "<details><summary>" + esc(t(f.q)) + "</summary><p>" + esc(t(f.a)) + "</p></details>").join("");
     const rv = R.resenas;
     $("#score").textContent = rv.nota.toLocaleString(lang === "es" ? "es-CR" : "en-US", { minimumFractionDigits: 1 });
@@ -765,6 +839,50 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
   }
   addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
 
+  /* ---------- Para el dueño (solo en la demo) ---------- */
+  const oc = { res: 3, noc: 3, com: 15 };
+  const avgRate = () => Math.round(R.tarifas.reduce((a, x) => a + x.noche, 0) / R.tarifas.length);
+  function tplList() {
+    const w = R.wifi ? "Wi-Fi: " + R.wifi.red + " / clave " + R.wifi.clave + "\n" : "";
+    return [
+      ["Bienvenida con ubicación", "Hola, ¡bienvenidos a " + R.nombre + "! El check-in es desde las " + R.checkin + ".\nGoogle Maps: " + MAPS.g + "\nWaze: " + MAPS.w + "\n" + w + "Cualquier cosa me escribís por aquí."],
+      ["Un día antes", "Hola, mañana los esperamos en " + R.nombre + ". Los últimos 2 km son de lastre; dejen la ubicación guardada antes de salir porque la señal es irregular. Traigan abrigo.\nWaze: " + MAPS.w],
+      ["Después de la salida: pedir reseña", "Gracias por quedarse en " + R.nombre + ". Nos ayudaría muchísimo una reseña de 30 segundos: " + R.resenaUrl],
+      ["Cotización rápida", "Hola, gracias por escribir. Reservando directo por nuestra web tenés " + R.descuentoDirecto + " % de descuento sobre el hospedaje. Elegí tus fechas aquí y te confirmo por WhatsApp: " + location.href.split("?")[0].split("#")[0] + "#reservar"]
+    ];
+  }
+  function renderOwner() {
+    const t0 = today(), r = R.tarifas[R.tarifas.length - 1].noche, f = (n) => Math.round((r * n * 0.9 + R.limpieza) * (1 + (R.impuesto || 0)));
+    const reqs = [["Sarah y Tom", 3, 6], ["Camille", 2, 29], ["Familia Rojas", 4, 58]];
+    const tpls = tplList();
+    $("#ownBox").innerHTML =
+      '<div class="oc"><span class="tag">Ahorro</span><h3>Cuánto te ahorrás</h3><p>La plataforma te cobra comisión en cada reserva. Directo, no.</p><div class="calc">' +
+        '<div class="row"><span>Reservas directas al mes</span><div class="stepper"><button type="button" data-own="res-" aria-label="−">−</button><output id="cRes">' + oc.res + '</output><button type="button" data-own="res+" aria-label="+">+</button></div></div>' +
+        '<div class="row"><span>Noches por reserva</span><div class="stepper"><button type="button" data-own="noc-" aria-label="−">−</button><output id="cNoc">' + oc.noc + '</output><button type="button" data-own="noc+" aria-label="+">+</button></div></div>' +
+        '<div class="row"><span>Comisión que hoy pagás</span><b id="cCom">' + oc.com + ' %</b></div><input type="range" id="cRange" min="3" max="16" value="' + oc.com + '" aria-label="Comisión">' +
+        '<div><span class="tag" style="margin:0">Te ahorrás al mes</span><p class="big"><span id="cMes"></span></p></div><div><span class="tag" style="margin:0">Al año</span><p class="big"><span id="cAno"></span></p></div>' +
+      '</div><p style="margin:14px 0 0;font-size:13.5px">Estimación con la tarifa promedio de $' + avgRate() + ' por noche. Depende de tu plataforma.</p></div>' +
+      '<div class="oc"><span class="tag">Solicitudes</span><h3>Así te llegan las reservas</h3><p>Cada solicitud llega a tu WhatsApp con fechas, huéspedes, extras y total ya calculados. Ejemplos de demostración:</p><div class="inbox">' +
+        reqs.map(([n, k, d]) => '<div class="req"><div><b>' + n + '</b><span>' + k + ' noches desde el ' + fmtD(addDays(t0, d)) + '</span></div><div style="text-align:right"><b>$' + f(k) + '</b><button class="btn" type="button" data-own="resp" style="margin-top:6px">Responder</button></div></div>').join("") +
+      '</div></div>' +
+      '<div class="oc"><span class="tag">Calendario</span><h3>Bloqueás fechas desde el celular</h3><p>Cuando alguien reserva por otra plataforma, tocás esos días y quedan bloqueados en tu web. Probalo en el calendario de arriba.</p><button class="btn solid" type="button" data-own="blk">Probar el bloqueo</button></div>' +
+      '<div class="oc"><span class="tag">Material</span><h3>QR y paletas</h3><p>QR de la guía de la cabaña para pegar en la entrada, QR de la encuesta de salida, y cambio de colores con un toque.</p><button class="btn" type="button" data-own="qr">Ver QR y paletas</button></div>' +
+      '<div class="oc wide"><span class="tag">Mensajes listos</span><h3>Copiás y pegás en WhatsApp</h3><p>Los cuatro mensajes que más repetís, con tu ubicación en Google Maps y Waze, el Wi-Fi y tu enlace de reseñas ya incluidos.</p><div class="tpls">' +
+        tpls.map((x, i) => '<div class="tpl"><b>' + x[0] + '</b><pre>' + esc(x[1]) + '</pre><button class="btn" type="button" data-own="cp' + i + '">Copiar mensaje</button></div>').join("") +
+      '</div></div>' +
+      '<div class="oc"><span class="tag">Incluye</span><h3>Lo que tiene tu web</h3><ul class="checks"><li>Dominio y hosting funcionando todo el año</li><li>Español e inglés, dólares y colones</li><li>Calendario con tus fechas ocupadas</li><li>Cotizador con temporadas, extras e impuestos</li><li>Solicitudes directas a tu WhatsApp</li><li>Mapa, Google Maps y Waze para llegar</li><li>Guía del huésped con QR y Wi-Fi</li><li>Encuesta que manda las reseñas buenas a Google</li><li>Funciona sin internet una vez abierta</li></ul></div>' +
+      '<div class="oc"><span class="tag">Honestidad</span><h3>Lo que no hace</h3><ul class="checks no"><li>No cobra en línea: confirmás por WhatsApp</li><li>No se sincroniza sola con Airbnb o Booking</li><li>No reemplaza tus anuncios: se suma a ellos</li></ul></div>';
+    calcUpdate(true);
+  }
+  function calcUpdate(first) {
+    const mes = Math.round(oc.res * oc.noc * avgRate() * oc.com / 100), mEl = $("#cMes"), aEl = $("#cAno");
+    if (!mEl) return;
+    const pm = mEl.dataset.usd ? usdTxt(Number(mEl.dataset.usd)) : null, pa = aEl.dataset.usd ? usdTxt(Number(aEl.dataset.usd)) : null;
+    setUsd(mEl, mes, first ? null : pm); setUsd(aEl, mes * 12, first ? null : pa);
+    $("#cRes").textContent = oc.res; $("#cNoc").textContent = oc.noc; $("#cCom").textContent = oc.com + " %";
+  }
+  function ownerOn(on) { ownerMode = on; $("#ownBar").hidden = !on; renderCal(); renderStatus(); if (on) $("#reservar").scrollIntoView({ behavior: "smooth" }); }
+
   /* ---------- Clics ---------- */
   function copyWifi() { const done = () => toast(L().wifiCopied); if (navigator.clipboard && R.wifi) navigator.clipboard.writeText(R.wifi.clave).then(done, done); else done(); }
   document.addEventListener("click", (e) => {
@@ -777,6 +895,18 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
       const sv = $("#saveTxt"); if (sv) { const qd = computeQuote(); if (qd) sv.textContent = L().save(usdTxt(qd.disc)); }
     }
     else if (b.id === "wifiCopy") copyWifi();
+    else if (b.id === "bCoords") { const done = () => toast(L().coordsCopied); navigator.clipboard ? navigator.clipboard.writeText(R.lat + ", " + R.lng).then(done, done) : done(); }
+    else if (b.id === "ownOff") ownerOn(false);
+    else if (b.dataset.own) {
+      const k = b.dataset.own;
+      if (k === "res+") oc.res = Math.min(12, oc.res + 1); else if (k === "res-") oc.res = Math.max(1, oc.res - 1);
+      else if (k === "noc+") oc.noc = Math.min(10, oc.noc + 1); else if (k === "noc-") oc.noc = Math.max(1, oc.noc - 1);
+      else if (k === "blk") { ownerOn(true); return; }
+      else if (k === "qr") { open("#demoSheet"); return; }
+      else if (k === "resp") { toast("Demo: se abre WhatsApp con la respuesta lista"); return; }
+      else if (k.startsWith("cp")) { const txt = tplList()[Number(k.slice(2))][1], ok = () => toast("Mensaje copiado"); navigator.clipboard ? navigator.clipboard.writeText(txt).then(ok, ok) : ok(); return; }
+      calcUpdate();
+    }
     else if (b.id === "topPal") open("#demoSheet");
     else if (b.id === "surveyOpen") { svStep("sv1"); open("#surveySheet"); }
     else if (b.dataset.rate) { rates[Number(b.dataset.rate)] = Number(b.dataset.v); renderSurvey(); }
@@ -791,9 +921,11 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
     else if (b.dataset.dl) { const c = document.querySelector("#" + b.dataset.dl + " canvas"); if (!c) return; const a = document.createElement("a"); a.download = b.dataset.dl + "-" + R.nombre.toLowerCase().replace(/\s+/g, "-") + ".png"; a.href = c.toDataURL("image/png"); a.click(); }
   });
 
+  document.addEventListener("input", (e) => { if (e.target.id === "cRange") { oc.com = Number(e.target.value); calcUpdate(); } });
+
   /* ---------- Panel de demo ---------- */
   if (DEMO) {
-    $("#demo").hidden = false; $("#topPal").hidden = false;
+    $("#demo").hidden = false; $("#topPal").hidden = false; $("#dueno").hidden = false; renderOwner();
     $("#pals").innerHTML = Object.entries(PALETAS).map(([k, v]) => '<button class="pal" type="button" data-p="' + k + '"><span class="sw" style="background:' + v.bg + ";--rim:" + v.rim + '"></span>' + v.nombre + "</button>").join("");
     demoBtn.onclick = () => open("#demoSheet");
     if (window.QRCode) {
