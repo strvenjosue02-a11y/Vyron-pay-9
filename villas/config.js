@@ -90,9 +90,9 @@ window.VILLA = {
   ],
 
   fotos: [
-    { src: "img/villa.jpg", x: 62, y: 72, z: 2.2 },
-    { src: "img/villa.jpg", x: 12, y: 40, z: 2.0 },
-    { src: "img/villa.jpg", x: 88, y: 78, z: 2.1 }
+    { src: "img/villa.jpg", x: 56, y: 90, z: 2.3 },
+    { src: "img/villa.jpg", x: 10, y: 38, z: 2.0 },
+    { src: "img/villa.jpg", x: 93, y: 82, z: 2.4 }
   ],
 
   wifi: { red: "Casa Marea", clave: "nosara2026" },
