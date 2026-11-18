@@ -1,0 +1,9 @@
+LOTE DE 98 RESTAURANTES NUEVOS (Rest 135 a Rest 232)
+
+contactos-98.vcf  -> abrilo en el celular y se guardan los 98 de una vez.
+tabla-98.csv      -> la misma lista en tabla, con el link de WhatsApp de cada uno.
+
+Todos: restaurantes de playa (sin hoteles, pizzerías, cafeterías ni sodas), con celular (empieza con 6, 7 u 8)
+y ninguno repetido de las listas anteriores.
+Los numeros salen de la ficha de Google Maps (via directorio Wanderlog). No se pudo confirmar desde aqui
+si cada uno tiene WhatsApp.
