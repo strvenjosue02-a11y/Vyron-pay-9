@@ -70,6 +70,7 @@ h1, h2, h3, h4 { font-family: "Fraunces", Georgia, serif; font-optical-sizing: a
 .roll .s { display: flex; flex-direction: column; transition: transform .75s cubic-bezier(.2,.8,.2,1); }
 .roll .s span, .roll .t { display: block; height: 1.25em; }
 .roll .sp { width: .22em; }
+.roll .cm { margin-left: -.16em; }
 
 /* ================= Portada ================= */
 .cover { min-height: 100svh; display: flex; flex-direction: column; align-items: center; padding: 0 16px 36px; overflow: hidden;
@@ -630,7 +631,7 @@ footer button { color: var(--acc); text-decoration: underline; text-underline-of
   const roll = (txt, from) => {
     const chars = [...txt], prev = from ? [...from] : null, off = prev ? prev.length - chars.length : 0;
     return '<span class="roll" role="text" aria-label="' + esc(txt) + '">' + chars.map((ch, i) => {
-      if (!/\d/.test(ch)) return '<span class="t' + (ch === " " ? " sp" : "") + '" aria-hidden="true">' + (ch === " " ? "" : esc(ch)) + "</span>";
+      if (!/\d/.test(ch)) return '<span class="t' + (ch === " " ? " sp" : "") + (ch === "," ? " cm" : "") + '" aria-hidden="true">' + (ch === " " ? "" : esc(ch)) + "</span>";
       const p = prev ? prev[i + off] : null, old = prev ? (/\d/.test(p || "") ? p : "0") : ch;
       return '<span class="c" aria-hidden="true"><span class="s" data-to="' + ch + '" style="transform:translateY(' + (-old * 1.25) + 'em)">' + "0123456789".split("").map((d) => "<span>" + d + "</span>").join("") + "</span></span>";
     }).join("") + "</span>";
