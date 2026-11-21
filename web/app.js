@@ -8,6 +8,7 @@ import { ALCANCIA_ABI as ABI, ALCANCIA_BYTECODE } from "./alcancia.js";
 import { initI18n } from "./i18n.js";
 import { mountChart } from "./pro.js";
 import { mountChart2 } from "./chart2.js";
+import { vaultHtml, vaultBind } from "./fx3d.js";
 import { threadHtml, threadPreview, callHtml } from "./thread.js";
 import { createDemo } from "./demo.js";
 import { setLaunchChain, loadChainLaunches, lcChainLive, showLaunches, launchRows, launchItems, stopLaunches, lcLive, lcGet, lcMeBal, lcSwap, lcQuote, nextClose } from "./launch.js";
@@ -1895,7 +1896,7 @@ const ccBody = (p) => {
   if (t === "calls") return callsHtml(p);
   if (t === "members") { const old = S.ttab; S.ttab = "holders"; let h = ""; try { h = termTab(p); } finally { S.ttab = old; } return h; }
   const c = p.q.creator ? uname(p.q.creator) : "–", f0 = (p.trades || []).find((q) => q.ts), age = f0 ? agoS((S.now || Date.now() / 1000) - f0.ts) : "–";
-  return `<div class="cc-ab"><div><small>${T2("Creator", "Creador")}</small><b>${esc(c)}</b></div><div><small>${T2("Contract", "Contrato")}</small><b>${short(p.address || p.q.creator)}</b></div><div><small>${T2("Liquidity", "Liquidez")}</small><b>${T2("Locked forever", "Bloqueada para siempre")}</b></div><div><small>${T2("Market open", "Mercado abierto")}</small><b>${T2("", "hace ")}${age}${T2(" ago", "")}</b></div></div>`;
+  return vaultHtml(T2("Locked liquidity", "Liquidez bloqueada"), T2("Nobody can withdraw this token's pool, not even the creator. If the round had not filled, everyone would have been refunded.", "Nadie puede retirar el pool de este token, ni siquiera el creador. Si la ronda no se hubiera llenado, todos habrían recibido reembolso.")) + `<div class="cc-ab"><div><small>${T2("Creator", "Creador")}</small><b>${esc(c)}</b></div><div><small>${T2("Contract", "Contrato")}</small><b>${short(p.address || p.q.creator)}</b></div><div><small>${T2("Liquidity", "Liquidez")}</small><b>${T2("Locked forever", "Bloqueada para siempre")}</b></div><div><small>${T2("Market open", "Mercado abierto")}</small><b>${T2("", "hace ")}${age}${T2(" ago", "")}</b></div></div>`;
 };
 function communityHtml(p) {
   const src = logoSrc(p) || p.meta?.cover || "", sym = p.q.symbol, hn = holdN(p), fol = joined(p.id), x = stats24(p), up = x.chg >= 0, pv = threadPreview("tok-" + p.id), t = S.ccTab || "posts";
@@ -1928,7 +1929,7 @@ function renderCommunity(p) {
     set("cc-a", activeNow(p)); const hn = holdN(p); if (hn != null) set("cc-m", kfmt(hn)); const pv = threadPreview("tok-" + p.id); if (pv) set("cc-p", pv.c); };
   paint(); S.poll = setInterval(paint, 5000);
   const root = $("#app");
-  root.querySelector(".cc-tabs").onclick = (e) => { const b = e.target.closest("[data-cct]"); if (!b) return; S.ccTab = b.dataset.cct; document.querySelectorAll("[data-cct]").forEach((y) => y.setAttribute("aria-selected", y === b)); $("#cc-b").innerHTML = ccBody(p); };
+  root.querySelector(".cc-tabs").onclick = (e) => { const b = e.target.closest("[data-cct]"); if (!b) return; S.ccTab = b.dataset.cct; document.querySelectorAll("[data-cct]").forEach((y) => y.setAttribute("aria-selected", y === b)); $("#cc-b").innerHTML = ccBody(p); vaultBind($("#cc-b")); };
   const folHtml = (on) => on ? `<span class="xf-ck">✓</span>${T2("Following", "Siguiendo")}` : `<span class="xf-pl">+</span>${T2("Follow", "Seguir")}`;
   const bsOpen = (html, fn) => { document.getElementById("bs")?.remove(); const d = document.createElement("div"); d.id = "bs"; d.innerHTML = `<div class="bs-v"></div><div class="bs-p"><i class="bs-h"></i>${html}</div>`; document.body.appendChild(d); requestAnimationFrame(() => d.classList.add("on"));
     const close = () => { d.classList.remove("on"); setTimeout(() => d.remove(), 260); }; d.onclick = (e) => { if (e.target.classList.contains("bs-v")) return close(); fn?.(e, close); }; return close; };
