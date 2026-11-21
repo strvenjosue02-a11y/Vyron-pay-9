@@ -32,7 +32,7 @@ interface IPoolSlot0 {
 ///  - Mientras NO esté llena, cada quien puede sacar su dinero cuando quiera (withdraw).
 ///  - Al llenarse: el USDC (menos 1% de comisión) va a un pool de Uniswap v3 al MISMO precio que pagaron todos.
 ///    El recibo (NFT) de esa liquidez queda dentro de este contrato y NO existe ninguna función para sacarlo:
-///    el pool es permanente. Solo se pueden cobrar las comisiones de trading (collectFees), mitad plataforma, mitad creador.
+///    el pool es permanente. Solo se pueden cobrar las comisiones de trading (collectFees): 2/3 plataforma (0,20% de cada operación) y 1/3 creador (0,10%).
 ///  - El creador elige su parte (0, 5 o 10%) y su goteo (4, 8 o 12 semanas) con el VestingWallet de OpenZeppelin. La plataforma, 1,5% (inmediato).
 ///  - Despliegue perezoso: la dirección existe desde ya (CREATE2) y el primero que deposita lo despliega.
 contract Launch is ERC20, ReentrancyGuard {
@@ -42,8 +42,8 @@ contract Launch is ERC20, ReentrancyGuard {
 
     struct Params {
         IERC20 usdc;
-        address platform;        // recibe 1% del USDC, 1,5% de los tokens y la mitad de las comisiones del pool
-        address creator;         // recibe 5% de los tokens (con goteo) y la otra mitad de las comisiones
+        address platform;        // recibe 1% del USDC, 1,5% de los tokens y 2/3 de las comisiones del pool
+        address creator;         // recibe 5% de los tokens (con goteo) y 1/3 de las comisiones
         string name;
         string symbol;
         uint256 goal;            // 100e6, 500e6 o 2000e6
@@ -57,7 +57,8 @@ contract Launch is ERC20, ReentrancyGuard {
     uint256 public constant PLATFORM_TOKENS = 15_000_000 ether;  // 1,5% de referencia
     uint256 public constant FEE_BPS = 100;                       // 1% del USDC
     uint64 public constant ROUND_TIME = 24 hours;                // si en 24 h no se llena, expira y se devuelve todo
-    uint24 public constant POOL_FEE = 3000;
+    uint16 public constant MAX_WALLET_BPS = 2500;                // tope por billetera: 25% de la meta (nadie acapara la ronda)
+    uint24 public constant POOL_FEE = 3000;                      // 0,3%: 0,20% plataforma + 0,10% creador
     int24 internal constant MIN_TICK = -887220;
     int24 internal constant MAX_TICK = 887220;
 
@@ -91,6 +92,8 @@ contract Launch is ERC20, ReentrancyGuard {
     error TooMuch();
     error Expired();
     error NotExpired();
+    error WalletCap();
+    error CreatorLocked();
 
     constructor(Params memory p) ERC20(p.name, p.symbol) {
         if (
@@ -115,6 +118,7 @@ contract Launch is ERC20, ReentrancyGuard {
         if (block.timestamp > deadline) revert Expired();
         if (amount == 0 || to == address(0)) revert ZeroAmount();
         if (raised + amount > goal) revert TooMuch();
+        if (contributed[to] + amount > goal * MAX_WALLET_BPS / 10_000) revert WalletCap();
         usdc.safeTransferFrom(msg.sender, address(this), amount);
         contributed[to] += amount;
         raised += amount;
@@ -125,6 +129,8 @@ contract Launch is ERC20, ReentrancyGuard {
     /// @notice Saca tu dinero mientras la ronda no esté llena (o si quedó en reembolso).
     function withdraw() external nonReentrant {
         if (state == State.Live) revert WrongState();
+        // el dinero del creador queda en la ronda hasta que se llene o expire: no puede inflar la tendencia y retirarlo
+        if (state == State.Open && msg.sender == creator && block.timestamp <= deadline) revert CreatorLocked();
         uint256 amt = contributed[msg.sender];
         if (amt == 0) revert ZeroAmount();
         contributed[msg.sender] = 0;
@@ -159,7 +165,7 @@ contract Launch is ERC20, ReentrancyGuard {
         _mint(msg.sender, tokens);
     }
 
-    /// @notice Cobra las comisiones del pool y las reparte mitad plataforma, mitad creador. Es lo ÚNICO que sale del pool.
+    /// @notice Cobra las comisiones del pool y las reparte: 1/3 creador (0,10%) y 2/3 plataforma (0,20%). Es lo ÚNICO que sale del pool.
     function collectFees() external nonReentrant {
         if (state != State.Live) revert WrongState();
         (uint256 a0, uint256 a1) = positionManager.collect(INPM.CollectParams({
@@ -167,8 +173,8 @@ contract Launch is ERC20, ReentrancyGuard {
         }));
         (uint256 fu, uint256 ft) = address(usdc) < address(this) ? (a0, a1) : (a1, a0);
         emit FeesCollected(fu, ft);
-        if (fu > 0) { usdc.safeTransfer(platform, fu / 2); usdc.safeTransfer(creator, fu - fu / 2); }
-        if (ft > 0) { _transfer(address(this), platform, ft / 2); _transfer(address(this), creator, ft - ft / 2); }
+        if (fu > 0) { uint256 cu = fu / 3; usdc.safeTransfer(creator, cu); usdc.safeTransfer(platform, fu - cu); }
+        if (ft > 0) { uint256 ct = ft / 3; _transfer(address(this), creator, ct); _transfer(address(this), platform, ft - ct); }
     }
 
     /// @notice Callback de Uniswap para la corrección gratis del precio. NUNCA paga: solo acepta cantidades cero o negativas.

@@ -31,18 +31,25 @@ contract LaunchTest is Test {
     address alice = makeAddr("alice");
     address bob = makeAddr("bob");
     address trader = makeAddr("trader");
+    address carol = makeAddr("carol");
 
     function setUp() public {
         string memory url = vm.envOr("FORK_URL", string(""));
         if (bytes(url).length == 0) vm.skip(true);
         vm.createSelectFork(url);
-        _fund(alice, 5_000e6); _fund(bob, 5_000e6); _fund(trader, 5_000e6);
+        _fund(alice, 5_000e6); _fund(bob, 5_000e6); _fund(trader, 5_000e6); _fund(carol, 5_000e6);
     }
 
     function _fund(address who, uint256 amt) internal {
         vm.store(address(USDC), keccak256(abi.encode(who, uint256(9))), bytes32(amt));
         assertEq(USDC.balanceOf(who), amt);
     }
+    /// completa la ronda con bob, trader y carol (tope por billetera = 25% de la meta): `already` ya puso alice
+    function _rest(Launch l, uint256 goal, uint256 already) internal {
+        address[3] memory w = [bob, trader, carol]; uint256 left = goal - already; uint256 cap = goal / 4;
+        for (uint256 i = 0; i < 3 && left > 0; i++) { uint256 a = left < cap ? left : cap; vm.startPrank(w[i]); USDC.approve(address(l), a); l.deposit(a, w[i]); vm.stopPrank(); left -= a; }
+    }
+    function _fill100(Launch l) internal { vm.startPrank(alice); USDC.approve(address(l), 25e6); l.deposit(25e6, alice); vm.stopPrank(); _rest(l, 100e6, 25e6); }
     function _params(uint256 goal, string memory sym) internal view returns (Launch.Params memory) {
         return Launch.Params({usdc: USDC, platform: platform, creator: creator, name: "Moon Bread", symbol: sym, goal: goal, positionManager: NPM, creatorPct: 5, vestingWeeks: 8});
     }
@@ -74,8 +81,8 @@ contract LaunchTest is Test {
     // --- retirar antes de llenar
     function test_withdrawAnytimeBeforeFull() public {
         Launch l = _deploy(_params(500e6, "BR1"));
-        vm.startPrank(alice); USDC.approve(address(l), 200e6); l.deposit(200e6, alice);
-        assertEq(l.raised(), 200e6);
+        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice);
+        assertEq(l.raised(), 100e6);
         l.withdraw(); vm.stopPrank();
         assertEq(USDC.balanceOf(alice), 5_000e6); assertEq(l.raised(), 0);
     }
@@ -83,28 +90,25 @@ contract LaunchTest is Test {
     // --- llenar: pool, comisión 1%, tokens, mismo precio
     function test_fill_opensMarket_sameRoundPrice() public {
         Launch l = _deploy(_params(500e6, "BR2"));
-        vm.startPrank(alice); USDC.approve(address(l), 300e6); l.deposit(300e6, alice); vm.stopPrank();
-        vm.startPrank(bob); USDC.approve(address(l), 200e6); l.deposit(200e6, bob); vm.stopPrank();
+        vm.startPrank(alice); USDC.approve(address(l), 125e6); l.deposit(125e6, alice); vm.stopPrank();
+        _rest(l, 500e6, 125e6);
         assertEq(uint8(l.state()), uint8(Launch.State.Live));
         assertEq(USDC.balanceOf(platform), 5e6, "1% de comision");
         assertTrue(l.lpTokenId() != 0);
         assertEq(INFT(NPM).ownerOf(l.lpTokenId()), address(l), "el recibo queda en el contrato");
-        // mismo precio para todos: 300 USDC -> 60% de 500M ; 200 USDC -> 40%
         vm.prank(alice); l.claim(); vm.prank(bob); l.claim();
-        assertEq(l.balanceOf(alice), 300_000_000 ether);
-        assertEq(l.balanceOf(bob), 200_000_000 ether);
+        assertEq(l.balanceOf(alice), 125_000_000 ether);
+        assertEq(l.balanceOf(bob), 125_000_000 ether);
         assertEq(l.balanceOf(platform), 15_000_000 ether);
-        // ya no se puede retirar ni depositar
         vm.prank(alice); vm.expectRevert(); l.withdraw();
         vm.prank(alice); vm.expectRevert(); l.deposit(1, alice);
-        // nadie puede reclamar dos veces
         vm.prank(alice); vm.expectRevert(); l.claim();
     }
 
     // --- el dinero de la ronda no se puede sacar: solo comisiones por operar
     function test_poolIsPermanent_onlyFeesCollectable() public {
         Launch l = _deploy(_params(100e6, "BR3"));
-        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); l.claim(); vm.stopPrank();
+        _fill100(l); vm.prank(alice); l.claim();
         // alguien opera en el pool real
         vm.startPrank(trader); USDC.approve(ROUTER, 500e6);
         IRouter(ROUTER).exactInputSingle(IRouter.P(address(USDC), address(l), 3000, trader, 50e6, 0, 0));
@@ -112,7 +116,7 @@ contract LaunchTest is Test {
         uint256 platBefore = USDC.balanceOf(platform); uint256 crBefore = USDC.balanceOf(creator);
         l.collectFees();
         uint256 gotP = USDC.balanceOf(platform) - platBefore; uint256 gotC = USDC.balanceOf(creator) - crBefore;
-        assertGt(gotP, 0); assertApproxEqAbs(gotP, gotC, 1, "mitad y mitad");
+        assertGt(gotP, 0); assertApproxEqAbs(gotP, gotC * 2, 2, "2/3 plataforma, 1/3 creador (0,20% y 0,10%)");
         assertEq(INFT(NPM).ownerOf(l.lpTokenId()), address(l), "el pool sigue ahi");
         // el contrato no tiene ninguna otra puerta de salida: el USDC del pool sigue dentro del pool
         assertEq(USDC.balanceOf(address(l)), 0);
@@ -121,7 +125,7 @@ contract LaunchTest is Test {
     // --- el creador cobra poco a poco
     function test_creatorTokensDrip() public {
         Launch l = _deploy(_params(100e6, "BR4"));
-        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+        _fill100(l);
         VestingWallet vw = VestingWallet(payable(l.vesting()));
         assertEq(l.balanceOf(address(vw)), 50_000_000 ether);
         assertEq(l.balanceOf(creator), 0);
@@ -139,11 +143,11 @@ contract LaunchTest is Test {
     function test_creatorChoices() public {
         Launch.Params memory p = _params(100e6, "BR7"); p.creatorPct = 0;
         Launch l = _deploy(p);
-        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+        _fill100(l);
         assertEq(l.vesting(), address(0), "sin parte del creador no hay goteo");
         Launch.Params memory q = _params(100e6, "BR8"); q.creatorPct = 10; q.vestingWeeks = 12;
         Launch m = _deploy(q);
-        vm.startPrank(bob); USDC.approve(address(m), 100e6); m.deposit(100e6, bob); vm.stopPrank();
+        _fill100(m);
         assertEq(m.balanceOf(m.vesting()), 100_000_000 ether);
         Launch.Params memory bad = _params(100e6, "BR9"); bad.creatorPct = 7;
         vm.expectRevert(); new Launch(bad);
@@ -183,7 +187,7 @@ contract LaunchTest is Test {
         uint160 target = uint160(_sqrt(a1 * (1 << 96) / a0) << 48);
         INPM(NPM).createAndInitializePoolIfNecessary(t0, t1, 3000, target);
         Launch l = _deploy(p);
-        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+        _fill100(l);
         assertEq(uint8(l.state()), uint8(Launch.State.Live), "con el precio correcto la ronda se llena igual");
     }
     function _sqrt(uint256 x) internal pure returns (uint256 y) { if (x == 0) return 0; uint256 z = (x + 1) / 2; y = x; while (z < y) { y = z; z = (x / z + z) / 2; } }
@@ -192,16 +196,16 @@ contract LaunchTest is Test {
     function test_attack_donationDoesNotBreakAccounting() public {
         Launch l = _deploy(_params(100e6, "AT2"));
         vm.prank(trader); USDC.transfer(address(l), 50e6); // donación
-        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+        _fill100(l);
         assertEq(uint8(l.state()), uint8(Launch.State.Live));
         assertEq(USDC.balanceOf(platform), 1e6, "la plataforma sigue cobrando solo 1%");
-        vm.prank(alice); l.claim(); assertEq(l.balanceOf(alice), 500_000_000 ether);
+        vm.prank(alice); l.claim(); assertEq(l.balanceOf(alice), 125_000_000 ether);
     }
 
     // ATAQUE 3: nadie puede sacar ni reclamar lo de otro
     function test_attack_cannotTouchOthersFunds() public {
         Launch l = _deploy(_params(500e6, "AT3"));
-        vm.startPrank(alice); USDC.approve(address(l), 200e6); l.deposit(200e6, alice); vm.stopPrank();
+        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
         vm.prank(trader); vm.expectRevert(); l.withdraw();     // el atacante no tiene saldo en la ronda
         vm.prank(trader); vm.expectRevert(); l.claim();        // y antes de llenarse nadie reclama
         vm.prank(trader); vm.expectRevert(); l.collectFees();  // ni cobra comisiones sin pool
@@ -216,17 +220,33 @@ contract LaunchTest is Test {
         vm.prank(bob); l.withdraw(); assertEq(USDC.balanceOf(bob), 5_010e6);
     }
 
-    // ATAQUE 5: llenar la ronda con una sola persona no da ventaja de precio
-    function test_attack_whaleGetsSamePrice() public {
+    // ATAQUE 5: una sola billetera no puede acaparar la ronda (tope 25% de la meta)
+    function test_attack_walletCap() public {
         Launch l = _deploy(_params(100e6, "AT5"));
-        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); l.claim(); vm.stopPrank();
-        assertEq(l.balanceOf(alice), 500_000_000 ether, "100 USDC compran exactamente los 500M del tramo");
+        vm.startPrank(alice); USDC.approve(address(l), 100e6);
+        vm.expectRevert(Launch.WalletCap.selector); l.deposit(26e6, alice);
+        l.deposit(25e6, alice);
+        vm.expectRevert(Launch.WalletCap.selector); l.deposit(1e6, alice);
+        vm.stopPrank();
+        vm.startPrank(bob); USDC.approve(address(l), 10e6); vm.expectRevert(Launch.WalletCap.selector); l.deposit(1e6, alice); vm.stopPrank();
+    }
+
+    // el dinero del creador no se puede sacar mientras la ronda esta abierta; si expira, se le devuelve
+    function test_creatorDepositLockedUntilFillOrExpiry() public {
+        Launch l = _deploy(_params(100e6, "CL1"));
+        _fund(creator, 100e6);
+        vm.startPrank(creator); USDC.approve(address(l), 25e6); l.deposit(25e6, creator);
+        vm.expectRevert(Launch.CreatorLocked.selector); l.withdraw();
+        vm.stopPrank();
+        vm.warp(block.timestamp + 24 hours + 1);
+        vm.prank(trader); l.refundFor(creator);
+        assertEq(USDC.balanceOf(creator), 100e6, "el creador recupera todo si no se llena");
     }
 
     // ATAQUE 6: tras llenarse no hay forma de sacar el NFT del pool: el contrato no tiene ninguna función que lo mueva
     function test_attack_nftCannotLeave() public {
         Launch l = _deploy(_params(100e6, "AT6"));
-        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+        _fill100(l);
         uint256 id = l.lpTokenId();
         vm.prank(creator); (bool ok,) = NPM.call(abi.encodeWithSignature("transferFrom(address,address,uint256)", address(l), creator, id));
         assertTrue(!ok, "ni el creador puede mover el NFT");
@@ -245,7 +265,7 @@ contract LaunchTest is Test {
             Mover m = new Mover(); // el atacante mueve el precio con un swap sin liquidez (gratis)
             (uint160 cur,,,,,,) = IPoolSlot0(pl).slot0();
             m.go(pl, k == 1, k == 1 ? cur / 4 : cur * 4);
-            vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+            _fill100(l);
             assertEq(uint8(l.state()), uint8(Launch.State.Live), "la ronda se llena aunque el pool haya sido movido");
         }
     }
@@ -271,7 +291,7 @@ contract LaunchTest is Test {
         (address t0, address t1) = address(USDC) < pred ? (address(USDC), pred) : (pred, address(USDC));
         address pl = INPM(NPM).createAndInitializePoolIfNecessary(t0, t1, 3000, uint160(1) << 96); // precio 1:1, muy distinto
         Launch l = _deploy(p);
-        vm.startPrank(alice); USDC.approve(address(l), 100e6); l.deposit(100e6, alice); vm.stopPrank();
+        _fill100(l);
         assertEq(uint8(l.state()), uint8(Launch.State.Live), "se llena igual");
         assertEq(l.pool(), pl);
         (uint160 cur,,,,,,) = IPoolSlot0(pl).slot0();
