@@ -2,7 +2,6 @@
 // Una ronda se llena con USDC; mientras no se llene, cada quien puede sacar su dinero. Al llenarse, el dinero pasa a un pool y el token se opera.
 import { mountChart } from "./pro.js";
 import { threadHtml } from "./thread.js";
-import { eggHtml, eggBind, vaultHtml, vaultBind } from "./fx3d.js";
 
 const GOALS = [100, 500, 2000];
 const now = () => Date.now() / 1000;
@@ -114,9 +113,9 @@ function listHtml() {
 function pageHtml(l) {
   const live = l.status === "live", mine = mineOf(l), tk = me.tok[l.id] || 0, left = l.goal - l.raised;
   return `<a class="back" href="#/lc">${T("All launches", "Todos los lanzamientos")}</a>
-  <div class="lc-pg">${live ? "" : eggHtml(l.raised / l.goal)}<div class="lc-hero">${art(l)}<div class="lc-hero-t"><span class="pc-tick">${esc(l.sym)}</span><h1>${esc(l.name)}</h1></div></div>
+  <div class="lc-pg"><div class="lc-hero">${art(l)}<div class="lc-hero-t"><span class="pc-tick">${esc(l.sym)}</span><h1>${esc(l.name)}</h1></div></div>
   <div class="lc-side" id="lc-side">${l.chain && l.cs?.state === "live" ? liveChainHtml(l) : live ? liveHtml(l, tk) : openHtml(l, mine, left)}</div>
-  <div class="lc-main">${live ? `<div class="tx-chart" id="lc-chart"></div>` : `<div class="lc-note">${T("Everyone gets the same price. The moment the goal is reached the round closes, all the money goes into a locked pool and trading opens.", "Todos reciben el mismo precio. En cuanto se llega a la meta, la ronda se cierra, todo el dinero pasa a un pool bloqueado y se abre el mercado.")}</div>${vaultHtml(T("Locked liquidity", "Liquidez bloqueada"), T("When the round fills, the money goes into a pool nobody can withdraw. If it does not fill, everyone gets a refund.", "Al llenarse la ronda, el dinero pasa a un pool que nadie puede retirar. Si no se llena, todos reciben reembolso."))}<div class="lc-lock"><span>${T("Chart and trading open when the round fills", "El gráfico y el trading se abren cuando se llene")}</span></div>`}
+  <div class="lc-main">${live ? `<div class="tx-chart" id="lc-chart"></div>` : `<div class="lc-note">${T("Everyone gets the same price. The moment the goal is reached the round closes, all the money goes into a locked pool and trading opens.", "Todos reciben el mismo precio. En cuanto se llega a la meta, la ronda se cierra, todo el dinero pasa a un pool bloqueado y se abre el mercado.")}</div><div class="lc-lock"><span>${T("Chart and trading open when the round fills", "El gráfico y el trading se abren cuando se llene")}</span></div>`}
     ${l.creator ? `<p class="lc-dev">${T("Creator put in", "El creador metió")} <b>${l.creator}%</b> ${T("of the goal", "de la meta")}.</p>` : ""}
     ${threadHtml("rnd-" + l.id, { me: () => window.__hfMe?.() || null, avatar: window.__hfAva, seed: true })}</div></div>`;
 }
@@ -171,7 +170,7 @@ function liveUpdate() {
   const a = document.getElementById("lc-amt")?.value;
   if (l.status === "live" && !document.getElementById("lc-buy")) { view(); return; }
   if (l.chain && l.cs?.state === "live") { if (!document.getElementById("lc-claim") && mineOf(l) > 0 || !side.querySelector(".lc-big")) { side.innerHTML = liveChainHtml(l); bindSide(l); } else if (mineOf(l) === 0 && document.getElementById("lc-claim")) { side.innerHTML = liveChainHtml(l); bindSide(l); } }
-  else if (l.status === "open") { side.innerHTML = openHtml(l, mineOf(l), l.goal - l.raised); bindSide(l); eggBind(document, l.raised / l.goal, false); if (a) document.getElementById("lc-amt").value = a; }
+  else if (l.status === "open") { side.innerHTML = openHtml(l, mineOf(l), l.goal - l.raised); bindSide(l); if (a) document.getElementById("lc-amt").value = a; }
   else { const pl = side.querySelector(".lc-big"); if (pl) { const ch = (price(l) / l.p0 - 1) * 100; pl.innerHTML = `<b>${fmtP(price(l))}</b><span class="${ch >= 0 ? "u" : "d"}">${ch >= 0 ? "+" : ""}${ch.toFixed(1)}%</span>`; } chart?.update(); }
   document.getElementById("lc-cm") && (document.getElementById("lc-cm").innerHTML = cmHtml(l));
 }
@@ -198,7 +197,7 @@ function bindChain(l) {
   root.querySelectorAll("[data-copy]").forEach((b) => (b.onclick = () => navigator.clipboard?.writeText(b.dataset.copy)));
 }
 function bindPage(l) {
-  bindSide(l); eggBind(document, l.raised / l.goal, !!(l.chain && l.cs?.state === "live")); vaultBind(document);
+  bindSide(l);
   if (l.status === "live") { const es = lang() === "es"; chart = mountChart(document.getElementById("lc-chart"), { id: "lc-" + l.id, periods: ["1m", "5m"], period: "1m", onPeriod: () => {},
     getData: (per) => ({ candles: candles(l, per === "1m" ? 60 : 300), round: l.p0, supply: 1_000_000, marks: [] }), labels: es ? { cap: "Valor total", price: "Precio", candles: "Velas", line: "Línea", ma: "Promedios", draw: "Línea", clear: "Borrar", full: "Pantalla completa" } : {} }); }
 }
