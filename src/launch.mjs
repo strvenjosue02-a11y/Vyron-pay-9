@@ -159,7 +159,7 @@ async function main() {
     writeFileSync(
       f,
       signPage(
-        { chainId: t.chainId, to: t.to, value: t.value, data: t.data },
+        { chainId: t.chainId, to: t.to, value: t.value, data: t.data, gas: plan.chain.gasLimit },
         {
           name: plan.cfg.name,
           symbol: plan.cfg.symbol,

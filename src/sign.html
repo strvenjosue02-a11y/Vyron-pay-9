@@ -83,7 +83,7 @@ go.onclick=async()=>{try{
   let data=TX.data;
   if(INFO.openBuyer){const parts=data.toLowerCase().split(INFO.openBuyer);if(parts.length!==2||!/^0x[0-9a-fA-F]{40}$/.test(from)){st.textContent="El plan no tiene el formato esperado: no se envió nada.";return}data=parts.join(from.slice(2).toLowerCase());st.textContent="Los tokens de la compra inicial irán a "+from+". "}
   st.textContent+="Esperando tu firma…";
-  const h=await eth().request({method:"eth_sendTransaction",params:[{from,to:TX.to,value:"0x"+BigInt(TX.value).toString(16),data:data}]});
+  const h=await eth().request({method:"eth_sendTransaction",params:[{from,to:TX.to,value:"0x"+BigInt(TX.value).toString(16),data:data,...(TX.gas?{gas:"0x"+BigInt(TX.gas).toString(16)}:{})}]});
   st.innerHTML="Enviado: <a href='"+INFO.explorer+"/tx/"+h+"' target='_blank' rel='noopener' style='color:var(--ac)'>ver transacción</a>. Cuando se confirme, el token ya existe en Uniswap.";
-}catch(e){st.textContent="No se envió: "+(e.message||e)}};
+}catch(e){st.textContent=e.code===4001?"Cancelaste la firma. No se envió nada.":"No se envió: "+(e.message||e)}};
 </script></main></body></html>

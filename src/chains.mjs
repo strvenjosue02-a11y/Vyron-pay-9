@@ -10,6 +10,7 @@ export const CHAINS = {
     weth: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
     explorer: "https://sepolia.etherscan.io",
     uniswap: "sepolia",
+    gasLimit: "65000000",
     testnet: true,
   },
   base: {
@@ -21,6 +22,7 @@ export const CHAINS = {
     weth: "0x4200000000000000000000000000000000000006",
     explorer: "https://basescan.org",
     uniswap: "base",
+    gasLimit: "10000000",
     testnet: false,
   },
 };
