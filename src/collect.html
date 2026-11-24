@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cobrar comisiones</title>
+<style>
+:root{--bg:#15171b;--fg:#eceef2;--ac:#5ad3a4;--card:#1e2127;--mut:#8f95a3;--bad:#e5837f}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 "Inter","SF Pro Text","Helvetica Neue","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+main{min-height:100dvh;max-width:380px;margin:0 auto;padding:20px 18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+code,.mono{font-family:"JetBrains Mono","SF Mono",ui-monospace,Menlo,Consolas,monospace}
+.av{width:clamp(72px,16dvh,96px);aspect-ratio:1;border-radius:24%;display:grid;place-items:center;font-size:2.2rem;font-weight:700;color:#0c1a14;background:var(--ac);object-fit:cover}
+h1{margin:2px 0 0;font-family:"Inter Tight","SF Pro Display","Helvetica Neue","Segoe UI",system-ui,sans-serif;font-size:clamp(1.8rem,8vw,2.3rem);line-height:1.08;font-weight:700;letter-spacing:-.03em;word-break:break-word}
+.sym{margin-top:2px;color:var(--ac);font-weight:600;letter-spacing:.04em;font-size:.95rem}
+.lazy{font-size:.78rem;color:var(--mut);letter-spacing:.01em}
+.addr{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:12px;padding:8px 10px}
+.addr code{font-size:.64rem;color:var(--mut);word-break:break-all;text-align:left}
+.copy{flex:none;border:0;background:#2a2e36;color:var(--fg);border-radius:8px;padding:5px 10px;font:500 .68rem system-ui,sans-serif;cursor:pointer}
+.facts{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.facts span{background:var(--card);border-radius:99px;padding:4px 11px;font-size:.68rem;font-weight:500;color:#b9bec9}
+.who{font-size:.68rem;color:var(--mut);line-height:1.55}.who code{font-size:.62rem;color:#b9bec9}
+#info{font-size:.8rem;color:#c9cdd6}
+.red{color:var(--bad);font-size:.72rem;font-weight:500}
+.btn{display:flex;align-items:center;justify-content:center;gap:11px;width:100%;padding:15px;border:0;border-radius:14px;font:600 1rem "Inter","SF Pro Text",system-ui,sans-serif;letter-spacing:-.005em;text-decoration:none;cursor:pointer;transition:transform .08s,box-shadow .08s;margin-bottom:8px}
+#gh{color:#f0f2f5;background:#2a2e36;box-shadow:0 0 0 1px #3a404b inset,0 3px 0 #0d0f12}
+#uni{color:#0c1a14;background:var(--ac);box-shadow:0 3px 0 color-mix(in srgb,var(--ac) 45%,#000)}
+#go{color:#0c1a14;background:var(--ac);box-shadow:0 3px 0 color-mix(in srgb,var(--ac) 45%,#000)}
+.btn:active:not(:disabled){transform:translateY(3px)}
+#src{text-decoration:underline}
+#gh:active{box-shadow:0 0 0 1px #3a404b inset,0 0 0 #0d0f12}
+#go:active:not(:disabled){box-shadow:0 0 0 transparent}
+#go:disabled{background:#2a2e36;color:#6f7582;box-shadow:none;cursor:not-allowed}
+.btn svg{width:22px;height:22px;fill:currentColor;flex:none}
+.cap{font-size:.76rem;color:var(--mut)}
+#st{min-height:1.2em;font-size:.8rem;margin:0}
+.tiny{font-size:.62rem;color:#666c79;margin:0}
+.row{width:100%;background:var(--card);border-radius:14px;padding:12px 14px;text-align:left;display:flex;flex-direction:column;gap:8px}
+.row b{font-size:.9rem}.row .amt{font-size:1.15rem;font-weight:700;letter-spacing:-.02em}.row small{color:var(--mut);font-size:.72rem}
+.row .btn{margin:2px 0 0;padding:11px;font-size:.95rem}
+main{gap:9px;padding:12px 18px}.av{width:clamp(52px,10dvh,72px);font-size:1.7rem}h1{font-size:clamp(1.5rem,7vw,1.9rem)}.row{gap:5px;padding:10px 14px}
+</style></head><body><main>
+<img class="av" id="img" alt="" hidden><div class="av" id="av"></div>
+<div><h1 id="t">Token</h1><div class="sym" id="sy"></div></div>
+<div class="lazy" id="lz"></div>
+<div id="rows" style="width:100%;display:flex;flex-direction:column;gap:10px"></div>
+<p class="cap">Cobrar solo mueve las comisiones acumuladas, nunca la liquidez. Cualquiera puede cobrar: el dinero va siempre a la billetera dueña de cada posición y el gas lo paga quien firma.</p>
+<p id="st"></p>
+<a class="cap" target="_blank" rel="noopener" href="https://github.com/strvenjosue02-a11y/Vyron-pay-9" style="text-decoration:underline">Ver el código</a>
+<p class="tiny">Sin llaves ni claves. Tú decides si firmas. Los montos son los del momento en que se generó esta página.</p>
+<script>
+const INFO=__INFO__;
+const found=[];addEventListener("eip6963:announceProvider",e=>found.push(e.detail.provider));dispatchEvent(new Event("eip6963:requestProvider"));
+const eth=()=>window.ethereum||found[0];
+const $=(i)=>document.getElementById(i);
+const SEL="0xce3f865f",short=(a)=>a.slice(0,6)+"…"+a.slice(-4);
+$("t").textContent=INFO.name;$("sy").textContent="$"+INFO.symbol;$("lz").textContent=INFO.chain+" · Comisiones por cobrar";
+if(INFO.image){$("img").src=INFO.image;$("img").hidden=false;$("av").hidden=true}else{$("av").textContent=(INFO.symbol||"?").charAt(0).toUpperCase();$("img").remove()}
+const st=$("st");
+async function claim(p,btn){try{
+  if(!eth()){st.textContent="No encuentro una billetera en este navegador. Abre esta página dentro de tu billetera o instala MetaMask/Rabby.";return}
+  const [from]=await eth().request({method:"eth_requestAccounts"});
+  const hex="0x"+INFO.chainId.toString(16);
+  if((await eth().request({method:"eth_chainId"}))!==hex){try{await eth().request({method:"wallet_switchEthereumChain",params:[{chainId:hex}]})}catch(e){st.textContent="Cambia tu billetera a "+INFO.chain+" y vuelve a intentar.";return}}
+  st.textContent="Esperando tu firma…";
+  const data=SEL+BigInt(p.id).toString(16).padStart(64,"0");
+  const h=await eth().request({method:"eth_sendTransaction",params:[{from,to:p.lock,value:"0x0",data:data}]});
+  btn.disabled=true;btn.textContent="Enviado";
+  st.innerHTML="Enviado: <a href='"+INFO.explorer+"/tx/"+h+"' target='_blank' rel='noopener' style='color:var(--ac)'>ver transacción</a>. Cuando se confirme, las comisiones llegan a "+short(p.recipient)+".";
+}catch(e){st.textContent="No se envió: "+(e.message||e)}}
+for(const p of INFO.positions){const r=document.createElement("div");r.className="row";
+  const a=document.createElement("b");a.textContent=p.role+" · "+short(p.recipient);
+  const m=document.createElement("div");m.className="amt";m.textContent=p.ethText+" ETH";
+  const d=document.createElement("small");d.textContent=p.wethText+" WETH + "+p.tokenText+" "+INFO.symbol;
+  const b=document.createElement("button");b.className="btn";b.id="claim-"+p.id;b.textContent="Cobrar";b.onclick=()=>claim(p,b);
+  r.append(a,m,d,b);$("rows").append(r)}
+</script></main></body></html>
