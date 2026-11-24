@@ -1,0 +1,32 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm install --omit=dev
+      - name: Pruebas sin red (auditor independiente, verificador de interfaces, plan alterado)
+        run: |
+          node test/test-audit-plan.mjs
+          node test/test-check-site.mjs
+          node test/test-tamper.mjs
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: npm install --omit=dev
+      - run: bash contracts/script/setup-libs.sh
+      - name: Pruebas del Lock contra una copia de Sepolia con Uniswap real
+        working-directory: contracts
+        env: { FORK_URL: "https://ethereum-sepolia-rpc.publicnode.com" }
+        run: forge test
+      - name: Los bytes que usa el plugin son los del código fuente
+        run: node test/check-artifacts.mjs
+      - name: Matemática de ticks idéntica a la de Uniswap (1,774,545 ticks)
+        run: node test/test-tick-full.mjs

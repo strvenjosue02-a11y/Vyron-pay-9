@@ -1,0 +1,12 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc = "0.8.26"
+optimizer = true
+optimizer_runs = 200
+via_ir = true
+bytecode_hash = "none"   # los bytes del Lock y del token se comparan con los que usa la habilidad (node scripts/check-artifacts.mjs): no cambies estas opciones
+
+[fuzz]
+runs = 2000

@@ -1,0 +1,16 @@
+{
+  "name": "holdfast",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Memecoin launcher on Uniswap v3: lazy launch, liquidity locked by a 13-line contract.",
+  "scripts": {
+    "test": "node test/test-audit-plan.mjs && node test/test-check-site.mjs && node test/test-tamper.mjs"
+  },
+  "dependencies": {
+    "viem": "^2.21.0"
+  },
+  "prettier": {
+    "printWidth": 100
+  }
+}
