@@ -11,6 +11,7 @@ Memecoin launcher on Uniswap v3 (Base). The creator pays nothing and gets no tok
 ## Use
 With Claude Code, inside this repo: `/lanzar` to launch, `/cobrar` to see and collect fees.
 Without Claude: `npm install --omit=dev`, then `node src/launch.mjs plan|dryrun|sign|verify|fees|collect|links|check-site`.
+Practice first on `--chain sepolia` with free test ETH from a faucet.
 Host the signing page on any static host (GitHub Pages, Vercel…), next to `plan.json`.
 
 ## Test
