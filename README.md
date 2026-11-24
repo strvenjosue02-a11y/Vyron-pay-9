@@ -1,22 +1,20 @@
 # Holdfast
 
-Lanzador de memecoins sobre Uniswap v3 (Base). El creador no paga ni recibe tokens: el primer comprador paga el gas y abre el mercado. La liquidez queda en un contrato de 13 líneas sin función para sacarla.
+Memecoin launcher on Uniswap v3 (Base). The creator pays nothing and gets no tokens: the first buyer pays the gas and opens the market. Liquidity sits in a 13-line contract with no way to take it out.
 
-Memecoin launcher on Uniswap v3 (Base). The creator pays nothing and gets no tokens: the first buyer pays gas and opens the market. Liquidity sits in a 13-line contract with no way out.
+## What to read
+`contracts/src/Lock.sol`: 13 lines. It owns the Uniswap positions, can only collect fees, and sends them to one fixed address. Everything else is tooling: every launch is audited before signing and checked on-chain afterwards (`verify`).
 
-## Lo que hay que leer / What to read
-`contracts/src/Lock.sol`: 13 líneas. Es dueño de las posiciones de Uniswap, solo puede cobrar comisiones y las manda a una dirección fija. Lo demás es herramienta, y cada lanzamiento se audita y se verifica en la cadena (`verify`).
+## Fixed terms
+1 % pool fee: 20 % author, 80 % creator. 100 % of the supply goes to the pool. The creator gets no tokens. Token: OpenZeppelin 4.9.6, unmodified.
 
-## Términos fijos / Fixed terms
-Comisión del pool 1 %: 20 % autor, 80 % creador. 100 % del suministro al pool. El creador no recibe tokens. Token OpenZeppelin 4.9.6 sin cambios.
+## Use
+With Claude Code, inside this repo: `/lanzar` to launch, `/cobrar` to see and collect fees.
+Without Claude: `npm install --omit=dev`, then `node src/launch.mjs plan|dryrun|sign|verify|fees|collect|links|check-site`.
+Host the signing page on any static host (GitHub Pages, Vercel…), next to `plan.json`.
 
-## Usar / Use
-Con Claude Code, dentro de este repo: `/lanzar`.
-Sin Claude: `npm install --omit=dev` y `node src/launch.mjs plan|dryrun|sign|verify|fees|collect|links|check-site`.
-La página de firma va en un hosting estático (GitHub Pages, Vercel…), junto al `plan.json`.
+## Test
+`npm test` (offline) · `forge test` in `contracts/` with `FORK_URL=<rpc>` · `node test/test-fork.mjs` (`NET=base`, needs anvil) · `node test/check-artifacts.mjs`.
 
-## Probar / Test
-`npm test` (sin red) · `forge test` en `contracts/` (`FORK_URL=<rpc sepolia>`) · `node test/test-fork.mjs` (`NET=base|sepolia`, necesita anvil) · `node test/check-artifacts.mjs`.
-
-## Límites / Limits
-Sin lanzamiento real en Base todavía. El Lock lo revisa la comunidad; no tiene auditoría profesional. Un bot puede ser el primer comprador. Sin reembolsos. Un memecoin puede perder todo su valor.
+## Limits
+Never launched on real Base yet. The Lock is community-reviewed, not professionally audited. A bot can be the first buyer. No refunds. A memecoin can lose all its value.
